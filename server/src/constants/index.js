@@ -1,0 +1,36 @@
+const HTTP_STATUS = {
+  OK: 200,
+  CREATED: 201,
+  NO_CONTENT: 204,
+  BAD_REQUEST: 400,
+  UNAUTHORIZED: 401,
+  FORBIDDEN: 403,
+  NOT_FOUND: 404,
+  CONFLICT: 409,
+  UNPROCESSABLE: 422,
+  INTERNAL_SERVER: 500,
+};
+
+const USER_ROLES = {
+  USER: 'user',
+  ADMIN: 'admin',
+};
+
+const SHELF_TYPES = {
+  READ: 'READ',
+  READING: 'READING',
+  WISHLIST: 'WISHLIST',
+  DROPPED: 'DROPPED',
+};
+
+const COOKIE_NAMES = {
+  ACCESS_TOKEN: 'accessToken',
+  REFRESH_TOKEN: 'refreshToken',
+};
+
+module.exports = {
+  HTTP_STATUS,
+  USER_ROLES,
+  SHELF_TYPES,
+  COOKIE_NAMES,
+};
