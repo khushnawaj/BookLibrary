@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en" class="dark" data-palette="midnight" data-mode="dark">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -12,6 +12,22 @@
       rel="stylesheet"
     />
     <title>BookVerse — Your Universe of Stories</title>
+    <script>
+      (function () {
+        try {
+          var raw = localStorage.getItem('bookverse_theme');
+          if (!raw) return;
+          var theme = JSON.parse(raw);
+          var root = document.documentElement;
+          if (theme.palette) root.setAttribute('data-palette', theme.palette);
+          if (theme.mode) {
+            root.setAttribute('data-mode', theme.mode);
+            root.classList.toggle('dark', theme.mode === 'dark');
+            root.classList.toggle('light', theme.mode === 'light');
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -1,22 +1,29 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
+import { useAuth } from '@/features/auth/authHooks';
+import { PageLoader } from '@/components/ui/loader';
 import { ROUTES } from '@/constants';
 
-/**
- * Placeholder — wired with auth state in Step 3.
- * Currently allows all private routes for foundation testing.
- */
 export function ProtectedRoute({ children }) {
-  const isAuthenticated = false;
+  const { isAuthenticated, initialized } = useAuth();
+  const location = useLocation();
+
+  if (!initialized) {
+    return <PageLoader />;
+  }
 
   if (!isAuthenticated) {
-    return <Navigate to={ROUTES.LOGIN} replace />;
+    return <Navigate to={ROUTES.LOGIN} state={{ from: location }} replace />;
   }
 
   return children;
 }
 
-export function PublicOnlyRoute({ children }) {
-  const isAuthenticated = false;
+export function PublicRoute({ children }) {
+  const { isAuthenticated, initialized } = useAuth();
+
+  if (!initialized) {
+    return <PageLoader />;
+  }
 
   if (isAuthenticated) {
     return <Navigate to={ROUTES.DASHBOARD} replace />;
@@ -24,3 +31,6 @@ export function PublicOnlyRoute({ children }) {
 
   return children;
 }
+
+// Backward-compatible alias
+export const PublicOnlyRoute = PublicRoute;

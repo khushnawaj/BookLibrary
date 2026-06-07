@@ -9,6 +9,12 @@ export const ROUTES = {
   REGISTER: '/register',
   DASHBOARD: '/dashboard',
   LIBRARY: '/library',
+  FEED: '/feed',
+  LIBRARY_ADD: '/library/add',
+  LIBRARY_BOOK: '/library/:id',
+  LIBRARY_EDIT: '/library/:id/edit',
+  LIBRARY_IMPORT: '/library/import',
+  ANALYTICS: '/analytics',
   WISHLIST: '/wishlist',
   PROFILE: '/profile',
   SETTINGS: '/settings',
@@ -24,3 +30,11 @@ export const SHELF_TYPES = {
 export const STORAGE_KEYS = {
   THEME: 'bookverse_theme',
 };
+
+export {
+  THEME_MODES,
+  THEME_PALETTES,
+  DEFAULT_THEME,
+  PALETTE_META,
+  THEME_TOKENS,
+} from './themes';

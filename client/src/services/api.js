@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { API_BASE_URL } from '@/constants';
+import { resetAuth } from '@/features/auth/authSlice';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -9,14 +10,25 @@ const api = axios.create({
   },
 });
 
+let storeRef = null;
+
+export const injectStore = (store) => {
+  storeRef = store;
+};
+
+const isAuthEndpoint = (url = '') =>
+  url.includes('/auth/login') ||
+  url.includes('/auth/register') ||
+  url.includes('/auth/me');
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const originalRequest = error.config;
+    const status = error.response?.status;
+    const url = error.config?.url || '';
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-      // Token refresh logic — Step 3
+    if (status === 401 && !isAuthEndpoint(url) && storeRef) {
+      storeRef.dispatch(resetAuth());
     }
 
     return Promise.reject(error);

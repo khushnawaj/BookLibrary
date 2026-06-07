@@ -20,64 +20,44 @@
 
 ---
 
-### Step 2 — Database & Models
+### Step 2 — Database & Authentication ✅
 
-**Backend**
-
-- [ ] User model (name, username, email, password, avatar, bio, role, isVerified, refreshToken)
-- [ ] Book model (title, author, publisher, ISBN, genre, cover, etc.)
-- [ ] Library model (user, book, shelfType, rating, review, notes, dates)
-- [ ] Mongoose indexes & virtuals
-- [ ] Seed script for development data
-
-**Deliverables:** Working models, schema validation, DB connection tested with sample data.
+- [x] User, Book, Library Mongoose models with indexes & validation
+- [x] Virtual fields and model relationships
+- [x] JWT access + refresh token strategy (HttpOnly cookies)
+- [x] Register / Login / Logout / Get Me endpoints
+- [x] Auth middleware, role middleware, error middleware
+- [x] express-validator schemas
+- [x] API documentation (`server/docs/`)
 
 ---
 
-### Step 3 — Authentication System
+### Step 3 — Books & Library APIs ✅
 
-**Backend**
-
-- [ ] Register / Login / Logout controllers
-- [ ] JWT access + refresh token strategy (httpOnly cookies)
-- [ ] Auth middleware (protect routes)
-- [ ] Token refresh endpoint
-- [ ] User profile GET/PATCH endpoints
-- [ ] express-validator schemas
-
-**Frontend**
-
-- [ ] Login & Register forms (React Hook Form + Zod)
-- [ ] Auth Redux thunks / RTK Query
-- [ ] Protected route wiring with real auth state
-- [ ] Token refresh interceptor
-- [ ] Profile & Settings pages
-
-**Deliverables:** Full auth flow end-to-end.
+- [x] Book CRUD with ownership checks
+- [x] Search (title, author), filter (genre, language), sort (newest, oldest, title)
+- [x] Pagination utility
+- [x] Library CRUD with shelf types, rating validation
+- [x] Duplicate library entry handling
+- [x] Cascade delete library entries when book deleted
+- [x] API docs + Postman/cURL examples
 
 ---
 
-### Step 4 — Books & Library
+### Step 4 — Frontend Foundation ✅
 
-**Backend**
-
-- [ ] Book CRUD controllers & services
-- [ ] Library entry management (shelf types: READ, READING, WISHLIST, DROPPED)
-- [ ] Search & filter (title, author, genre, shelf)
-- [ ] Pagination
-
-**Frontend**
-
-- [ ] My Library page with book grid/list
-- [ ] Add/Edit book modal forms
-- [ ] Search & filter UI
-- [ ] Book detail view
-
-**Deliverables:** Complete library management.
+- [x] Design system (colors, typography, spacing, glass UI)
+- [x] shadcn-style UI components (Button, Input, Modal, Skeleton, etc.)
+- [x] Redux auth (authSlice, authApi, useAuth hook)
+- [x] Login & Register with React Hook Form + Zod
+- [x] ProtectedRoute / PublicRoute with session bootstrap
+- [x] Main layout (Sidebar, TopNavbar, MobileNav, UserMenu)
+- [x] Framer Motion page transitions + Lottie empty states
+- [x] Axios interceptors with cookie auth
 
 ---
 
-### Step 5 — Wishlist, Reviews & Dashboard
+### Step 5 — Book & Library UI
 
 **Backend**
 

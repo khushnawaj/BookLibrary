@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="480" viewBox="0 0 480 480" fill="none">
+  <defs>
+    <g id="leaf">
+      <path
+        d="M0 0 C18 -8 36 -6 48 8 C52 22 44 38 28 48 C12 52 -4 44 -8 28 C-10 12 -2 4 0 0 Z"
+        fill="currentColor"
+        opacity="0.35"
+      />
+      <path
+        d="M0 8 L0 42 M-6 14 L6 14 M-10 22 L10 22 M-12 30 L12 30 M-10 38 L10 38"
+        stroke="currentColor"
+        stroke-width="0.6"
+        opacity="0.25"
+        stroke-linecap="round"
+      />
+    </g>
+  </defs>
+  <g color="#14b8a6">
+    <use href="#leaf" transform="translate(80 60) rotate(-18) scale(1.4)" />
+    <use href="#leaf" transform="translate(260 40) rotate(24) scale(1.1)" opacity="0.7" />
+    <use href="#leaf" transform="translate(360 120) rotate(-8) scale(0.95)" />
+  </g>
+  <g color="#5eead4">
+    <use href="#leaf" transform="translate(140 200) rotate(12) scale(1.2)" opacity="0.5" />
+    <use href="#leaf" transform="translate(320 220) rotate(-22) scale(1.35)" opacity="0.45" />
+    <use href="#leaf" transform="translate(40 280) rotate(32) scale(0.85)" opacity="0.4" />
+  </g>
+  <g color="#0f766e">
+    <use href="#leaf" transform="translate(200 140) rotate(-14) scale(1.5)" opacity="0.55" />
+    <use href="#leaf" transform="translate(400 320) rotate(18) scale(1.05)" opacity="0.35" />
+    <use href="#leaf" transform="translate(100 380) rotate(-28) scale(1.15)" opacity="0.4" />
+  </g>
+  <g color="#2dd4bf">
+    <use href="#leaf" transform="translate(240 340) rotate(8) scale(1.25)" opacity="0.35" />
+    <use href="#leaf" transform="translate(420 60) rotate(-32) scale(0.9)" opacity="0.3" />
+  </g>
+</svg>

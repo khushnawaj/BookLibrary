@@ -11,10 +11,15 @@ router.get('/health', (req, res) => {
   });
 });
 
-// Phase 2: mount feature routes
-// router.use('/auth', require('./auth.routes'));
-// router.use('/books', require('./book.routes'));
-// router.use('/library', require('./library.routes'));
-// router.use('/users', require('./user.routes'));
+// Feature routes
+router.use('/auth', require('./auth.routes'));
+router.use('/books', require('./book.routes'));
+router.use('/library', require('./library.routes'));
+router.use('/dashboard', require('./dashboard.routes'));
+router.use('/analytics', require('./analytics.routes'));
+router.use('/upload', require('./upload.routes'));
+router.use('/users', require('./user.routes'));
+router.use('/posts', require('./post.routes'));
+router.use('/feed', require('./feed.routes'));
 
 module.exports = router;

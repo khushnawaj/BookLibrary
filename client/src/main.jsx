@@ -5,14 +5,18 @@ import { RouterProvider } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { router } from '@/routes';
 import { store } from '@/store';
+import { injectStore } from '@/services/api';
+import '@/features/theme/themeSlice';
 import './index.css';
+
+injectStore(store);
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <Provider store={store}>
       <RouterProvider router={router} />
       <Toaster
-        position="top-right"
+        position="bottom-right"
         toastOptions={{
           className: 'glass !bg-card !text-foreground !border-border',
           duration: 4000,

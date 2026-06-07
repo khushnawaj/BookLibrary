@@ -12,8 +12,8 @@ const HTTP_STATUS = {
 };
 
 const USER_ROLES = {
-  USER: 'user',
-  ADMIN: 'admin',
+  USER: 'USER',
+  ADMIN: 'ADMIN',
 };
 
 const SHELF_TYPES = {
@@ -28,9 +28,22 @@ const COOKIE_NAMES = {
   REFRESH_TOKEN: 'refreshToken',
 };
 
+const GOAL_TYPES = {
+  BOOKS: 'BOOKS',
+  PAGES: 'PAGES',
+};
+
+const GOAL_STATUS = {
+  ACTIVE: 'ACTIVE',
+  COMPLETED: 'COMPLETED',
+  FAILED: 'FAILED',
+};
+
 module.exports = {
   HTTP_STATUS,
   USER_ROLES,
   SHELF_TYPES,
   COOKIE_NAMES,
+  GOAL_TYPES,
+  GOAL_STATUS,
 };

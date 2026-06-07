@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { ArrowRight, BookOpen, Heart, Star } from 'lucide-react';
+import { ArrowRight, BookOpen, Heart, Leaf, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { FadeIn } from '@/components/animations/FadeIn';
 import { Button } from '@/components/ui/button';
@@ -34,10 +34,10 @@ export default function LandingPage() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5 }}
-              className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5 text-sm text-primary"
+              className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-4 py-1.5 text-sm text-mint"
             >
-              <BookOpen className="h-4 w-4" />
-              Phase 1 — Foundation Ready
+              <Leaf className="h-4 w-4 text-primary" />
+              Your calm reading sanctuary
             </motion.div>
 
             <h1 className="font-display text-4xl font-bold tracking-tight sm:text-6xl lg:text-7xl">
@@ -46,8 +46,8 @@ export default function LandingPage() {
             </h1>
 
             <p className="mt-6 text-lg text-muted-foreground sm:text-xl">
-              {APP_NAME} — {APP_TAGLINE}. A modern social platform for book lovers,
-              built with elegance and purpose.
+              {APP_NAME} — {APP_TAGLINE}. A modern platform for book lovers,
+              wrapped in the calm depth of nature.
             </p>
 
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
@@ -69,10 +69,10 @@ export default function LandingPage() {
         <div className="mt-24 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {features.map((feature, index) => (
             <FadeIn key={feature.title} delay={index * 100}>
-              <Card className="h-full transition-transform duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/5">
+              <Card className="h-full transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10">
                 <CardContent className="p-6">
-                  <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-primary/15 ring-1 ring-primary/20">
-                    <feature.icon className="h-5 w-5 text-primary" />
+                  <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-primary/15 ring-1 ring-primary/25">
+                    <feature.icon className="h-5 w-5 text-mint" />
                   </div>
                   <h3 className="text-lg font-semibold">{feature.title}</h3>
                   <p className="mt-2 text-sm text-muted-foreground">{feature.description}</p>
