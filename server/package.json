@@ -8,7 +8,7 @@
     "dev": "nodemon server.js",
     "lint": "eslint src/",
     "format": "prettier --write \"src/**/*.js\"",
-    "prepare": "husky"
+    "prepare": "node -e \"if(process.env.NODE_ENV !== 'production' && !process.env.CI) { require('child_process').execSync('husky', {stdio: 'inherit'}) }\""
   },
   "keywords": [
     "ShelfForge",
