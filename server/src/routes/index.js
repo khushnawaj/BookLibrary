@@ -6,7 +6,7 @@ const router = express.Router();
 router.get('/health', (req, res) => {
   res.status(HTTP_STATUS.OK).json({
     success: true,
-    message: 'BookVerse API is healthy',
+    message: 'ShelfForge API is healthy',
     timestamp: new Date().toISOString(),
   });
 });
@@ -21,5 +21,6 @@ router.use('/upload', require('./upload.routes'));
 router.use('/users', require('./user.routes'));
 router.use('/posts', require('./post.routes'));
 router.use('/feed', require('./feed.routes'));
+router.use('/google-books', require('./googleBooks.routes'));
 
 module.exports = router;

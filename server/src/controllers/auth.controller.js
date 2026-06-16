@@ -1,4 +1,4 @@
-const { HTTP_STATUS } = require('../constants');
+const { HTTP_STATUS, COOKIE_NAMES } = require('../constants');
 const ApiResponse = require('../utils/apiResponse');
 const asyncHandler = require('../utils/asyncHandler');
 const { setTokenCookies, clearTokenCookies } = require('../utils/cookie.util');
@@ -45,4 +45,17 @@ const getMe = asyncHandler(async (req, res) => {
   });
 });
 
-module.exports = { register, login, logout, getMe };
+const refresh = asyncHandler(async (req, res) => {
+  const incomingRefreshToken = req.cookies[COOKIE_NAMES.REFRESH_TOKEN];
+
+  const { accessToken, refreshToken, user } = await authService.refreshUserTokens(incomingRefreshToken);
+
+  setTokenCookies(res, accessToken, refreshToken);
+
+  return ApiResponse.success(res, {
+    message: 'Token refreshed successfully',
+    data: { user: user.toPublicProfile() },
+  });
+});
+
+module.exports = { register, login, logout, getMe, refresh };

@@ -14,7 +14,7 @@ export function SkeletonBox({ className }) {
 export function BookCardSkeleton() {
   return (
     <div className="glass-card overflow-hidden">
-      <SkeletonBox className="h-48 w-full rounded-none" />
+      <SkeletonBox className="w-full aspect-[3/4] rounded-none" />
       <div className="p-4 space-y-3">
         <SkeletonBox className="h-4 w-3/4" />
         <SkeletonBox className="h-3 w-1/2" />

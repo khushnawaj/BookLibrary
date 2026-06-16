@@ -22,7 +22,7 @@ export function PageLoader() {
           <Loader2 className="h-7 w-7 animate-spin text-white" />
         </div>
         <div className="text-center">
-          <p className="text-sm font-semibold text-[#1C1A17]">BookVerse</p>
+          <p className="text-sm font-semibold text-[#1C1A17]">ShelfForge</p>
           <p className="text-xs text-[#8A7F74] mt-0.5">Loading your library...</p>
         </div>
       </div>

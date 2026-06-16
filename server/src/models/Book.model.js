@@ -105,7 +105,10 @@ const bookSchema = new mongoose.Schema(
   }
 );
 
-bookSchema.index({ title: 'text', author: 'text', genre: 'text' });
+bookSchema.index(
+  { title: 'text', author: 'text', genre: 'text' },
+  { language_override: 'none' }
+);
 bookSchema.index({ owner: 1, createdAt: -1 });
 bookSchema.index({ isbn: 1 }, { unique: true, sparse: true });
 bookSchema.index({ genre: 1 });

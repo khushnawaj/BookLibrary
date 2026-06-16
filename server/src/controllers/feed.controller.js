@@ -4,7 +4,7 @@ const { Post, Follow, Like, SavedPost } = require('../models');
 
 const getFeed = asyncHandler(async (req, res) => {
   const userId = req.user._id;
-  const { cursor, limit = 10, type = 'following' } = req.query; // type: 'following' | 'global'
+  const { cursor, limit = 10, type = 'global' } = req.query; // type: 'following' | 'global'
 
   const parsedLimit = parseInt(limit, 10);
   const query = {};
@@ -17,15 +17,15 @@ const getFeed = asyncHandler(async (req, res) => {
     // Get list of followed users
     const follows = await Follow.find({ follower: userId }).select('following');
     const followingIds = follows.map((f) => f.following);
-    
+
     // Include user's own posts + following
     followingIds.push(userId);
-    
+
     query.author = { $in: followingIds };
-    query.visibility = { $in: ['PUBLIC', 'FOLLOWERS'] }; 
+    query.visibility = { $in: ['PUBLIC', 'FOLLOWERS'] };
   } else {
-    // Global feed
-    query.visibility = 'PUBLIC';
+    // Global / community feed — show all public posts
+    query.visibility = { $in: ['PUBLIC', 'FOLLOWERS'] };
   }
 
   const posts = await Post.find(query)

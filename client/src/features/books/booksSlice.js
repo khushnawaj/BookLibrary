@@ -34,7 +34,12 @@ export const createBook = createAsyncThunk(
       const response = await bookService.create(data);
       return response.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || 'Failed to create book');
+      const errorData = err.response?.data;
+      if (errorData?.errors && Array.isArray(errorData.errors)) {
+        const detailMsg = errorData.errors.map((e) => e.message).join(', ');
+        return rejectWithValue(`${errorData.message}: ${detailMsg}`);
+      }
+      return rejectWithValue(errorData?.message || 'Failed to create book');
     }
   }
 );
@@ -46,7 +51,12 @@ export const updateBook = createAsyncThunk(
       const response = await bookService.update(id, data);
       return response.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || 'Failed to update book');
+      const errorData = err.response?.data;
+      if (errorData?.errors && Array.isArray(errorData.errors)) {
+        const detailMsg = errorData.errors.map((e) => e.message).join(', ');
+        return rejectWithValue(`${errorData.message}: ${detailMsg}`);
+      }
+      return rejectWithValue(errorData?.message || 'Failed to update book');
     }
   }
 );

@@ -13,10 +13,26 @@ const parseDuration = (duration, fallbackMs) => {
   return value * multipliers[unit];
 };
 
+const isProduction = process.env.NODE_ENV === 'production';
+
+/**
+ * Cookie security strategy:
+ * - Development: sameSite=lax, secure=false  (works on localhost http)
+ * - Production (same domain): sameSite=strict, secure=true
+ * - Production (cross domain): sameSite=none, secure=true
+ *
+ * Set COOKIE_SAME_SITE=none in your production .env if frontend & backend
+ * are on different domains (e.g. Vercel + Render).
+ */
+const getSameSite = () => {
+  if (!isProduction) return 'lax';
+  return process.env.COOKIE_SAME_SITE || 'strict';
+};
+
 const baseCookieOptions = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+  secure: isProduction,
+  sameSite: getSameSite(),
   path: '/',
 };
 

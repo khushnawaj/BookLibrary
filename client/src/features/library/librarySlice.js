@@ -34,7 +34,12 @@ export const addToLibrary = createAsyncThunk(
       const response = await libraryService.add(data);
       return response.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || 'Failed to add to library');
+      const errorData = err.response?.data;
+      if (errorData?.errors && Array.isArray(errorData.errors)) {
+        const detailMsg = errorData.errors.map((e) => e.message).join(', ');
+        return rejectWithValue(`${errorData.message}: ${detailMsg}`);
+      }
+      return rejectWithValue(errorData?.message || 'Failed to add to library');
     }
   }
 );
@@ -46,7 +51,12 @@ export const updateLibraryEntry = createAsyncThunk(
       const response = await libraryService.update(id, data);
       return response.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || 'Failed to update library entry');
+      const errorData = err.response?.data;
+      if (errorData?.errors && Array.isArray(errorData.errors)) {
+        const detailMsg = errorData.errors.map((e) => e.message).join(', ');
+        return rejectWithValue(`${errorData.message}: ${detailMsg}`);
+      }
+      return rejectWithValue(errorData?.message || 'Failed to update library entry');
     }
   }
 );

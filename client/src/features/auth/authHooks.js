@@ -22,7 +22,7 @@ export const useAuth = () => {
     async (data) => {
       const result = await dispatch(registerUser(data));
       if (registerUser.fulfilled.match(result)) {
-        toast.success('Welcome to BookVerse!');
+        toast.success('Welcome to ShelfForge!');
         navigate(ROUTES.DASHBOARD);
         return { success: true };
       }

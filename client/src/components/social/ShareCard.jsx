@@ -25,7 +25,7 @@ export function ShareCard({ type, data, onClose }) {
       });
       const url = canvas.toDataURL('image/png');
       const link = document.createElement('a');
-      link.download = `bookverse-${type}-card.png`;
+      link.download = `ShelfForge-${type}-card.png`;
       link.href = url;
       link.click();
     } catch {
@@ -119,7 +119,7 @@ function ReviewCard({ data }) {
     >
       <div className="flex items-center gap-2 text-xs text-white/50 font-medium tracking-widest uppercase">
         <BookOpen className="w-3.5 h-3.5" />
-        BookVerse Review
+        ShelfForge Review
       </div>
 
       <div className="flex gap-4 items-start">
@@ -147,7 +147,7 @@ function ReviewCard({ data }) {
       )}
 
       <div className="mt-auto pt-4 border-t border-white/10 flex items-center justify-between">
-        <span className="text-xs text-white/40">bookverse.app</span>
+        <span className="text-xs text-white/40">shelfforge.app</span>
         <span className="text-xs text-white/40">#{data.title?.replace(/\s/g, '')}</span>
       </div>
     </div>
@@ -178,7 +178,7 @@ function AchievementCard({ data }) {
       </div>
 
       <div className="mt-auto pt-4 border-t border-white/10 w-full flex items-center justify-between">
-        <span className="text-xs text-white/40">bookverse.app</span>
+        <span className="text-xs text-white/40">shelfforge.app</span>
         <span className="text-xs text-amber-400/60">#ReadingGoals</span>
       </div>
     </div>
@@ -217,7 +217,7 @@ function GoalCard({ data }) {
       </div>
 
       <div className="mt-auto pt-4 border-t border-white/10 flex items-center justify-between">
-        <span className="text-xs text-white/40">bookverse.app</span>
+        <span className="text-xs text-white/40">shelfforge.app</span>
         <span className="text-xs text-emerald-400/60">#ReadingChallenge</span>
       </div>
     </div>
@@ -265,7 +265,7 @@ function BookCard({ data }) {
       </div>
 
       <div className="mt-auto pt-4 border-t border-white/10 flex items-center justify-between">
-        <span className="text-xs text-white/40">bookverse.app</span>
+        <span className="text-xs text-white/40">shelfforge.app</span>
         <span className="text-xs text-violet-400/60">#{data.title?.replace(/\s/g, '')}</span>
       </div>
     </div>
@@ -276,14 +276,14 @@ function BookCard({ data }) {
 function getShareText(type, data) {
   switch (type) {
     case 'review':
-      return `I just rated "${data.title}" by ${data.author} ${'⭐'.repeat(data.rating)} on BookVerse!\n\n"${data.review}"\n\nbookverse.app`;
+      return `I just rated "${data.title}" by ${data.author} ${'⭐'.repeat(data.rating)} on ShelfForge!\n\n"${data.review}"\n\nshelfforge.app`;
     case 'achievement':
-      return `I unlocked the "${data.name}" achievement on BookVerse! ${data.icon || '🏆'}\n\nbookverse.app`;
+      return `I unlocked the "${data.name}" achievement on ShelfForge! ${data.icon || '🏆'}\n\nshelfforge.app`;
     case 'goal':
-      return `I'm ${Math.round((data.current / data.target) * 100)}% through my reading goal: "${data.title}" on BookVerse! 📚\n\nbookverse.app`;
+      return `I'm ${Math.round((data.current / data.target) * 100)}% through my reading goal: "${data.title}" on ShelfForge! 📚\n\nshelfforge.app`;
     case 'book':
-      return `Currently reading "${data.title}" by ${data.author} on BookVerse 📖\n\nbookverse.app`;
+      return `Currently reading "${data.title}" by ${data.author} on ShelfForge 📖\n\nshelfforge.app`;
     default:
-      return 'Check out BookVerse — the social reading platform! bookverse.app';
+      return 'Check out ShelfForge - the social reading platform! shelfforge.app';
   }
 }

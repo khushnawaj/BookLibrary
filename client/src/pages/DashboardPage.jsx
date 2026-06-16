@@ -1,147 +1,173 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  BookOpen,
+  ArrowRight,
+  BarChart3,
   BookMarked,
+  BookOpen,
+  Flame,
   Heart,
   Library,
-  TrendingUp,
   Plus,
-  ArrowRight,
-  Flame,
   Star,
   Target,
-  Users,
+  TrendingUp,
   Upload,
-  BarChart3,
+  Users,
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppStore';
 import {
   fetchDashboardStats,
   selectDashboardStats,
   selectRecentBooks,
-  selectRecentActivity,
   selectDashboardLoading,
 } from '@/features/dashboard/dashboardSlice';
 import { fetchAnalytics, fetchGoals, selectAnalytics } from '@/features/analytics/analyticsSlice';
 import { useAuth } from '@/features/auth/authHooks';
-import { EmptyState } from '@/components/common/EmptyState';
-import { StatCardSkeleton } from '@/components/common/Skeletons';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ROUTES } from '@/constants';
 
-/* ─── tiny helpers ─────────────────────────────────────────────────────────── */
 const fade = (delay = 0) => ({
   initial: { opacity: 0, y: 12 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.35, delay },
+  transition: { duration: 0.32, delay },
 });
 
 const SHELF_COLORS = {
-  READ:     'bg-[#5C7A3E]/10 text-[#5C7A3E]',
-  READING:  'bg-[#8B4513]/10 text-[#8B4513]',
-  WISHLIST: 'bg-[#D4931A]/10 text-[#D4931A]',
-  DROPPED:  'bg-[#C0392B]/10 text-[#C0392B]',
+  READ: 'bg-success/15 text-success border-success/20',
+  READING: 'bg-primary/15 text-primary border-primary/20',
+  WISHLIST: 'bg-amber-500/15 text-amber-500 border-amber-500/20',
+  DROPPED: 'bg-destructive/15 text-destructive border-destructive/20',
 };
-const SHELF_LABELS = { READ: 'Read', READING: 'Reading', WISHLIST: 'Wishlist', DROPPED: 'Dropped' };
 
-/* ─── sub-components ────────────────────────────────────────────────────────── */
+const SHELF_LABELS = {
+  READ: 'Read',
+  READING: 'Reading',
+  WISHLIST: 'Wishlist',
+  DROPPED: 'Dropped',
+};
+
+const metricPalette = {
+  total: { iconBg: 'bg-primary/10', iconColor: 'text-primary' },
+  reading: { iconBg: 'bg-primary/15', iconColor: 'text-primary' },
+  finished: { iconBg: 'bg-success/15', iconColor: 'text-success' },
+  wishlist: { iconBg: 'bg-amber-500/15', iconColor: 'text-amber-500' },
+};
+
+const formatNumber = (value) => new Intl.NumberFormat().format(value ?? 0);
+
+const clampPercent = (value) => Math.min(100, Math.max(0, Math.round(value || 0)));
+
 function SectionCard({ children, className }) {
   return (
-    <div className={cn('rounded-xl border border-[#DDD4C4] bg-white shadow-sm', className)}>
+    <section className={cn('glass-card border border-glass-border', className)}>
       {children}
-    </div>
+    </section>
   );
 }
 
-function CardHeader({ title, icon: Icon, action }) {
+function SectionHeader({ title, icon: Icon, action }) {
   return (
-    <div className="flex items-center justify-between px-5 pt-5 pb-3">
-      <h3 className="flex items-center gap-2 text-[13px] font-semibold text-[#3D3530] uppercase tracking-wide">
-        {Icon && <Icon className="h-3.5 w-3.5 text-[#8B4513]" />}
+    <div className="flex min-h-12 items-center justify-between gap-3 border-b border-border/40 px-5">
+      <h2 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-foreground">
+        {Icon && <Icon className="h-4 w-4 text-primary" />}
         {title}
-      </h3>
+      </h2>
       {action}
     </div>
   );
 }
 
-function StatPill({ label, value, max = 100, color = '#8B4513' }) {
-  const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
+function MetricCard({ label, value, detail, icon: Icon, tone = 'total' }) {
+  const colors = metricPalette[tone] || metricPalette.total;
+
   return (
-    <div className="flex-1 min-w-[140px]">
-      <div className="flex justify-between mb-1">
-        <span className="text-xs text-[#8A7F74]">{label}</span>
-        <span className="text-xs font-semibold" style={{ color }}>{pct}%</span>
+    <motion.div {...fade(0.04)} className="glass-card border border-glass-border p-5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
+          <p className="mt-2 text-2xl font-bold leading-none text-foreground">{formatNumber(value)}</p>
+          <p className="mt-2.5 truncate text-xs text-muted-foreground/80">{detail}</p>
+        </div>
+        <div className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-xl', colors.iconBg)}>
+          <Icon className={cn('h-5 w-5', colors.iconColor)} />
+        </div>
       </div>
-      <div className="h-2 rounded-full bg-[#EDE6D8] overflow-hidden">
+    </motion.div>
+  );
+}
+
+function ProgressTrack({ label, value, max, color }) {
+  const percent = max > 0 ? clampPercent((value / max) * 100) : 0;
+
+  return (
+    <div>
+      <div className="mb-1.5 flex items-center justify-between gap-3">
+        <span className="text-sm font-medium text-foreground">{label}</span>
+        <span className="text-xs font-semibold text-muted-foreground">
+          {formatNumber(value)} / {formatNumber(max)}
+        </span>
+      </div>
+      <div className="h-2.5 overflow-hidden rounded-full bg-secondary">
         <div
           className="h-full rounded-full transition-all duration-700"
-          style={{ width: `${pct}%`, backgroundColor: color }}
+          style={{ width: `${percent}%`, backgroundColor: color }}
         />
       </div>
     </div>
   );
 }
 
-function BigStat({ value, label }) {
-  return (
-    <div className="text-center px-4">
-      <p className="text-3xl font-bold text-[#1C1A17]">{value ?? 0}</p>
-      <p className="text-[11px] text-[#8A7F74] mt-0.5">{label}</p>
-    </div>
-  );
-}
-
-function QuickAction({ to, icon: Icon, label, color = '#8B4513' }) {
+function QuickAction({ to, icon: Icon, label, color }) {
   return (
     <Link
       to={to}
-      className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-[#F5F0E8] transition-colors group"
+      className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary/60"
     >
-      <div
-        className="h-11 w-11 rounded-xl flex items-center justify-center transition-transform group-hover:scale-105"
-        style={{ backgroundColor: `${color}18` }}
-      >
-        <Icon className="h-5 w-5" style={{ color }} />
-      </div>
-      <span className="text-[11px] font-medium text-[#3D3530]">{label}</span>
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: `${color}18` }}>
+        <Icon className="h-4 w-4" style={{ color }} />
+      </span>
+      <span className="truncate">{label}</span>
     </Link>
+  );
+}
+
+function BookCover({ book, className }) {
+  const coverImage = book.coverImage || book?.book?.coverImage;
+  const title = book.title || book?.book?.title || 'Book cover';
+
+  return (
+    <div className={cn('shrink-0 overflow-hidden rounded-lg bg-secondary shadow-sm', className)}>
+      {coverImage ? (
+        <img src={coverImage} alt={title} className="h-full w-full object-cover" loading="lazy" />
+      ) : (
+        <div className="flex h-full items-center justify-center">
+          <BookOpen className="h-4 w-4 text-muted-foreground" />
+        </div>
+      )}
+    </div>
   );
 }
 
 function RecentBookRow({ book }) {
   const shelfType = book.shelfType || book.status;
+  const title = book.title || book?.book?.title || 'Untitled book';
+  const author = book.author || book?.book?.author || 'Unknown author';
+
   return (
     <Link
       to={`/library/${book._id}`}
-      className="flex items-center gap-3 px-5 py-2.5 hover:bg-[#F5F0E8] transition-colors group"
+      className="flex min-h-16 items-center gap-3 px-5 py-3 transition-colors hover:bg-secondary/40"
     >
-      <div className="h-10 w-7 shrink-0 overflow-hidden rounded shadow-sm bg-[#EDE6D8]">
-        {book.coverImage || book?.book?.coverImage ? (
-          <img
-            src={book.coverImage || book?.book?.coverImage}
-            alt={book.title}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center">
-            <BookOpen className="h-3 w-3 text-[#8A7F74]" />
-          </div>
-        )}
-      </div>
+      <BookCover book={book} className="h-12 w-8" />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[13px] font-medium text-[#1C1A17]">
-          {book.title ?? book?.book?.title}
-        </p>
-        <p className="truncate text-[11px] text-[#8A7F74]">
-          {book.author ?? book?.book?.author}
-        </p>
+        <p className="truncate text-sm font-semibold text-foreground">{title}</p>
+        <p className="mt-0.5 truncate text-xs text-muted-foreground">{author}</p>
       </div>
       {shelfType && (
-        <span className={cn('shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold', SHELF_COLORS[shelfType])}>
+        <span className={cn('shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold', SHELF_COLORS[shelfType])}>
           {SHELF_LABELS[shelfType] || shelfType}
         </span>
       )}
@@ -149,7 +175,42 @@ function RecentBookRow({ book }) {
   );
 }
 
-/* ─── main page ─────────────────────────────────────────────────────────────── */
+function GoalRow({ goal }) {
+  const percent = clampPercent(goal.progressPercentage);
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between gap-3 text-sm">
+        <span className="min-w-0 truncate font-semibold text-foreground">{goal.title}</span>
+        <span className="shrink-0 text-xs font-medium text-muted-foreground">
+          {goal.currentValue}/{goal.targetValue}
+        </span>
+      </div>
+      <div className="h-2 overflow-hidden rounded-full bg-secondary">
+        <div
+          className={cn(
+            'h-full rounded-full transition-all duration-700',
+            goal.status === 'COMPLETED' ? 'bg-success' : 'bg-primary'
+          )}
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function StatLine({ label, value, icon: Icon }) {
+  return (
+    <div className="flex items-center justify-between gap-3 text-sm">
+      <span className="flex items-center gap-2 text-muted-foreground">
+        {Icon && <Icon className="h-4 w-4 text-primary" />}
+        {label}
+      </span>
+      <span className="max-w-[55%] truncate font-semibold text-foreground">{value}</span>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const dispatch = useAppDispatch();
   const { user } = useAuth();
@@ -165,124 +226,93 @@ export default function DashboardPage() {
   }, [dispatch]);
 
   const firstName = user?.name?.split(' ')[0] || 'Reader';
-  const total = stats.totalBooks || 1; // avoid divide-by-zero
+  const totalBooks = stats.totalBooks || 0;
+  const progressTotal = Math.max(
+    totalBooks,
+    stats.readBooks || 0,
+    stats.readingBooks || 0,
+    stats.wishlistCount || 0,
+    1
+  );
+  const currentBook =
+    recentBooks?.find((book) => (book.shelfType || book.status) === 'READING') || recentBooks?.[0];
 
   return (
-    <div className="space-y-5 pb-4">
-
-      {/* ── Welcome ── */}
-      <motion.div {...fade(0)} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-6 pb-8">
+      <motion.div {...fade(0)} className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-sm text-[#8A7F74]">Good to see you,</p>
-          <h1 className="text-2xl sm:text-3xl font-bold text-[#1C1A17] leading-tight">
-            Welcome in, <span className="text-[#8B4513]">{firstName}</span>
+          <p className="text-sm font-medium text-muted-foreground">Good to see you, {firstName}</p>
+          <h1 className="mt-1.5 text-2xl font-bold leading-tight text-foreground sm:text-3xl">
+            Your reading dashboard
           </h1>
         </div>
-        <Button asChild className="self-start sm:self-auto">
-          <Link to={ROUTES.LIBRARY_ADD}>
-            <Plus className="h-4 w-4 shrink-0" />
-            New Book
-          </Link>
-        </Button>
+        <div className="flex flex-wrap gap-2.5">
+          <Button asChild variant="outline">
+            <Link to={ROUTES.LIBRARY_IMPORT}>
+              <Upload className="h-4 w-4" />
+              Import
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link to={ROUTES.LIBRARY_ADD}>
+              <Plus className="h-4 w-4" />
+              New Book
+            </Link>
+          </Button>
+        </div>
       </motion.div>
 
-      {/* ── Top Progress Bars + Big Stats ── */}
-      <motion.div {...fade(0.05)}>
-        <SectionCard className="px-5 py-4">
-          <div className="flex flex-wrap gap-4 items-end">
-            <StatPill label="Read" value={stats.readBooks} max={total} color="#5C7A3E" />
-            <StatPill label="Reading" value={stats.readingBooks} max={total} color="#8B4513" />
-            <StatPill label="Wishlist" value={stats.wishlistCount} max={total} color="#D4931A" />
-            <div className="hidden sm:flex items-center gap-0 ml-auto border-l border-[#EDE6D8] pl-6">
-              <BigStat value={stats.totalBooks} label="Total Books" />
-              <BigStat value={stats.readBooks} label="Finished" />
-              <BigStat value={overview?.currentStreak ?? 0} label="Day Streak" />
-            </div>
-          </div>
-        </SectionCard>
-      </motion.div>
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+        <MetricCard label="Library" value={stats.totalBooks} detail="Books in collection" icon={Library} tone="total" />
+        <MetricCard label="Reading" value={stats.readingBooks} detail="Currently active" icon={BookOpen} tone="reading" />
+        <MetricCard label="Finished" value={stats.readBooks} detail={`${formatNumber(overview?.totalPagesRead)} pages read`} icon={BookMarked} tone="finished" />
+        <MetricCard label="Wishlist" value={stats.wishlistCount} detail="Saved for later" icon={Heart} tone="wishlist" />
+      </div>
 
-      {/* ── Main Grid ── */}
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-
-        {/* ── Left: Profile card ── */}
-        <motion.div {...fade(0.08)} className="lg:col-span-1">
-          <SectionCard className="overflow-hidden">
-            <div className="bg-gradient-to-br from-[#8B4513] to-[#5C3010] px-5 py-6 text-white">
-              <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-xl bg-white/20 flex items-center justify-center text-xl font-bold shadow-inner">
-                  {firstName[0]?.toUpperCase()}
-                </div>
-                <div>
-                  <p className="font-semibold text-base leading-tight">{user?.name}</p>
-                  <span className="mt-1 inline-block rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-medium">
-                    {user?.role || 'Book Lover'}
-                  </span>
-                </div>
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+        <motion.div {...fade(0.08)} className="xl:col-span-2">
+          <SectionCard>
+            <SectionHeader title="Reading Progress" icon={TrendingUp} />
+            <div className="grid gap-6 p-5 lg:grid-cols-[1fr_220px]">
+              <div className="space-y-4">
+                <ProgressTrack label="Finished" value={stats.readBooks || 0} max={progressTotal} color="var(--color-success)" />
+                <ProgressTrack label="Currently Reading" value={stats.readingBooks || 0} max={progressTotal} color="var(--color-primary)" />
+                <ProgressTrack label="Wishlist" value={stats.wishlistCount || 0} max={progressTotal} color="var(--color-primary)" />
               </div>
-            </div>
-            <div className="px-5 py-4 space-y-3">
-              <div className="flex justify-between text-[13px]">
-                <span className="text-[#8A7F74]">Reputation</span>
-                <span className="font-semibold text-[#1C1A17]">{overview?.totalBooksRead ?? 0} books read</span>
+              <div className="space-y-3 border-t border-border/40 pt-4 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+                <StatLine label="Day streak" value={`${overview?.currentStreak ?? 0} days`} icon={Flame} />
+                <StatLine label="Average rating" value={overview?.averageRating ? overview.averageRating.toFixed(1) : 'Not rated'} icon={Star} />
+                <StatLine label="Favorite genre" value={overview?.favoriteGenre || 'No genre yet'} icon={BarChart3} />
               </div>
-              <div className="flex justify-between text-[13px]">
-                <span className="text-[#8A7F74]">Avg Rating</span>
-                <span className="flex items-center gap-1 font-semibold text-[#1C1A17]">
-                  <Star className="h-3.5 w-3.5 text-[#D4931A] fill-[#D4931A]" />
-                  {overview?.averageRating?.toFixed(1) ?? '—'}
-                </span>
-              </div>
-              <div className="flex justify-between text-[13px]">
-                <span className="text-[#8A7F74]">Streak</span>
-                <span className="flex items-center gap-1 font-semibold text-[#1C1A17]">
-                  <Flame className="h-3.5 w-3.5 text-[#D4931A]" />
-                  {overview?.currentStreak ?? 0} days
-                </span>
-              </div>
-              <Button asChild variant="outline" size="sm" className="w-full mt-2">
-                <Link to={ROUTES.PROFILE}>
-                  View Profile
-                </Link>
-              </Button>
             </div>
           </SectionCard>
         </motion.div>
 
-        {/* ── Center: Recent Books ── */}
-        <motion.div {...fade(0.11)} className="lg:col-span-2">
-          <SectionCard className="overflow-hidden">
-            <CardHeader
-              title="Recent Books"
-              icon={BookMarked}
-              action={
-                <Button asChild variant="link" size="sm" className="text-xs gap-1 font-semibold text-[#8B4513]">
-                  <Link to={ROUTES.LIBRARY}>
-                    See all <ArrowRight className="h-3.5 w-3.5" />
-                  </Link>
-                </Button>
-              }
-            />
-            <div className="divide-y divide-[#F0EBE3]">
-              {isLoading ? (
-                Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="flex items-center gap-3 px-5 py-3 animate-pulse">
-                    <div className="h-10 w-7 rounded bg-[#EDE6D8]" />
-                    <div className="flex-1 space-y-2">
-                      <div className="h-3 w-3/4 rounded bg-[#EDE6D8]" />
-                      <div className="h-2.5 w-1/2 rounded bg-[#EDE6D8]" />
-                    </div>
+        <motion.div {...fade(0.1)}>
+          <SectionCard>
+            <SectionHeader title="Next Up" icon={BookOpen} />
+            <div className="p-5">
+              {currentBook ? (
+                <Link to={`/library/${currentBook._id}`} className="flex gap-4 rounded-xl transition-colors hover:bg-secondary/40">
+                  <BookCover book={currentBook} className="h-28 w-20" />
+                  <div className="min-w-0 py-1">
+                    <p className="line-clamp-2 text-base font-bold text-foreground">
+                      {currentBook.title || currentBook?.book?.title || 'Untitled book'}
+                    </p>
+                    <p className="mt-1.5 truncate text-sm text-muted-foreground">
+                      {currentBook.author || currentBook?.book?.author || 'Unknown author'}
+                    </p>
+                    <span className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary/80 transition-colors">
+                      Open book <ArrowRight className="h-3.5 w-3.5" />
+                    </span>
                   </div>
-                ))
-              ) : recentBooks?.length > 0 ? (
-                recentBooks.slice(0, 6).map((book) => (
-                  <RecentBookRow key={book._id} book={book} />
-                ))
+                </Link>
               ) : (
-                <div className="px-5 py-8 text-center">
-                  <p className="text-sm text-[#8A7F74]">No books yet.</p>
-                  <Link to={ROUTES.LIBRARY_ADD} className="mt-2 inline-block text-sm font-medium text-[#8B4513] hover:underline">
-                    Add your first book →
+                <div className="py-4 text-center">
+                  <BookOpen className="mx-auto mb-2.5 h-9 w-9 text-muted-foreground/40" />
+                  <p className="text-sm font-medium text-foreground">No books yet</p>
+                  <Link to={ROUTES.LIBRARY_ADD} className="mt-2 inline-flex text-sm font-semibold text-primary hover:underline">
+                    Add your first book
                   </Link>
                 </div>
               )}
@@ -291,60 +321,38 @@ export default function DashboardPage() {
         </motion.div>
       </div>
 
-      {/* ── Bottom Grid ── */}
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
-
-        {/* Quick Actions */}
-        <motion.div {...fade(0.14)}>
-          <SectionCard>
-            <CardHeader title="Quick Actions" icon={TrendingUp} />
-            <div className="grid grid-cols-4 gap-1 px-3 pb-4">
-              <QuickAction to={ROUTES.LIBRARY_ADD}    icon={Plus}     label="Add Book"   color="#8B4513" />
-              <QuickAction to={ROUTES.FEED}           icon={Users}    label="Feed"       color="#5C7A3E" />
-              <QuickAction to={ROUTES.LIBRARY_IMPORT} icon={Upload}   label="Import"     color="#D4931A" />
-              <QuickAction to={ROUTES.LIBRARY}        icon={Library}  label="Library"    color="#C0622F" />
-            </div>
-          </SectionCard>
-        </motion.div>
-
-        {/* Reading Goals */}
-        <motion.div {...fade(0.17)}>
-          <SectionCard>
-            <CardHeader
-              title="Reading Goals"
-              icon={Target}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <motion.div {...fade(0.12)} className="lg:col-span-2">
+          <SectionCard className="overflow-hidden">
+            <SectionHeader
+              title="Recent Books"
+              icon={BookMarked}
               action={
-                <Button asChild variant="link" size="sm" className="text-xs gap-1 font-semibold text-[#8B4513]">
-                  <Link to={ROUTES.ANALYTICS}>
-                    Manage <ArrowRight className="h-3.5 w-3.5" />
+                <Button asChild variant="link" size="sm" className="gap-1 text-xs font-semibold text-primary hover:text-primary/80 transition-colors">
+                  <Link to={ROUTES.LIBRARY}>
+                    See all <ArrowRight className="h-3.5 w-3.5" />
                   </Link>
                 </Button>
               }
             />
-            <div className="px-5 pb-5 space-y-4">
-              {goals?.length > 0 ? (
-                goals.slice(0, 2).map((goal) => (
-                  <div key={goal._id} className="space-y-1.5">
-                    <div className="flex justify-between text-[13px]">
-                      <span className="font-medium text-[#1C1A17] truncate max-w-[160px]">{goal.title}</span>
-                      <span className="text-[#8A7F74] shrink-0 ml-2">{goal.currentValue}/{goal.targetValue}</span>
-                    </div>
-                    <div className="h-2 bg-[#EDE6D8] rounded-full overflow-hidden">
-                      <div
-                        className={cn('h-full rounded-full transition-all duration-700',
-                          goal.status === 'COMPLETED' ? 'bg-[#5C7A3E]' : 'bg-[#8B4513]'
-                        )}
-                        style={{ width: `${goal.progressPercentage ?? 0}%` }}
-                      />
+            <div className="divide-y divide-border/40">
+              {isLoading ? (
+                Array.from({ length: 5 }).map((_, index) => (
+                  <div key={index} className="flex items-center gap-3 px-5 py-3">
+                    <div className="h-12 w-8 animate-pulse rounded-md bg-secondary/60" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-3 w-3/4 animate-pulse rounded bg-secondary/60" />
+                      <div className="h-2.5 w-1/2 animate-pulse rounded bg-secondary/60" />
                     </div>
                   </div>
                 ))
+              ) : recentBooks?.length > 0 ? (
+                recentBooks.slice(0, 6).map((book) => <RecentBookRow key={book._id} book={book} />)
               ) : (
-                <div className="py-4 text-center">
-                  <Target className="h-8 w-8 text-[#DDD4C4] mx-auto mb-2" />
-                  <p className="text-xs text-[#8A7F74]">No active goals</p>
-                  <Link to={ROUTES.ANALYTICS} className="mt-2 inline-block text-xs font-medium text-[#8B4513] hover:underline">
-                    Set a goal →
+                <div className="px-5 py-10 text-center">
+                  <p className="text-sm text-muted-foreground">No books yet.</p>
+                  <Link to={ROUTES.LIBRARY_ADD} className="mt-2 inline-flex text-sm font-semibold text-primary hover:underline">
+                    Add your first book
                   </Link>
                 </div>
               )}
@@ -352,33 +360,41 @@ export default function DashboardPage() {
           </SectionCard>
         </motion.div>
 
-        {/* Analytics Snapshot */}
-        <motion.div {...fade(0.20)}>
+        <motion.div {...fade(0.14)} className="space-y-6">
           <SectionCard>
-            <CardHeader
-              title="Analytics"
-              icon={BarChart3}
+            <SectionHeader title="Quick Actions" icon={TrendingUp} />
+            <div className="grid gap-1.5 p-3">
+              <QuickAction to={ROUTES.LIBRARY_ADD} icon={Plus} label="Add Book" color="var(--color-primary)" />
+              <QuickAction to={ROUTES.FEED} icon={Users} label="Open Feed" color="var(--color-success)" />
+              <QuickAction to={ROUTES.LIBRARY_IMPORT} icon={Upload} label="Import Books" color="var(--color-primary)" />
+              <QuickAction to={ROUTES.LIBRARY} icon={Library} label="View Library" color="var(--color-primary)" />
+            </div>
+          </SectionCard>
+
+          <SectionCard>
+            <SectionHeader
+              title="Reading Goals"
+              icon={Target}
               action={
-                <Button asChild variant="link" size="sm" className="text-xs gap-1 font-semibold text-[#8B4513]">
+                <Button asChild variant="link" size="sm" className="gap-1 text-xs font-semibold text-primary hover:text-primary/80 transition-colors">
                   <Link to={ROUTES.ANALYTICS}>
-                    Full view <ArrowRight className="h-3.5 w-3.5" />
+                    Manage <ArrowRight className="h-3.5 w-3.5" />
                   </Link>
                 </Button>
               }
             />
-            <div className="px-5 pb-5 grid grid-cols-2 gap-3">
-              {[
-                { label: 'This Year',  value: overview?.booksThisYear ?? 0,  unit: 'books' },
-                { label: 'This Month', value: overview?.booksThisMonth ?? 0, unit: 'books' },
-                { label: 'Pages Read', value: overview?.totalPagesRead ?? 0, unit: 'pages' },
-                { label: 'Fav Genre',  value: overview?.favoriteGenre ?? '—', unit: '' },
-              ].map(({ label, value, unit }) => (
-                <div key={label} className="rounded-xl bg-[#F5F0E8] p-3">
-                  <p className="text-[10px] font-medium text-[#8A7F74] uppercase tracking-wide">{label}</p>
-                  <p className="text-lg font-bold text-[#1C1A17] mt-0.5 truncate">{value}</p>
-                  {unit && <p className="text-[10px] text-[#8A7F74]">{unit}</p>}
+            <div className="space-y-4 p-5">
+              {goals?.length > 0 ? (
+                goals.slice(0, 3).map((goal) => <GoalRow key={goal._id} goal={goal} />)
+              ) : (
+                <div className="py-4 text-center">
+                  <Target className="mx-auto mb-2.5 h-9 w-9 text-muted-foreground/40" />
+                  <p className="text-sm text-muted-foreground">No active goals</p>
+                  <Link to={ROUTES.ANALYTICS} className="mt-2 inline-flex text-sm font-semibold text-primary hover:underline">
+                    Set a goal
+                  </Link>
                 </div>
-              ))}
+              )}
             </div>
           </SectionCard>
         </motion.div>

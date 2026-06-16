@@ -28,6 +28,10 @@ export const bookService = {
   delete: (id) => api.delete(`/books/${id}`),
 };
 
+export const googleBooksService = {
+  search: (query) => api.get('/google-books/search', { params: { query } }),
+};
+
 export const libraryService = {
   getAll: (params) => api.get('/library', { params }),
   getById: (id) => api.get(`/library/${id}`),
@@ -46,7 +50,7 @@ export const dashboardService = {
 };
 
 export const analyticsService = {
-  getOverview: async () => api.get('/analytics/overview'),
+  getOverview: async () => api.get('/analytics'),
   getAchievements: async () => api.get('/analytics/achievements'),
   getGoals: async () => api.get('/analytics/goals'),
   createGoal: async (data) => api.post('/analytics/goals', data),

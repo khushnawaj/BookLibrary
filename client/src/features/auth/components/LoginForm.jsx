@@ -31,7 +31,8 @@ export function LoginForm() {
   return (
     <AuthFormLayout
       title="Welcome back"
-      description="Sign in to continue your reading journey"
+      description="Sign in to continue your reading journey."
+      mode="login"
       footer={
         <AuthFooterLink
           text="Don't have an account?"
@@ -57,7 +58,7 @@ export function LoginForm() {
             id="password"
             type="password"
             autoComplete="current-password"
-            placeholder="••••••••"
+            placeholder="Password"
             error={errors.password?.message}
             {...register('password')}
           />

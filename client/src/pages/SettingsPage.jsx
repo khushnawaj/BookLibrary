@@ -15,7 +15,7 @@ export default function SettingsPage() {
           Settings
         </Badge>
         <h1 className="font-display text-3xl font-bold tracking-tight">Settings</h1>
-        <p className="mt-1 text-muted-foreground">Customize your BookVerse experience</p>
+        <p className="mt-1 text-muted-foreground">Customize your ShelfForge experience</p>
       </div>
 
       <Card>

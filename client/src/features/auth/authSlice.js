@@ -93,11 +93,14 @@ const authSlice = createSlice({
         setAuthenticated(state, action.payload);
       })
       .addCase(fetchCurrentUser.rejected, (state) => {
+        // A 401 here is normal — user simply isn't logged in yet.
+        // Do NOT set error state here, it would flash error messages on landing page.
         state.loading = false;
         state.initialized = true;
         state.user = null;
         state.accessToken = null;
         state.isAuthenticated = false;
+        state.error = null; // intentionally null — not a real error
       })
       // Update User Profile
       .addCase(updateUserProfile.pending, (state) => {

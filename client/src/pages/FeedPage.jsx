@@ -30,20 +30,20 @@ export default function FeedPage() {
 
   useEffect(() => {
     if (status === 'idle') {
-      dispatch(fetchFeed({ limit: 10, type: 'following' }));
+      dispatch(fetchFeed({ limit: 10, type: 'global' }));
     }
   }, [status, dispatch]);
 
   useEffect(() => {
     if (inView && hasNextPage && !isFetchingMore && status === 'succeeded') {
-      dispatch(fetchFeed({ cursor: nextCursor, limit: 10, type: 'following' }));
+      dispatch(fetchFeed({ cursor: nextCursor, limit: 10, type: 'global' }));
     }
   }, [inView, hasNextPage, isFetchingMore, nextCursor, status, dispatch]);
 
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     dispatch(resetFeed());
-    await dispatch(fetchFeed({ limit: 10, type: 'following' }));
+    await dispatch(fetchFeed({ limit: 10, type: 'global' }));
     setIsRefreshing(false);
   }, [dispatch]);
 
@@ -74,7 +74,7 @@ export default function FeedPage() {
                     <Sparkles className="h-3.5 w-3.5 text-[#C0622F]" />
                   </h1>
                   <p className="text-[11px] text-[#8A7F74] hidden sm:block leading-none mt-0.5">
-                    Updates from readers you follow
+                    Discover posts from all readers
                   </p>
                 </div>
               </div>
@@ -170,9 +170,9 @@ export default function FeedPage() {
                                 flex items-center justify-center text-3xl mb-4 shadow-sm">
                   📚
                 </div>
-                <p className="font-bold text-[#1C1A17] text-base mb-1.5">Your feed is quiet</p>
+                <p className="font-bold text-[#1C1A17] text-base mb-1.5">No posts yet</p>
                 <p className="text-xs text-[#8A7F74] mb-6 max-w-[260px] leading-relaxed">
-                  Follow other readers or share your first post to start the conversation!
+                  Be the first to share a review, recommendation, or reading milestone!
                 </p>
                 <Button
                   variant="outline"

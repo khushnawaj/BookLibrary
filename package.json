@@ -1,8 +1,8 @@
 {
-  "name": "bookverse",
+  "name": "shelfforge",
   "version": "1.0.0",
   "private": true,
-  "description": "BookVerse — A modern social platform for book lovers",
+  "description": "ShelfForge — A modern social platform for book lovers",
   "scripts": {
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "dev:server": "npm run dev --prefix server",

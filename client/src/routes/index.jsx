@@ -17,6 +17,7 @@ import ProfilePage from '@/pages/ProfilePage';
 import RegisterPage from '@/pages/RegisterPage';
 import SettingsPage from '@/pages/SettingsPage';
 import WishlistPage from '@/pages/WishlistPage';
+import NotFoundPage from '@/pages/NotFoundPage';
 import { ProtectedRoute, PublicRoute } from '@/routes/ProtectedRoute';
 
 function RootLayout() {
@@ -74,7 +75,7 @@ export const router = createBrowserRouter([
           { path: ROUTES.SETTINGS, element: <SettingsPage /> },
         ],
       },
-      { path: '*', element: <Navigate to={ROUTES.HOME} replace /> },
+      { path: '*', element: <NotFoundPage /> },
     ],
   },
 ]);

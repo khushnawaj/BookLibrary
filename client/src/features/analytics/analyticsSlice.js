@@ -5,7 +5,7 @@ export const fetchAnalytics = createAsyncThunk(
   'analytics/fetchAnalytics',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await analyticsService.getAnalytics();
+      const response = await analyticsService.getOverview();
       return response.data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || 'Failed to fetch analytics');
@@ -49,6 +49,18 @@ export const createGoal = createAsyncThunk(
   }
 );
 
+export const deleteGoal = createAsyncThunk(
+  'analytics/deleteGoal',
+  async (id, { rejectWithValue }) => {
+    try {
+      await analyticsService.deleteGoal(id);
+      return id;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || 'Failed to delete goal');
+    }
+  }
+);
+
 const initialState = {
   overview: {
     totalBooksRead: 0,
@@ -56,12 +68,20 @@ const initialState = {
     averageRating: 0,
     currentStreak: 0,
     longestStreak: 0,
+    booksThisYear: 0,
+    avgBooksPerMonth: 0,
+    avgDaysPerBook: null,
+    currentlyReading: 0,
+    wishlistCount: 0,
+    uniqueGenres: 0,
   },
   genreDistribution: [],
   booksPerMonth: [],
+  topRatedBooks: [],
   goals: [],
   achievements: [],
   isLoading: false,
+  isGoalLoading: false,
   error: null,
 };
 
@@ -79,6 +99,7 @@ const analyticsSlice = createSlice({
         state.overview = action.payload.data.overview;
         state.genreDistribution = action.payload.data.genreDistribution;
         state.booksPerMonth = action.payload.data.booksPerMonth;
+        state.topRatedBooks = action.payload.data.topRatedBooks || [];
       })
       .addCase(fetchAnalytics.rejected, (state, action) => {
         state.isLoading = false;
@@ -90,8 +111,18 @@ const analyticsSlice = createSlice({
       .addCase(fetchAchievements.fulfilled, (state, action) => {
         state.achievements = action.payload.data.achievements;
       })
+      .addCase(createGoal.pending, (state) => {
+        state.isGoalLoading = true;
+      })
       .addCase(createGoal.fulfilled, (state, action) => {
+        state.isGoalLoading = false;
         state.goals.unshift(action.payload.data.goal);
+      })
+      .addCase(createGoal.rejected, (state) => {
+        state.isGoalLoading = false;
+      })
+      .addCase(deleteGoal.fulfilled, (state, action) => {
+        state.goals = state.goals.filter((g) => g._id !== action.payload);
       });
   },
 });

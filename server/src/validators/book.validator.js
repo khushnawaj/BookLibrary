@@ -11,7 +11,7 @@ const purchaseLinkValidator = [
   body('purchaseLinks.*.url')
     .optional()
     .trim()
-    .isURL({ protocols: ['http', 'https'], require_protocol: true })
+    .isURL({ protocols: ['http', 'https'], require_protocol: true, require_tld: false })
     .withMessage('Please provide a valid purchase URL'),
 ];
 
@@ -73,7 +73,7 @@ const createBookValidator = [
   body('coverImage')
     .optional()
     .trim()
-    .isURL({ protocols: ['http', 'https'], require_protocol: true })
+    .isURL({ protocols: ['http', 'https'], require_protocol: true, require_tld: false })
     .withMessage('Cover image must be a valid URL'),
 
   body('description')

@@ -1,3 +1,5 @@
+const path = require('path');
+
 require('dotenv').config();
 
 const app = require('./src/app');
@@ -11,7 +13,7 @@ const startServer = async () => {
   await connectDB();
 
   app.listen(PORT, () => {
-    console.log(`BookVerse API running on port ${PORT} [${process.env.NODE_ENV}]`);
+    console.log(`ShelfForge API running on port ${PORT} [${process.env.NODE_ENV}]`);
   });
 };
 

@@ -5,15 +5,15 @@ import { cn } from '@/lib/utils';
 
 export function Logo({ className, showText = true }) {
   return (
-    <Link to="/" className={cn('flex items-center gap-3 group', className)}>
+    <Link to="/" className={cn('flex items-center gap-3.5 group', className)}>
       {/* Icon mark — gradient with glow */}
-      <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#C0622F] to-[#8B4513] shadow-md transition-all group-hover:shadow-[0_0_12px_rgba(139,69,19,0.5)] group-hover:scale-105">
-        <BookOpen className="h-4.5 w-4.5 text-white" />
+      <div className="relative flex h-9.5 w-9.5 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-mint shadow-md transition-all group-hover:shadow-[0_0_12px_var(--color-primary)] group-hover:scale-105">
+        <BookOpen className="h-5 w-5 text-primary-foreground" />
         {/* subtle shine */}
         <div className="absolute inset-0 rounded-xl bg-gradient-to-t from-transparent to-white/10 pointer-events-none" />
       </div>
       {showText && (
-        <span className="font-display text-lg font-bold tracking-tight text-[#EDE6D8] group-hover:text-white transition-colors">
+        <span className="font-display text-lg font-bold tracking-tight text-foreground group-hover:text-primary transition-colors duration-200">
           {APP_NAME}
         </span>
       )}

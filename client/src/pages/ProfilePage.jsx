@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { MotionCard } from '@/components/animations/PageTransition';
 import { PostCard } from '@/components/social/PostCard';
+import { Modal } from '@/components/ui/modal';
 import {
   Camera, Edit2, Check, X, Loader2, Mail, Shield, AtSign,
   BookOpen, Users, UserCheck, Calendar, BookMarked
@@ -48,6 +49,44 @@ export default function ProfilePage() {
   const [avatar, setAvatar] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+
+  // Follow modal states
+  const [isFollowersOpen, setIsFollowersOpen] = useState(false);
+  const [isFollowingOpen, setIsFollowingOpen] = useState(false);
+  const [followersList, setFollowersList] = useState([]);
+  const [followingList, setFollowingList] = useState([]);
+  const [isLoadingFollowers, setIsLoadingFollowers] = useState(false);
+  const [isLoadingFollowing, setIsLoadingFollowing] = useState(false);
+
+  // Fetch followers
+  const handleOpenFollowers = async () => {
+    setIsFollowersOpen(true);
+    try {
+      setIsLoadingFollowers(true);
+      const res = await userService.getFollowers(profile._id);
+      setFollowersList(res.data.data || []);
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to load followers');
+    } finally {
+      setIsLoadingFollowers(false);
+    }
+  };
+
+  // Fetch following
+  const handleOpenFollowing = async () => {
+    setIsFollowingOpen(true);
+    try {
+      setIsLoadingFollowing(true);
+      const res = await userService.getFollowing(profile._id);
+      setFollowingList(res.data.data || []);
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to load following list');
+    } finally {
+      setIsLoadingFollowing(false);
+    }
+  };
 
   // Fetch profile details
   useEffect(() => {
@@ -332,12 +371,12 @@ export default function ProfilePage() {
                   <span className="text-[10px] font-bold text-[#8A7F74] uppercase tracking-wider">Books Read</span>
                 </div>
                 <div className="w-px h-8 bg-[#DDD4C4]" />
-                <div className="text-center">
+                <div onClick={handleOpenFollowers} className="text-center cursor-pointer hover:opacity-80 transition-opacity">
                   <span className="block text-lg font-bold text-[#8B4513]">{profile.followersCount || 0}</span>
                   <span className="text-[10px] font-bold text-[#8A7F74] uppercase tracking-wider">Followers</span>
                 </div>
                 <div className="w-px h-8 bg-[#DDD4C4]" />
-                <div className="text-center">
+                <div onClick={handleOpenFollowing} className="text-center cursor-pointer hover:opacity-80 transition-opacity">
                   <span className="block text-lg font-bold text-[#8B4513]">{profile.followingCount || 0}</span>
                   <span className="text-[10px] font-bold text-[#8A7F74] uppercase tracking-wider">Following</span>
                 </div>
@@ -576,6 +615,82 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
       </MotionCard>
+
+      <Modal
+        open={isFollowersOpen}
+        onClose={() => setIsFollowersOpen(false)}
+        title="Followers"
+        description={`People who follow ${profile.name}`}
+        className="max-w-md"
+      >
+        {isLoadingFollowers ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="w-6 h-6 text-[#8B4513] animate-spin" />
+          </div>
+        ) : followersList.length === 0 ? (
+          <p className="text-center py-8 text-sm text-[#8A7F74]">No followers yet.</p>
+        ) : (
+          <div className="max-h-[350px] overflow-y-auto space-y-3 pr-1">
+            {followersList.map((item) => {
+              const followerUser = item.follower;
+              if (!followerUser) return null;
+              return (
+                <div key={item._id} className="flex items-center justify-between py-2 border-b border-[#DDD4C4]/30 last:border-b-0">
+                  <Link
+                    to={`/profile/${followerUser.username}`}
+                    onClick={() => setIsFollowersOpen(false)}
+                    className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+                  >
+                    <Avatar src={followerUser.avatar} name={followerUser.name} size="sm" />
+                    <div>
+                      <p className="font-semibold text-sm text-[#1C1A17]">{followerUser.name}</p>
+                      <p className="text-xs text-[#8A7F74]">@{followerUser.username}</p>
+                    </div>
+                  </Link>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </Modal>
+
+      <Modal
+        open={isFollowingOpen}
+        onClose={() => setIsFollowingOpen(false)}
+        title="Following"
+        description={`People followed by ${profile.name}`}
+        className="max-w-md"
+      >
+        {isLoadingFollowing ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="w-6 h-6 text-[#8B4513] animate-spin" />
+          </div>
+        ) : followingList.length === 0 ? (
+          <p className="text-center py-8 text-sm text-[#8A7F74]">Not following anyone yet.</p>
+        ) : (
+          <div className="max-h-[350px] overflow-y-auto space-y-3 pr-1">
+            {followingList.map((item) => {
+              const followingUser = item.following;
+              if (!followingUser) return null;
+              return (
+                <div key={item._id} className="flex items-center justify-between py-2 border-b border-[#DDD4C4]/30 last:border-b-0">
+                  <Link
+                    to={`/profile/${followingUser.username}`}
+                    onClick={() => setIsFollowingOpen(false)}
+                    className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+                  >
+                    <Avatar src={followingUser.avatar} name={followingUser.name} size="sm" />
+                    <div>
+                      <p className="font-semibold text-sm text-[#1C1A17]">{followingUser.name}</p>
+                      <p className="text-xs text-[#8A7F74]">@{followingUser.username}</p>
+                    </div>
+                  </Link>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

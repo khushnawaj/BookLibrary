@@ -3,7 +3,6 @@ import {
   Heart,
   Library,
   Settings,
-  User,
   BarChart3,
   Users,
   Home,
@@ -55,14 +54,13 @@ export function Sidebar({ className, onNavigate }) {
     <aside
       className={cn(
         'flex h-full w-64 flex-col',
-        'bg-[#1E1915]',
-        // subtle left border as ambient glow separator
-        'border-r border-white/5',
+        'bg-sidebar backdrop-blur-xl',
+        'border-r border-border/40',
         className
       )}
     >
       {/* Logo header */}
-      <div className="flex h-16 items-center px-5 border-b border-white/6">
+      <div className="flex h-16 items-center px-5 border-b border-border/40">
         <Logo />
       </div>
 
@@ -70,7 +68,7 @@ export function Sidebar({ className, onNavigate }) {
       <nav className="flex flex-1 flex-col gap-6 overflow-y-auto px-3 py-5 scrollbar-none">
         {NAV_SECTIONS.map((section) => (
           <div key={section.label}>
-            <p className="mb-2 px-3 text-[9px] font-bold uppercase tracking-[0.14em] text-white/25">
+            <p className="mb-2 px-3 text-[9px] font-bold uppercase tracking-[0.14em] text-muted-foreground/50">
               {section.label}
             </p>
             <div className="flex flex-col gap-0.5">
@@ -84,8 +82,8 @@ export function Sidebar({ className, onNavigate }) {
                     cn(
                       'group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200',
                       isActive
-                        ? 'bg-gradient-to-r from-[#8B4513] to-[#C0622F] text-white shadow-lg shadow-[#8B4513]/25'
-                        : 'text-white/50 hover:bg-white/6 hover:text-white/90'
+                        ? 'bg-gradient-to-r from-primary to-mint text-primary-foreground shadow-lg shadow-primary/15'
+                        : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
                     )
                   }
                 >
@@ -94,14 +92,14 @@ export function Sidebar({ className, onNavigate }) {
                       <div className={cn(
                         'flex h-7 w-7 items-center justify-center rounded-lg transition-all duration-200 shrink-0',
                         isActive
-                          ? 'bg-white/15'
-                          : 'bg-white/5 group-hover:bg-white/10'
+                          ? 'bg-primary-foreground/15'
+                          : 'bg-secondary group-hover:bg-accent'
                       )}>
                         <Icon className="h-3.5 w-3.5" />
                       </div>
                       <span className="truncate">{label}</span>
                       {isActive && (
-                        <div className="ml-auto h-1.5 w-1.5 rounded-full bg-white/70 shrink-0" />
+                        <div className="ml-auto h-1.5 w-1.5 rounded-full bg-primary-foreground/70 shrink-0" />
                       )}
                     </>
                   )}
@@ -113,8 +111,8 @@ export function Sidebar({ className, onNavigate }) {
       </nav>
 
       {/* Bottom version tag */}
-      <div className="px-5 py-4 border-t border-white/5">
-        <p className="text-[10px] text-white/20 font-medium">BookVerse v1.0</p>
+      <div className="px-5 py-4 border-t border-border/40">
+        <p className="text-[10px] text-muted-foreground/30 font-medium">ShelfForge v1.0</p>
       </div>
     </aside>
   );

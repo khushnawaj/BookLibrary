@@ -1,9 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, Plus, Trash2 } from 'lucide-react';
+import { BookOpen, Loader2, Plus, Search, Trash2, X } from 'lucide-react';
 import { bookSchema } from '@/schemas/book.schema';
+import { googleBooksService } from '@/services';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,6 +25,11 @@ const GENRES = [
   'Business', 'Technology', 'Science', 'Philosophy', 'Psychology',
   'Poetry', 'Drama', 'Graphic Novel', 'Children', 'Young Adult', 'Other',
 ];
+
+const pickGenre = (genre = '') => {
+  const normalized = genre.toLowerCase();
+  return GENRES.find((genre) => normalized.includes(genre.toLowerCase())) || '';
+};
 
 function FieldError({ error }) {
   if (!error) return null;
@@ -52,11 +58,17 @@ function FormGroup({ label, required, error, children, className }) {
 }
 
 export function BookForm({ onSubmit, defaultValues, isLoading, submitLabel = 'Save Book' }) {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [googleResults, setGoogleResults] = useState([]);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [googleError, setGoogleError] = useState('');
+
   const {
     register,
     handleSubmit,
     control,
     reset,
+    setValue,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(bookSchema),
@@ -101,6 +113,46 @@ export function BookForm({ onSubmit, defaultValues, isLoading, submitLabel = 'Sa
     }
   }, [defaultValues, reset]);
 
+  const handleGoogleSearch = async () => {
+    const query = searchQuery.trim();
+    if (!query) return;
+
+    setIsGoogleLoading(true);
+    setGoogleError('');
+
+    try {
+      const response = await googleBooksService.search(query);
+      setGoogleResults(response.data?.data?.books || []);
+    } catch (error) {
+      setGoogleResults([]);
+      setGoogleError(error.response?.data?.message || 'Could not search Google Books');
+    } finally {
+      setIsGoogleLoading(false);
+    }
+  };
+
+  const applyGoogleBook = (book) => {
+    const mapped = {
+      title: book.title || '',
+      author: book.author || '',
+      publisher: book.publisher || '',
+      publicationDate: book.publicationDate || '',
+      isbn: book.isbn || '',
+      genre: pickGenre(book.genre),
+      language: book.language || 'English',
+      pages: book.pages || undefined,
+      coverImage: book.coverImage || '',
+      description: book.description || '',
+    };
+
+    Object.entries(mapped).forEach(([field, value]) => {
+      setValue(field, value, { shouldDirty: true, shouldValidate: true });
+    });
+
+    setGoogleResults([]);
+    setSearchQuery(mapped.title);
+  };
+
   const processSubmit = (data) => {
     const clean = {
       ...data,
@@ -115,6 +167,95 @@ export function BookForm({ onSubmit, defaultValues, isLoading, submitLabel = 'Sa
 
   return (
     <form onSubmit={handleSubmit(processSubmit)} className="space-y-6" noValidate>
+      <div className="space-y-3 rounded-xl border border-glass-border bg-glass/40 backdrop-blur-sm p-4">
+        <Label htmlFor="google-books-search" className="text-sm font-medium">
+          Search Google Books
+        </Label>
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              id="google-books-search"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault();
+                  handleGoogleSearch();
+                }
+              }}
+              placeholder="Search title, author, or ISBN"
+              className="pl-9"
+            />
+          </div>
+          {searchQuery && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                setSearchQuery('');
+                setGoogleResults([]);
+                setGoogleError('');
+              }}
+              aria-label="Clear Google Books search"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleGoogleSearch}
+            disabled={isGoogleLoading || !searchQuery.trim()}
+            className="min-w-24"
+          >
+            {isGoogleLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Search'}
+          </Button>
+        </div>
+
+        {googleError && <p className="text-xs text-destructive">{googleError}</p>}
+
+        {googleResults.length > 0 && (
+          <div className="grid gap-2 sm:grid-cols-2">
+            {googleResults.slice(0, 6).map((book) => {
+              return (
+                <button
+                  key={book.googleBooksId}
+                  type="button"
+                  onClick={() => applyGoogleBook(book)}
+                  className="flex min-h-24 gap-3 rounded-xl border border-glass-border bg-glass/60 p-3 text-left transition-colors hover:border-primary/50 hover:bg-primary/10 text-foreground"
+                >
+                  <div className="flex h-20 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-secondary">
+                    {book.coverImage ? (
+                      <img
+                        src={book.coverImage}
+                        alt=""
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <BookOpen className="h-5 w-5 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="line-clamp-2 text-sm font-medium text-foreground">
+                      {book.title || 'Untitled book'}
+                    </p>
+                    <p className="mt-1 truncate text-xs text-muted-foreground">
+                      {book.author || 'Unknown author'}
+                    </p>
+                    <p className="mt-1 truncate text-xs text-muted-foreground">
+                      {[book.publisher, book.publicationDate].filter(Boolean).join(' • ')}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       {/* Core Info */}
       <div className="grid gap-4 sm:grid-cols-2">
         <FormGroup label="Title" required error={errors.title} className="sm:col-span-2">

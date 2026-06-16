@@ -70,7 +70,7 @@ export default function WishlistPage() {
     setDeleteTarget(null);
   };
 
-  const skeletonCount = viewMode === 'grid' ? 4 : 3;
+  const skeletonCount = viewMode === 'grid' ? 12 : 3;
 
   return (
     <div className="space-y-6">
@@ -129,7 +129,7 @@ export default function WishlistPage() {
             exit={{ opacity: 0 }}
             className={
               viewMode === 'grid'
-                ? 'grid gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4'
+                ? 'grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
                 : 'space-y-3'
             }
           >
@@ -162,7 +162,7 @@ export default function WishlistPage() {
             exit={{ opacity: 0 }}
             className={
               viewMode === 'grid'
-                ? 'grid gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4'
+                ? 'grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
                 : 'space-y-3'
             }
           >

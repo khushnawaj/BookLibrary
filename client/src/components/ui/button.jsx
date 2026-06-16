@@ -4,24 +4,24 @@ import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B4513]/40 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:-translate-y-[1px] active:translate-y-[1px] active:scale-[0.98]',
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:-translate-y-[1px] active:translate-y-[1px] active:scale-[0.98]',
   {
     variants: {
       variant: {
         default:
-          'bg-[#8B4513] text-white shadow-sm hover:bg-[#7A3B10] hover:shadow-md active:bg-[#6B3310]',
+          'bg-primary text-primary-foreground shadow-sm hover:opacity-90 hover:shadow-md active:opacity-85',
         secondary:
-          'bg-[#EDE6D8] text-[#3D3530] border border-[#DDD4C4]/60 hover:bg-[#E5DDD0] hover:shadow-sm',
+          'bg-secondary text-secondary-foreground border border-border/40 hover:bg-accent hover:text-accent-foreground hover:shadow-sm',
         outline:
-          'border border-[#DDD4C4] bg-white text-[#3D3530] hover:bg-[#F5F0E8] hover:border-[#8B4513]/40 hover:shadow-sm',
+          'border border-border bg-card/60 text-foreground hover:bg-accent hover:border-primary/40 hover:shadow-sm',
         ghost:
-          'text-[#3D3530] hover:bg-[#EDE6D8]/60 hover:text-[#1C1A17] hover:-translate-y-0 active:translate-y-0 active:scale-100',
+          'text-foreground hover:bg-secondary hover:text-foreground hover:-translate-y-0 active:translate-y-0 active:scale-100',
         destructive:
-          'bg-[#C0392B] text-white hover:bg-[#A93226] hover:shadow-md',
+          'bg-destructive text-destructive-foreground hover:opacity-90 hover:shadow-md',
         glass:
-          'border border-[#DDD4C4] bg-white/70 text-[#3D3530] backdrop-blur-md hover:bg-white hover:shadow-md',
+          'border border-glass-border bg-glass/70 text-foreground backdrop-blur-md hover:bg-glass hover:shadow-md',
         link:
-          'text-[#8B4513] underline-offset-4 hover:underline p-0 h-auto hover:-translate-y-0 active:translate-y-0 active:scale-100',
+          'text-primary underline-offset-4 hover:underline p-0 h-auto hover:-translate-y-0 active:translate-y-0 active:scale-100',
       },
       size: {
         default: 'h-10 px-5 py-2',

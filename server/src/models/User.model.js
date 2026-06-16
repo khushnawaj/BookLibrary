@@ -43,13 +43,6 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
-    username: {
-      type: String,
-      unique: true,
-      sparse: true,
-      trim: true,
-      lowercase: true,
-    },
     bio: {
       type: String,
       maxlength: [500, 'Bio cannot exceed 500 characters'],
@@ -67,6 +60,18 @@ const userSchema = new mongoose.Schema(
     isVerified: {
       type: Boolean,
       default: false,
+    },
+    booksRead: {
+      type: Number,
+      default: 0,
+    },
+    followersCount: {
+      type: Number,
+      default: 0,
+    },
+    followingCount: {
+      type: Number,
+      default: 0,
     },
     refreshToken: {
       type: String,
@@ -90,6 +95,8 @@ const userSchema = new mongoose.Schema(
 );
 
 userSchema.index({ role: 1 });
+userSchema.index({ username: 1 });
+userSchema.index({ email: 1 });
 
 userSchema.virtual('displayName').get(function displayName() {
   return this.name;
@@ -111,9 +118,13 @@ userSchema.methods.toPublicProfile = function toPublicProfile() {
     username: this.username,
     email: this.email,
     avatar: this.avatar,
+    bannerImage: this.bannerImage,
     bio: this.bio,
     role: this.role,
     isVerified: this.isVerified,
+    booksRead: this.booksRead,
+    followersCount: this.followersCount,
+    followingCount: this.followingCount,
     createdAt: this.createdAt,
     updatedAt: this.updatedAt,
   };

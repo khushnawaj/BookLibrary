@@ -35,19 +35,17 @@ function SelectTrigger({
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "flex w-full items-center justify-between gap-2 rounded-lg border border-[#DDD4C4] bg-white px-3 py-2 text-sm text-[#1C1A17] whitespace-nowrap shadow-none transition-colors outline-none",
-        "placeholder:text-[#8A7F74] data-[placeholder]:text-[#8A7F74]",
-        "hover:border-[#C4BAA8]",
-        "focus-visible:border-[#8B4513]/50 focus-visible:ring-2 focus-visible:ring-[#8B4513]/20",
-        "disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-[#F5F0E8]",
-        "data-[size=default]:h-9 data-[size=sm]:h-8",
+        "flex w-full items-center justify-between gap-2 rounded-xl border px-3.5 py-2 text-sm transition-all duration-200 outline-none",
+        "glass-input placeholder:text-muted-foreground/50 data-[placeholder]:text-muted-foreground/50",
+        "disabled:cursor-not-allowed disabled:opacity-50",
+        "data-[size=default]:h-10 data-[size=sm]:h-8.5",
         "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className
       )}
       {...props}>
       {children}
       <SelectPrimitive.Icon asChild>
-        <ChevronDownIcon className="size-4 text-[#8A7F74] opacity-70" />
+        <ChevronDownIcon className="size-4 text-muted-foreground opacity-70" />
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   );
@@ -65,7 +63,7 @@ function SelectContent({
       <SelectPrimitive.Content
         data-slot="select-content"
         className={cn(
-          "relative z-50 max-h-[--radix-select-content-available-height] min-w-[8rem] origin-[--radix-select-content-transform-origin] overflow-x-hidden overflow-y-auto rounded-xl border border-[#DDD4C4] bg-white text-[#1C1A17] shadow-lg",
+          "relative z-50 max-h-[--radix-select-content-available-height] min-w-[8rem] origin-[--radix-select-content-transform-origin] overflow-x-hidden overflow-y-auto rounded-xl border border-glass-border bg-popover/80 backdrop-blur-lg text-popover-foreground shadow-xl",
           "data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
           "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
           "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
@@ -109,8 +107,8 @@ function SelectItem({
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "relative flex w-full cursor-default select-none items-center gap-2 rounded-lg py-1.5 pr-8 pl-2.5 text-sm text-[#1C1A17] outline-none",
-        "focus:bg-[#F5F0E8] focus:text-[#8B4513]",
+        "relative flex w-full cursor-default select-none items-center gap-2 rounded-lg py-1.5 pr-8 pl-2.5 text-sm text-foreground outline-none transition-colors",
+        "focus:bg-accent focus:text-accent-foreground",
         "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className
@@ -120,7 +118,7 @@ function SelectItem({
         data-slot="select-item-indicator"
         className="absolute right-2 flex size-3.5 items-center justify-center">
         <SelectPrimitive.ItemIndicator>
-          <CheckIcon className="size-4 text-[#8B4513]" />
+          <CheckIcon className="size-4 text-primary" />
         </SelectPrimitive.ItemIndicator>
       </span>
       <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>

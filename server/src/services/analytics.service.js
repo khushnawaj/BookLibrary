@@ -59,77 +59,132 @@ const calculateReadingStreak = async (userId) => {
 
 const getReadingAnalytics = async (userId) => {
   const objectIdUser = new mongoose.Types.ObjectId(userId);
+  const yearStart = new Date(new Date().getFullYear(), 0, 1);
 
-  const [basicStats, genreDist, monthlyBooks] = await Promise.all([
+  const [basicStats, genreDist, monthlyData, topRated, shelfCounts] = await Promise.all([
+    // Basic stats: books read, pages, avg rating
     Library.aggregate([
       { $match: { user: objectIdUser, shelfType: SHELF_TYPES.READ } },
-      {
-        $lookup: {
-          from: 'books',
-          localField: 'book',
-          foreignField: '_id',
-          as: 'bookDetails'
-        }
-      },
+      { $lookup: { from: 'books', localField: 'book', foreignField: '_id', as: 'bookDetails' } },
       { $unwind: '$bookDetails' },
       {
         $group: {
           _id: null,
           totalRead: { $sum: 1 },
           totalPages: { $sum: '$bookDetails.pages' },
-          avgRating: { $avg: '$rating' }
+          avgRating: { $avg: '$rating' },
+          avgDays: {
+            $avg: {
+              $cond: [
+                { $and: ['$startedAt', '$finishedAt'] },
+                { $divide: [{ $subtract: ['$finishedAt', '$startedAt'] }, 86400000] },
+                null
+              ]
+            }
+          }
         }
       }
     ]),
+    // Genre distribution
     Library.aggregate([
       { $match: { user: objectIdUser, shelfType: SHELF_TYPES.READ } },
-      {
-        $lookup: {
-          from: 'books',
-          localField: 'book',
-          foreignField: '_id',
-          as: 'bookDetails'
-        }
-      },
+      { $lookup: { from: 'books', localField: 'book', foreignField: '_id', as: 'bookDetails' } },
       { $unwind: '$bookDetails' },
       { $match: { 'bookDetails.genre': { $exists: true, $ne: '' } } },
-      {
-        $group: {
-          _id: '$bookDetails.genre',
-          count: { $sum: 1 }
-        }
-      },
+      { $group: { _id: '$bookDetails.genre', count: { $sum: 1 } } },
       { $sort: { count: -1 } }
     ]),
+    // Books + pages per month
     Library.aggregate([
       { $match: { user: objectIdUser, shelfType: SHELF_TYPES.READ, finishedAt: { $ne: null } } },
+      { $lookup: { from: 'books', localField: 'book', foreignField: '_id', as: 'bookDetails' } },
+      { $unwind: '$bookDetails' },
       {
         $group: {
           _id: { $dateToString: { format: '%Y-%m', date: '$finishedAt' } },
           booksCount: { $sum: 1 },
+          pagesCount: { $sum: '$bookDetails.pages' }
         }
       },
       { $sort: { _id: 1 } }
-    ])
+    ]),
+    // Top-rated books (up to 5)
+    Library.aggregate([
+      { $match: { user: objectIdUser, shelfType: SHELF_TYPES.READ, rating: { $ne: null } } },
+      { $sort: { rating: -1, finishedAt: -1 } },
+      { $limit: 5 },
+      { $lookup: { from: 'books', localField: 'book', foreignField: '_id', as: 'bookDetails' } },
+      { $unwind: '$bookDetails' },
+      {
+        $project: {
+          rating: 1,
+          finishedAt: 1,
+          'bookDetails.title': 1,
+          'bookDetails.author': 1,
+          'bookDetails.coverImage': 1,
+          'bookDetails.genre': 1,
+        }
+      }
+    ]),
+    // Shelf counts breakdown
+    Library.aggregate([
+      { $match: { user: objectIdUser } },
+      { $group: { _id: '$shelfType', count: { $sum: 1 } } }
+    ]),
   ]);
 
-  const stats = basicStats[0] || { totalRead: 0, totalPages: 0, avgRating: 0 };
+  const stats = basicStats[0] || { totalRead: 0, totalPages: 0, avgRating: 0, avgDays: null };
   const streaks = await calculateReadingStreak(userId);
+
+  // Books finished this year
+  const booksThisYear = await Library.countDocuments({
+    user: objectIdUser,
+    shelfType: SHELF_TYPES.READ,
+    finishedAt: { $gte: yearStart }
+  });
 
   // Check achievements
   const allStats = { ...stats, currentStreak: streaks.currentStreak };
   await checkAchievements(userId, allStats);
 
-  // Return formatted data
+  // Shelf map
+  const shelfMap = {};
+  shelfCounts.forEach(s => { shelfMap[s._id] = s.count; });
+
+  // Avg books per month (over months that have data)
+  const monthsWithData = monthlyData.length;
+  const avgBooksPerMonth = monthsWithData > 0
+    ? Number((stats.totalRead / Math.max(monthsWithData, 1)).toFixed(1))
+    : 0;
+
   return {
     overview: {
       totalBooksRead: stats.totalRead,
       totalPagesRead: stats.totalPages || 0,
       averageRating: stats.avgRating ? Number(stats.avgRating.toFixed(1)) : 0,
+      avgDaysPerBook: stats.avgDays ? Math.round(stats.avgDays) : null,
+      booksThisYear,
+      avgBooksPerMonth,
+      currentlyReading: shelfMap['READING'] || 0,
+      wishlistCount: shelfMap['WISHLIST'] || 0,
+      uniqueGenres: genreDist.length,
       ...streaks
     },
     genreDistribution: genreDist.map(g => ({ name: g._id, value: g.count })),
-    booksPerMonth: monthlyBooks.map(m => ({ month: m._id, count: m.booksCount }))
+    booksPerMonth: monthlyData.map(m => ({
+      month: m._id,
+      books: m.booksCount,
+      pages: m.pagesCount,
+    })),
+    topRatedBooks: topRated.map(t => ({
+      _id: t._id,
+      rating: t.rating,
+      finishedAt: t.finishedAt,
+      title: t.bookDetails?.title,
+      author: t.bookDetails?.author,
+      coverImage: t.bookDetails?.coverImage,
+      genre: t.bookDetails?.genre,
+    })),
   };
 };
 

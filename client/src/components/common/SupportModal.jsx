@@ -71,7 +71,7 @@ export function SupportModal({ open, onClose }) {
                   <div className="text-3xl">🍵</div>
                   <h2 className="text-xl font-bold text-[#1C1A17]">Buy me a Tea</h2>
                   <p className="text-xs text-[#8A7F74] leading-relaxed">
-                    If BookVerse has been useful to you, a small contribution<br />
+                    If ShelfForge has been useful to you, a small contribution<br />
                     keeps the servers running and new features coming!
                   </p>
                 </div>

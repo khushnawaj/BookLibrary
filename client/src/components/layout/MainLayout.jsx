@@ -6,6 +6,7 @@ import { TopNavbar } from './TopNavbar';
 import { MobileNav } from './MobileNav';
 import { SupportModal } from '@/components/common/SupportModal';
 import { BookOpen, Code2, Share2, Heart } from 'lucide-react';
+import { LiquidGlassBackground } from '@/components/common/LiquidGlassBackground';
 
 function getPageTitle(pathname) {
   if (pathname === '/dashboard') return 'Dashboard';
@@ -19,7 +20,7 @@ function getPageTitle(pathname) {
   if (pathname === '/settings') return 'Settings';
   if (pathname === '/feed') return 'Community Feed';
   if (pathname === '/library/import') return 'Import Books';
-  return 'BookVerse';
+  return 'ShelfForge';
 }
 
 export function MainLayout() {
@@ -29,16 +30,7 @@ export function MainLayout() {
   const title = getPageTitle(pathname);
 
   return (
-    <div className="min-h-screen bg-[#F5F0E8] lg:flex">
-      {/* Subtle background texture */}
-      <div
-        className="pointer-events-none fixed inset-0 z-0 opacity-30"
-        style={{
-          backgroundImage: `radial-gradient(ellipse at 70% 0%, rgba(139,69,19,0.07) 0%, transparent 60%),
-                            radial-gradient(ellipse at 10% 90%, rgba(192,98,47,0.05) 0%, transparent 55%)`,
-        }}
-      />
-
+    <LiquidGlassBackground className="lg:flex">
       {/* Sidebar — fixed on desktop, wider at w-64 */}
       <div className="fixed inset-y-0 left-0 z-20 hidden lg:block">
         <Sidebar />
@@ -56,27 +48,27 @@ export function MainLayout() {
         </main>
 
         {/* ── Rich Footer ── */}
-        <footer className="relative border-t border-[#DDD4C4]/60 bg-white/60 backdrop-blur-sm mt-auto">
+        <footer className="relative border-t border-border/40 bg-card/30 backdrop-blur-md mt-auto">
           <div className="max-w-7xl mx-auto px-6 py-8">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
 
               {/* Branding */}
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-[#8B4513] to-[#C0622F] shadow-sm">
-                    <BookOpen className="w-4 h-4 text-white" />
+                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-mint shadow-sm">
+                    <BookOpen className="w-4 h-4 text-primary-foreground" />
                   </div>
-                  <span className="font-display text-lg font-bold text-[#1C1A17]">BookVerse</span>
+                  <span className="font-display text-lg font-bold text-foreground">ShelfForge</span>
                 </div>
-                <p className="text-xs text-[#8A7F74] leading-relaxed max-w-[200px]">
-                  Your personal universe of stories. Track, discover, and share your reading journey.
+                <p className="text-xs text-muted-foreground leading-relaxed max-w-[200px]">
+                  Forge your personal library. Track, discover, and share your reading journey.
                 </p>
                 <div className="flex items-center gap-3 pt-1">
                   <a
                     href="https://github.com"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-7 h-7 flex items-center justify-center rounded-md bg-[#F5F0E8] text-[#8A7F74] hover:text-[#8B4513] hover:bg-[#EDE6D8] transition-colors"
+                    className="w-7 h-7 flex items-center justify-center rounded-md bg-secondary text-muted-foreground hover:text-primary hover:bg-accent transition-colors"
                   >
                     <Code2 className="w-3.5 h-3.5" />
                   </a>
@@ -84,7 +76,7 @@ export function MainLayout() {
                     href="https://twitter.com"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-7 h-7 flex items-center justify-center rounded-md bg-[#F5F0E8] text-[#8A7F74] hover:text-[#8B4513] hover:bg-[#EDE6D8] transition-colors"
+                    className="w-7 h-7 flex items-center justify-center rounded-md bg-secondary text-muted-foreground hover:text-primary hover:bg-accent transition-colors"
                   >
                     <Share2 className="w-3.5 h-3.5" />
                   </a>
@@ -93,7 +85,7 @@ export function MainLayout() {
 
               {/* Quick Links */}
               <div className="space-y-3">
-                <h4 className="text-[11px] font-bold uppercase tracking-widest text-[#8A7F74]">Navigate</h4>
+                <h4 className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Navigate</h4>
                 <ul className="space-y-2">
                   {[
                     { label: 'Dashboard',   to: '/dashboard' },
@@ -105,7 +97,7 @@ export function MainLayout() {
                     <li key={link.to}>
                       <Link
                         to={link.to}
-                        className="text-xs text-[#8A7F74] hover:text-[#8B4513] transition-colors"
+                        className="text-xs text-muted-foreground hover:text-primary transition-colors"
                       >
                         {link.label}
                       </Link>
@@ -116,7 +108,7 @@ export function MainLayout() {
 
               {/* Account */}
               <div className="space-y-3">
-                <h4 className="text-[11px] font-bold uppercase tracking-widest text-[#8A7F74]">Account</h4>
+                <h4 className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Account</h4>
                 <ul className="space-y-2">
                   {[
                     { label: 'Profile',  to: '/profile' },
@@ -126,7 +118,7 @@ export function MainLayout() {
                     <li key={link.to}>
                       <Link
                         to={link.to}
-                        className="text-xs text-[#8A7F74] hover:text-[#8B4513] transition-colors"
+                        className="text-xs text-muted-foreground hover:text-primary transition-colors"
                       >
                         {link.label}
                       </Link>
@@ -137,17 +129,17 @@ export function MainLayout() {
             </div>
 
             {/* Bottom bar */}
-            <div className="mt-8 pt-5 border-t border-[#DDD4C4]/40 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <p className="text-[11px] text-[#B5A898]">
-                © {new Date().getFullYear()} BookVerse. All rights reserved.
+            <div className="mt-8 pt-5 border-t border-border/30 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p className="text-[11px] text-muted-foreground/80">
+                © {new Date().getFullYear()} ShelfForge. All rights reserved.
               </p>
 
               {/* Support button → opens QR modal */}
               <button
                 onClick={() => setSupportOpen(true)}
                 className="group flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-[13px]
-                           bg-[#FFDD00] text-[#1C1A17] shadow-sm
-                           hover:bg-[#FFE94D] hover:shadow-md
+                           bg-primary text-primary-foreground shadow-sm
+                           hover:opacity-90 hover:shadow-md
                            active:scale-95
                            transition-all duration-150"
               >
@@ -155,7 +147,7 @@ export function MainLayout() {
                 Buy me a Tea
               </button>
 
-              <p className="text-[11px] text-[#B5A898] flex items-center gap-1">
+              <p className="text-[11px] text-muted-foreground/80 flex items-center gap-1">
                 Made with <Heart className="w-3 h-3 text-red-400 fill-current" /> for readers everywhere
               </p>
             </div>
@@ -165,7 +157,7 @@ export function MainLayout() {
 
       {/* Support / QR Modal */}
       <SupportModal open={supportOpen} onClose={() => setSupportOpen(false)} />
-    </div>
+    </LiquidGlassBackground>
   );
 }
 

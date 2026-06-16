@@ -44,7 +44,8 @@ export function RegisterForm() {
   return (
     <AuthFormLayout
       title="Create your account"
-      description="Join BookVerse and start building your library"
+      description="Join ShelfForge and start building your library."
+      mode="register"
       footer={
         <AuthFooterLink
           text="Already have an account?"
@@ -90,7 +91,7 @@ export function RegisterForm() {
             id="password"
             type="password"
             autoComplete="new-password"
-            placeholder="••••••••"
+            placeholder="Password"
             error={errors.password?.message}
             {...register('password')}
           />
@@ -105,7 +106,7 @@ export function RegisterForm() {
             id="confirmPassword"
             type="password"
             autoComplete="new-password"
-            placeholder="••••••••"
+            placeholder="Password"
             error={errors.confirmPassword?.message}
             {...register('confirmPassword')}
           />

@@ -19,19 +19,62 @@ export const injectStore = (store) => {
 const isAuthEndpoint = (url = '') =>
   url.includes('/auth/login') ||
   url.includes('/auth/register') ||
-  url.includes('/auth/me');
+  url.includes('/auth/refresh') ||
+  url.includes('/auth/logout');
+
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve();
+    }
+  });
+  failedQueue = [];
+};
 
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
+    const originalRequest = error.config;
     const status = error.response?.status;
-    const url = error.config?.url || '';
+    const url = originalRequest?.url || '';
 
-    if (status === 401 && !isAuthEndpoint(url) && storeRef) {
-      storeRef.dispatch(resetAuth());
+    // Don't intercept auth endpoints or already-retried requests
+    if (status !== 401 || originalRequest._retry || isAuthEndpoint(url)) {
+      return Promise.reject(error);
     }
 
-    return Promise.reject(error);
+    // Queue concurrent requests while a refresh is in-flight
+    if (isRefreshing) {
+      return new Promise((resolve, reject) => {
+        failedQueue.push({
+          resolve: () => resolve(api(originalRequest)),
+          reject: (err) => reject(err),
+        });
+      });
+    }
+
+    originalRequest._retry = true;
+    isRefreshing = true;
+
+    try {
+      await api.post('/auth/refresh');
+      isRefreshing = false;
+      processQueue(null);
+      return api(originalRequest);
+    } catch (refreshError) {
+      isRefreshing = false;
+      processQueue(refreshError);
+      // Refresh failed — clear auth state and redirect to login
+      if (storeRef) {
+        storeRef.dispatch(resetAuth());
+      }
+      return Promise.reject(refreshError);
+    }
   }
 );
 

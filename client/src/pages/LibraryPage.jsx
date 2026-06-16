@@ -126,7 +126,7 @@ export default function LibraryPage() {
   };
 
   const hasActiveFilters = filters.search || filters.shelfType || filters.sort;
-  const skeletonCount = viewMode === 'grid' ? 8 : 5;
+  const skeletonCount = viewMode === 'grid' ? 12 : 5;
 
   return (
     <div className="space-y-6">
@@ -275,7 +275,7 @@ export default function LibraryPage() {
             exit={{ opacity: 0 }}
             className={
               viewMode === 'grid'
-                ? 'grid gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4'
+                ? 'grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
                 : 'space-y-3'
             }
           >
@@ -322,7 +322,7 @@ export default function LibraryPage() {
             exit={{ opacity: 0 }}
             className={
               viewMode === 'grid'
-                ? 'grid gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4'
+                ? 'grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
                 : 'space-y-3'
             }
           >

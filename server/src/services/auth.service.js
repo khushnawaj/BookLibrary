@@ -4,6 +4,7 @@ const { User } = require('../models');
 const {
   generateAccessToken,
   generateRefreshToken,
+  verifyRefreshToken,
 } = require('../utils/jwt.util');
 const { hashToken } = require('../utils/tokenHash.util');
 
@@ -69,10 +70,39 @@ const getCurrentUser = async (userId) => {
   return user.toPublicProfile();
 };
 
+const refreshUserTokens = async (refreshToken) => {
+  if (!refreshToken) {
+    throw new AppError('Refresh token required', HTTP_STATUS.UNAUTHORIZED);
+  }
+
+  let decoded;
+  try {
+    decoded = verifyRefreshToken(refreshToken);
+  } catch (error) {
+    throw new AppError('Invalid or expired refresh token', HTTP_STATUS.UNAUTHORIZED);
+  }
+
+  const user = await User.findById(decoded.userId).select('+refreshToken');
+  if (!user || !user.refreshToken) {
+    throw new AppError('Invalid refresh token or user not found', HTTP_STATUS.UNAUTHORIZED);
+  }
+
+  const hashedToken = hashToken(refreshToken);
+  if (user.refreshToken !== hashedToken) {
+    // Revoke refresh token for security as it might be a reuse/replay attack
+    user.refreshToken = null;
+    await user.save({ validateBeforeSave: false });
+    throw new AppError('Invalid refresh token', HTTP_STATUS.UNAUTHORIZED);
+  }
+
+  return issueAuthTokens(user);
+};
+
 module.exports = {
   registerUser,
   loginUser,
   logoutUser,
   getCurrentUser,
+  refreshUserTokens,
   issueAuthTokens,
 };
