@@ -49,7 +49,10 @@ export function UserMenu() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-60 rounded-2xl border border-glass-border bg-card/95 glass-card shadow-xl shadow-black/8 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150">
+        <div
+          className="absolute right-0 top-full z-50 mt-2 w-60 rounded-2xl border border-glass-border shadow-2xl overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150"
+          style={{ backgroundColor: 'var(--color-card)', backdropFilter: 'none' }}
+        >
           {/* User header */}
           <div className="relative px-4 py-3 bg-gradient-to-br from-primary to-primary/80">
             <div className="flex items-center gap-3">

@@ -9,6 +9,7 @@ router.use(authenticate);
 router.post('/', postController.createPost);
 router.get('/saved', postController.getSavedPosts);
 router.get('/:id', postController.getPostById);
+router.put('/:id', postController.updatePost);
 router.delete('/:id', postController.deletePost);
 
 router.post('/:id/like', postController.toggleLike);

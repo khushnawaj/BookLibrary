@@ -298,6 +298,16 @@ export default function ProfilePage() {
     }
   };
 
+  const handlePostDelete = (deletedId) => {
+    setPosts((prev) => prev.filter((p) => p._id !== deletedId));
+    setSavedPosts((prev) => prev.filter((p) => p._id !== deletedId));
+  };
+
+  const handlePostUpdate = (updatedPost) => {
+    setPosts((prev) => prev.map((p) => (p._id === updatedPost._id ? updatedPost : p)));
+    setSavedPosts((prev) => prev.map((p) => (p._id === updatedPost._id ? updatedPost : p)));
+  };
+
   return (
     <div className="space-y-6 max-w-4xl mx-auto pb-12">
       {/* ── Page Header ── */}
@@ -539,7 +549,12 @@ export default function ProfilePage() {
                       </div>
                     ) : (
                       posts.map((post) => (
-                        <PostCard key={post._id} post={post} />
+                        <PostCard
+                          key={post._id}
+                          post={post}
+                          onDelete={handlePostDelete}
+                          onUpdate={handlePostUpdate}
+                        />
                       ))
                     )}
                   </div>
@@ -560,7 +575,12 @@ export default function ProfilePage() {
                       </div>
                     ) : (
                       savedPosts.map((post) => (
-                        <PostCard key={post._id} post={post} />
+                        <PostCard
+                          key={post._id}
+                          post={post}
+                          onDelete={handlePostDelete}
+                          onUpdate={handlePostUpdate}
+                        />
                       ))
                     )}
                   </div>

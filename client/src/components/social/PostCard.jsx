@@ -3,13 +3,13 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import {
-  Heart, MessageCircle, Bookmark, Share2,
-  MoreHorizontal, BookOpen, Globe, Lock, Users, Trash2,
+  MessageCircle, Bookmark, Share2,
+  BookOpen, Globe, Lock, Users, Trash2,
+  ArrowUp, ArrowDown, Edit2, Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { toggleLike, removePostFromFeed } from '@/features/feed/feedSlice';
+import { toggleLike, removePostFromFeed, updatePostInFeed } from '@/features/feed/feedSlice';
 import { postService } from '@/services';
-import { Button } from '@/components/ui/button';
 import { Avatar } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { toast } from 'react-hot-toast';
@@ -21,25 +21,101 @@ const VISIBILITY_ICON = {
   PRIVATE:   Lock,
 };
 
-export function PostCard({ post }) {
+// Dynamically determine a Reddit-style community name and theme for the post
+const getCommunityInfo = (post) => {
+  if (post.bookRef) {
+    return {
+      name: 's/books',
+      icon: '📖',
+      color: 'text-primary bg-primary/10 border-primary/20 hover:bg-primary/15',
+    };
+  }
+  if (post.hashtags && post.hashtags.length > 0) {
+    const mainTag = post.hashtags[0].toLowerCase();
+    return {
+      name: `s/${mainTag}`,
+      icon: '✨',
+      color: 'text-indigo-500 bg-indigo-500/10 border-indigo-500/20 hover:bg-indigo-500/15',
+    };
+  }
+  const linesCount = post.content.split('\n').length;
+  if (linesCount > 4) {
+    return {
+      name: 's/poetry',
+      icon: '✍️',
+      color: 'text-pink-500 bg-pink-500/10 border-pink-500/20 hover:bg-pink-500/15',
+    };
+  }
+  return {
+    name: 's/lounge',
+    icon: '💭',
+    color: 'text-amber-500 bg-amber-500/10 border-amber-500/20 hover:bg-amber-500/15',
+  };
+};
+
+// Parse title out of content if the first line is short and followed by text
+const parsePostContent = (content) => {
+  const lines = content.split('\n');
+  if (lines.length > 1 && lines[0].trim().length > 0 && lines[0].trim().length < 80) {
+    return {
+      title: lines[0].trim(),
+      body: lines.slice(1).join('\n').trim(),
+    };
+  }
+  return {
+    title: null,
+    body: content,
+  };
+};
+
+export function PostCard({ post, onDelete, onUpdate }) {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const [isSaved, setIsSaved]           = useState(post.isSaved);
   const [showComments, setShowComments] = useState(false);
   const [imgError, setImgError]         = useState({});
 
+  // Inline editing states
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState(post.content);
+  const [isUpdating, setIsUpdating] = useState(false);
+
   const isAuthor = user && post.author && (user._id === post.author._id || user._id === post.author);
   const isAdmin = user && user.role === 'ADMIN';
   const canDelete = isAuthor || isAdmin;
 
-  const handleLike  = () => dispatch(toggleLike(post._id));
+  const handleLike = () => dispatch(toggleLike(post._id));
+
+  const handleDownvote = () => {
+    if (post.isLiked) {
+      dispatch(toggleLike(post._id));
+    } else {
+      toast("ShelfForge is all about positive vibes! Downvoting is disabled. 🌟", {
+        icon: '✨',
+        style: {
+          borderRadius: '12px',
+          background: 'var(--color-card)',
+          color: 'var(--color-foreground)',
+          border: '1px solid var(--color-glass-border)',
+          fontSize: '13px',
+        }
+      });
+    }
+  };
 
   const handleSave = async () => {
     try {
       const res = await postService.toggleSave(post._id);
       const { saved } = res.data.data;
       setIsSaved(saved);
-      toast.success(saved ? 'Post saved' : 'Post unsaved');
+      toast.success(saved ? 'Post saved to bookmarks' : 'Post removed from bookmarks', {
+        style: {
+          borderRadius: '12px',
+          background: 'var(--color-card)',
+          color: 'var(--color-foreground)',
+          border: '1px solid var(--color-glass-border)',
+        }
+      });
     } catch {
       toast.error('Failed to save post');
     }
@@ -47,7 +123,14 @@ export function PostCard({ post }) {
 
   const handleShare = () => {
     navigator.clipboard.writeText(`${window.location.origin}/post/${post._id}`);
-    toast.success('Link copied to clipboard!');
+    toast.success('Post link copied to clipboard!', {
+      style: {
+        borderRadius: '12px',
+        background: 'var(--color-card)',
+        color: 'var(--color-foreground)',
+        border: '1px solid var(--color-glass-border)',
+      }
+    });
   };
 
   const handleDelete = async () => {
@@ -57,242 +140,378 @@ export function PostCard({ post }) {
     try {
       await postService.deletePost(post._id);
       dispatch(removePostFromFeed(post._id));
+      if (onDelete) onDelete(post._id);
       toast.success('Post deleted successfully');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to delete post');
     }
   };
 
+  const handleUpdateSubmit = async () => {
+    if (!editContent.trim()) return;
+    try {
+      setIsUpdating(true);
+      const res = await postService.updatePost(post._id, { content: editContent.trim() });
+      
+      // Update redux state
+      dispatch(updatePostInFeed(res.data.data));
+      
+      // Propagate update to parent (e.g., Profile Page local state)
+      if (onUpdate) onUpdate(res.data.data);
+      
+      setIsEditing(false);
+      toast.success('Post updated successfully', {
+        style: {
+          borderRadius: '12px',
+          background: 'var(--color-card)',
+          color: 'var(--color-foreground)',
+          border: '1px solid var(--color-glass-border)',
+        }
+      });
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to update post');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const VisibilityIcon = VISIBILITY_ICON[post.visibility] ?? Globe;
+  const community = getCommunityInfo(post);
+  const { title, body } = parsePostContent(post.content);
 
   return (
     <article
       className="group bg-card/70 glass-card border border-glass-border rounded-2xl
                  shadow-sm hover:shadow-md hover:border-primary/20
-                 transition-all duration-200 overflow-hidden"
+                 transition-all duration-200 overflow-hidden flex"
     >
-      {/* ── Card Header ── */}
-      <div className="flex items-start justify-between px-4 sm:px-5 pt-4 sm:pt-5 pb-0">
-        <div className="flex items-center gap-3 min-w-0">
-          {/* Avatar */}
-          <Link to={`/profile/${post.author?.username}`} className="relative shrink-0 hover:opacity-90 transition-opacity">
-            <Avatar
-              src={post.author?.avatar}
-              name={post.author?.name}
-              size="md"
-              className="ring-2 ring-secondary/50 border border-glass-border"
-            />
-          </Link>
-
-          {/* Author info */}
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5 flex-wrap leading-none">
-              <Link
-                to={`/profile/${post.author?.username}`}
-                className="font-semibold text-sm text-foreground hover:text-primary transition-colors truncate max-w-[120px] sm:max-w-none"
-              >
-                {post.author?.name}
-              </Link>
-              <Link
-                to={`/profile/${post.author?.username}`}
-                className="text-xs text-muted-foreground hover:text-primary transition-colors truncate"
-              >
-                @{post.author?.username}
-              </Link>
-            </div>
-            <div className="flex items-center gap-1.5 mt-1">
-              <VisibilityIcon className="h-3 w-3 text-muted-foreground/60 shrink-0" />
-              <span className="text-[10px] text-muted-foreground/60">
-                {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Delete option for Author or Admin */}
-        {canDelete && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleDelete}
-            className="h-8 w-8 rounded-xl text-red-500/70 hover:text-red-600 hover:bg-red-50/50 shrink-0 -mr-1.5 -mt-0.5 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity"
-            title="Delete post"
-          >
-            <Trash2 className="w-4 h-4" />
-          </Button>
-        )}
-      </div>
-
-      {/* ── Content ── */}
-      <div className="px-4 sm:px-5 py-3.5">
-        {/* Text body */}
-        <p className="text-sm sm:text-[14.5px] leading-relaxed text-foreground whitespace-pre-wrap">
-          {post.content}
-        </p>
-
-        {/* Hashtags */}
-        {post.hashtags?.length > 0 && (
-          <div className="mt-2.5 flex flex-wrap gap-1.5">
-            {post.hashtags.map((tag) => (
-              <span
-                key={tag}
-                className="text-[12px] text-primary font-semibold hover:underline cursor-pointer
-                           bg-primary/10 px-1.5 py-0.5 rounded-md transition-colors hover:bg-primary/20"
-              >
-                #{tag}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* Images grid */}
-        {post.images?.length > 0 && (
-          <div
-            className={cn(
-              'mt-3.5 grid gap-1.5 rounded-xl overflow-hidden',
-              post.images.length === 1 && 'grid-cols-1',
-              post.images.length === 2 && 'grid-cols-2',
-              post.images.length >= 3 && 'grid-cols-2',
-            )}
-          >
-            {post.images.slice(0, 4).map((img, i) => (
-              <div
-                key={i}
-                className={cn(
-                  'relative overflow-hidden bg-secondary/20',
-                  post.images.length === 1 ? 'rounded-xl' : '',
-                  post.images.length >= 3 && i === 0 ? 'row-span-2' : '',
-                )}
-              >
-                {!imgError[i] ? (
-                  <img
-                    src={img}
-                    alt={`Post image ${i + 1}`}
-                    onError={() => setImgError((p) => ({ ...p, [i]: true }))}
-                    className="w-full h-full object-cover aspect-video"
-                  />
-                ) : (
-                  <div className="flex items-center justify-center h-32 text-muted-foreground">
-                    <BookOpen className="h-6 w-6" />
-                  </div>
-                )}
-                {/* Extra count badge */}
-                {post.images.length > 4 && i === 3 && (
-                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                    <span className="text-white font-bold text-lg">+{post.images.length - 4}</span>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Book Reference card */}
-        {post.bookRef && (
-          <div className="mt-3.5 flex items-center gap-3 p-3 rounded-xl
-                          border border-glass-border bg-secondary/30
-                          cursor-pointer hover:bg-secondary/55 hover:border-primary/25
-                          transition-all duration-150">
-            {post.bookRef.coverImage ? (
-              <img
-                src={post.bookRef.coverImage}
-                className="w-10 h-[56px] object-cover rounded-lg border border-glass-border shadow-sm shrink-0"
-                alt="Book cover"
-              />
-            ) : (
-              <div className="w-10 h-[56px] bg-secondary/30 rounded-lg flex items-center justify-center border border-glass-border shrink-0">
-                <BookOpen className="w-4 h-4 text-muted-foreground" />
-              </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-primary mb-0.5">
-                📖 Book Reference
-              </p>
-              <p className="font-semibold text-[13px] text-foreground truncate">{post.bookRef.title}</p>
-              <p className="text-[11px] text-muted-foreground truncate">{post.bookRef.author}</p>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* ── Action bar ── */}
-      <div className="flex items-center justify-between px-2.5 sm:px-3.5 py-2
-                      border-t border-glass-border">
-        {/* Left actions */}
-        <div className="flex items-center gap-0.5 sm:gap-1">
-          {/* Like */}
-          <button
-            onClick={handleLike}
-            className={cn(
-              'flex items-center gap-1.5 h-8 px-2.5 rounded-xl text-xs font-medium',
-              'transition-all duration-150',
-              post.isLiked
-                ? 'text-red-500 bg-red-50/50 hover:bg-red-100/50'
-                : 'text-muted-foreground hover:text-red-500 hover:bg-red-50/30'
-            )}
-          >
-            <Heart className={cn('w-4 h-4 shrink-0', post.isLiked && 'fill-current')} />
-            <span>{post.likesCount > 0 ? post.likesCount : 'Like'}</span>
-          </button>
-
-          {/* Comment */}
-          <button
-            onClick={() => setShowComments((v) => !v)}
-            className={cn(
-              'flex items-center gap-1.5 h-8 px-2.5 rounded-xl text-xs font-medium',
-              'transition-all duration-150',
-              showComments
-                ? 'text-primary bg-primary/10'
-                : 'text-muted-foreground hover:text-primary hover:bg-primary/5'
-            )}
-          >
-            <MessageCircle className="w-4 h-4 shrink-0" />
-            <span>{post.commentsCount > 0 ? post.commentsCount : 'Comment'}</span>
-          </button>
-
-          {/* Share */}
-          <button
-            onClick={handleShare}
-            className="flex items-center gap-1.5 h-8 px-2.5 rounded-xl text-xs font-medium
-                       text-muted-foreground hover:text-success hover:bg-success/5
-                       transition-all duration-150"
-          >
-            <Share2 className="w-4 h-4 shrink-0" />
-            <span className="hidden sm:inline">Share</span>
-          </button>
-        </div>
-
-        {/* Bookmark */}
+      {/* ── Left Vote Panel (desktop only) ── */}
+      <div className="hidden md:flex flex-col items-center w-12 shrink-0 pt-4 bg-secondary/15 border-r border-glass-border/30 select-none">
         <button
-          onClick={handleSave}
+          onClick={handleLike}
           className={cn(
-            'flex items-center justify-center h-8 w-8 rounded-xl',
-            'transition-all duration-150',
-            isSaved
-              ? 'text-primary bg-primary/10'
-              : 'text-muted-foreground/70 hover:text-primary hover:bg-primary/5'
+            'p-1.5 rounded-lg transition-all duration-150',
+            post.isLiked
+              ? 'text-orange-500 bg-orange-500/10 hover:bg-orange-500/20'
+              : 'text-muted-foreground/70 hover:text-orange-500 hover:bg-secondary/40'
           )}
+          title="Upvote"
         >
-          <Bookmark className={cn('w-4 h-4 shrink-0', isSaved && 'fill-current')} />
+          <ArrowUp className={cn('w-5 h-5', post.isLiked && 'fill-current')} />
+        </button>
+        
+        <span className={cn(
+          'text-[13px] font-extrabold my-1 text-center min-w-[20px] transition-colors duration-150',
+          post.isLiked ? 'text-orange-500' : 'text-foreground/80'
+        )}>
+          {post.likesCount}
+        </span>
+
+        <button
+          onClick={handleDownvote}
+          className="p-1.5 rounded-lg text-muted-foreground/70 hover:text-blue-500 hover:bg-secondary/40 transition-all duration-150"
+          title="Downvote"
+        >
+          <ArrowDown className="w-5 h-5" />
         </button>
       </div>
 
-      {/* ── Comments ── */}
-      <AnimatePresence>
-        {showComments && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="overflow-hidden border-t border-glass-border"
-          >
-            <div className="px-4 sm:px-5 py-3">
-              <CommentSection postId={post._id} />
+      {/* ── Main Post Area ── */}
+      <div className="flex-1 min-w-0 flex flex-col">
+        {/* ── Card Header ── */}
+        <div className="flex items-start justify-between px-4 sm:px-5 pt-4 pb-1">
+          <div className="flex items-center gap-3 min-w-0">
+            {/* User Avatar */}
+            <Link to={`/profile/${post.author?.username}`} className="relative shrink-0 hover:opacity-90 transition-opacity">
+              <Avatar
+                src={post.author?.avatar}
+                name={post.author?.name}
+                size="md"
+                className="ring-2 ring-secondary/50 border border-glass-border"
+              />
+              <span className="absolute -bottom-1 -right-1 bg-background border border-glass-border rounded-full p-0.5 text-[10px] shadow-sm leading-none flex items-center justify-center">
+                {community.icon}
+              </span>
+            </Link>
+
+            {/* Sub-community & Author Details */}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 flex-wrap leading-tight">
+                <span className="font-bold text-[13px] text-foreground hover:text-primary transition-colors cursor-pointer">
+                  {community.name}
+                </span>
+                <span className="text-[11px] text-muted-foreground/80">
+                  • Posted by
+                </span>
+                <Link
+                  to={`/profile/${post.author?.username}`}
+                  className="text-[11px] font-semibold text-muted-foreground hover:text-primary hover:underline transition-colors truncate max-w-[100px] sm:max-w-none"
+                >
+                  u/{post.author?.username}
+                </Link>
+                <span className="text-[10px] text-muted-foreground/60">
+                  {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
+                </span>
+              </div>
+              
+              <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-muted-foreground/60">
+                <VisibilityIcon className="h-3 w-3 shrink-0" />
+                <span className="capitalize">{post.visibility.toLowerCase()}</span>
+              </div>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+        </div>
+
+        {/* ── Post Content ── */}
+        <div className="px-4 sm:px-5 py-3">
+          {isEditing ? (
+            <div className="space-y-3">
+              <textarea
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                style={{ color: 'var(--color-foreground)' }}
+                className="w-full min-h-[120px] rounded-xl border border-glass-border bg-secondary/15 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/45 transition-all text-foreground font-medium"
+                placeholder="What is on your mind?"
+              />
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={() => {
+                    setIsEditing(false);
+                    setEditContent(post.content);
+                  }}
+                  disabled={isUpdating}
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-secondary/30 text-foreground hover:bg-secondary/45 border border-glass-border/40 transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleUpdateSubmit}
+                  disabled={isUpdating || !editContent.trim()}
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/95 transition-all flex items-center gap-1 cursor-pointer"
+                >
+                  {isUpdating && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  Save Changes
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Post Title (parsed from first line) */}
+              {title && (
+                <h2 className="text-base sm:text-[17px] font-bold text-foreground mb-1.5 leading-snug tracking-tight">
+                  {title}
+                </h2>
+              )}
+
+              {/* Post Text Body */}
+              <p className="text-sm sm:text-[14.5px] leading-relaxed text-foreground/90 whitespace-pre-wrap">
+                {body}
+              </p>
+            </>
+          )}
+
+          {/* Hashtags */}
+          {post.hashtags?.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {post.hashtags.map((tag) => (
+                <span
+                  key={tag}
+                  className="text-[11px] text-primary font-bold hover:underline cursor-pointer
+                             bg-primary/5 border border-primary/15 px-2 py-0.5 rounded-full transition-all hover:bg-primary/10"
+                >
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Images Grid */}
+          {post.images?.length > 0 && (
+            <div
+              className={cn(
+                'mt-3.5 grid gap-2 rounded-xl overflow-hidden border border-glass-border/40',
+                post.images.length === 1 && 'grid-cols-1',
+                post.images.length === 2 && 'grid-cols-2',
+                post.images.length >= 3 && 'grid-cols-2',
+              )}
+            >
+              {post.images.slice(0, 4).map((img, i) => (
+                <div
+                  key={i}
+                  className={cn(
+                    'relative overflow-hidden bg-secondary/20 group/img',
+                    post.images.length === 1 ? 'rounded-xl max-h-[380px]' : '',
+                    post.images.length >= 3 && i === 0 ? 'row-span-2' : '',
+                  )}
+                >
+                  {!imgError[i] ? (
+                    <img
+                      src={img}
+                      alt={`Post image ${i + 1}`}
+                      onError={() => setImgError((p) => ({ ...p, [i]: true }))}
+                      className="w-full h-full object-cover aspect-video hover:scale-[1.02] transition-transform duration-300 cursor-zoom-in"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-32 text-muted-foreground bg-secondary/10">
+                      <BookOpen className="h-6 w-6" />
+                    </div>
+                  )}
+                  {post.images.length > 4 && i === 3 && (
+                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-[2px]">
+                      <span className="text-white font-bold text-lg">+{post.images.length - 4}</span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Book Reference Embed Card */}
+          {post.bookRef && (
+            <div className="mt-3.5 flex items-center gap-3 p-3 rounded-xl
+                            border border-glass-border/60 bg-secondary/20 hover:bg-secondary/35 hover:border-primary/20
+                            cursor-pointer transition-all duration-200">
+              {post.bookRef.coverImage ? (
+                <img
+                  src={post.bookRef.coverImage}
+                  className="w-10 h-[56px] object-cover rounded-lg border border-glass-border shadow-sm shrink-0"
+                  alt="Book cover"
+                />
+              ) : (
+                <div className="w-10 h-[56px] bg-secondary/30 rounded-lg flex items-center justify-center border border-glass-border shrink-0">
+                  <BookOpen className="w-4 h-4 text-muted-foreground" />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-primary mb-0.5 flex items-center gap-1">
+                  <BookOpen className="w-3 h-3" /> Book Reference
+                </p>
+                <p className="font-bold text-[13px] text-foreground truncate">{post.bookRef.title}</p>
+                <p className="text-[11px] text-muted-foreground truncate">{post.bookRef.author}</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ── Action bar (Pill style, responsive votes) ── */}
+        <div className="flex flex-wrap items-center gap-2 px-4 sm:px-5 py-2.5 border-t border-glass-border/30 bg-secondary/5 mt-auto">
+          {/* Mobile Upvote/Downvote Pill */}
+          <div className="flex md:hidden items-center bg-secondary/40 border border-glass-border/50 rounded-full h-8 px-1.5 gap-0.5 shrink-0">
+            <button
+              onClick={handleLike}
+              className={cn(
+                'p-1 rounded-full transition-colors duration-150',
+                post.isLiked ? 'text-orange-500 bg-orange-500/10' : 'text-muted-foreground/70'
+              )}
+              title="Upvote"
+            >
+              <ArrowUp className={cn('w-4 h-4', post.isLiked && 'fill-current')} />
+            </button>
+            <span className={cn(
+              'text-xs font-extrabold px-1.5 min-w-[20px] text-center transition-colors',
+              post.isLiked ? 'text-orange-500' : 'text-foreground/80'
+            )}>
+              {post.likesCount}
+            </span>
+            <button
+              onClick={handleDownvote}
+              className="p-1 rounded-full text-muted-foreground/70"
+              title="Downvote"
+            >
+              <ArrowDown className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Comments Pill */}
+          <button
+            onClick={() => setShowComments((v) => !v)}
+            className={cn(
+              'flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-semibold shrink-0 transition-all duration-150 border',
+              showComments
+                ? 'bg-primary/10 text-primary border-primary/20'
+                : 'bg-secondary/25 hover:bg-secondary/40 text-muted-foreground hover:text-foreground border-glass-border/40'
+            )}
+          >
+            <MessageCircle className="w-4 h-4 shrink-0" />
+            <span>
+              {post.commentsCount > 0 
+                ? `${post.commentsCount} ${post.commentsCount === 1 ? 'Comment' : 'Comments'}` 
+                : 'Comment'}
+            </span>
+          </button>
+
+          {/* Share Pill */}
+          <button
+            onClick={handleShare}
+            className="flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-semibold shrink-0
+                       bg-secondary/25 hover:bg-secondary/40 text-muted-foreground hover:text-foreground border border-glass-border/40
+                       transition-all duration-150"
+          >
+            <Share2 className="w-4 h-4 shrink-0" />
+            <span>Share</span>
+          </button>
+
+          {/* Save Pill */}
+          <button
+            onClick={handleSave}
+            className={cn(
+              'flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-semibold shrink-0 transition-all duration-150 border',
+              isSaved
+                ? 'bg-amber-500/10 text-amber-600 border-amber-500/20'
+                : 'bg-secondary/25 hover:bg-secondary/40 text-muted-foreground hover:text-foreground border-glass-border/40'
+            )}
+          >
+            <Bookmark className={cn('w-4 h-4 shrink-0', isSaved && 'fill-current')} />
+            <span>{isSaved ? 'Saved' : 'Save'}</span>
+          </button>
+
+          {/* Edit Pill for Author */}
+          {isAuthor && !isEditing && (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-semibold shrink-0 ml-auto
+                         bg-primary/5 hover:bg-primary/10 text-primary border border-primary/10
+                         transition-all duration-150 cursor-pointer"
+              title="Edit post"
+            >
+              <Edit2 className="w-3.5 h-3.5 shrink-0" />
+              <span>Edit</span>
+            </button>
+          )}
+
+          {/* Delete Pill for Author or Admin */}
+          {canDelete && (
+            <button
+              onClick={handleDelete}
+              className={cn(
+                "flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-semibold shrink-0 transition-all duration-150 cursor-pointer",
+                isAuthor ? "ml-0 bg-red-500/5 hover:bg-red-500/10 text-red-500/70 hover:text-red-500 border border-red-500/10" : "ml-auto bg-red-500/5 hover:bg-red-500/10 text-red-500/70 hover:text-red-500 border border-red-500/10"
+              )}
+              title="Delete post"
+            >
+              <Trash2 className="w-3.5 h-3.5 shrink-0" />
+              <span className="hidden xs:inline">Delete</span>
+            </button>
+          )}
+        </div>
+
+        {/* ── Comments ── */}
+        <AnimatePresence>
+          {showComments && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="overflow-hidden border-t border-glass-border/30"
+            >
+              <div className="px-4 sm:px-5 py-3">
+                <CommentSection postId={post._id} />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </article>
   );
 }

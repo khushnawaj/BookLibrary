@@ -237,11 +237,16 @@ export function CreatePostModal({ isOpen, onClose }) {
             <select
               value={visibility}
               onChange={(e) => setVisibility(e.target.value)}
-              className="text-xs font-semibold rounded-xl bg-background border border-glass-border px-2.5 py-1.5 text-foreground focus:outline-none cursor-pointer hover:bg-secondary/40 transition-colors"
+              style={{
+                backgroundColor: 'var(--color-card)',
+                color: 'var(--color-foreground)',
+                border: '1px solid var(--color-glass-border)',
+              }}
+              className="text-xs font-semibold rounded-xl px-2.5 py-1.5 focus:outline-none cursor-pointer hover:opacity-80 transition-opacity"
             >
-              <option value="PUBLIC">🌍 Public</option>
-              <option value="FOLLOWERS">👥 Followers</option>
-              <option value="PRIVATE">🔒 Only me</option>
+              <option value="PUBLIC" style={{ backgroundColor: 'var(--color-card)', color: 'var(--color-foreground)' }}>🌍 Public</option>
+              <option value="FOLLOWERS" style={{ backgroundColor: 'var(--color-card)', color: 'var(--color-foreground)' }}>👥 Followers</option>
+              <option value="PRIVATE" style={{ backgroundColor: 'var(--color-card)', color: 'var(--color-foreground)' }}>🔒 Only me</option>
             </select>
           </div>
 

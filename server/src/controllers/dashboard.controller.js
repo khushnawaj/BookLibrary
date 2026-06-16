@@ -6,7 +6,7 @@ const { SHELF_TYPES } = require('../constants');
 const getDashboardStats = asyncHandler(async (req, res) => {
   const userId = req.user._id;
 
-  const [totalBooks, libraryStats, recentBooks, recentLibrary] = await Promise.all([
+  const [totalBooks, libraryStats, recentLibrary] = await Promise.all([
     Book.countDocuments({ owner: userId }),
     Library.aggregate([
       { $match: { user: userId } },
@@ -17,14 +17,9 @@ const getDashboardStats = asyncHandler(async (req, res) => {
         },
       },
     ]),
-    Book.find({ owner: userId })
-      .sort({ createdAt: -1 })
-      .limit(5)
-      .select('title author genre coverImage createdAt')
-      .lean(),
     Library.find({ user: userId })
       .sort({ updatedAt: -1 })
-      .limit(5)
+      .limit(6)
       .populate('book', 'title author genre coverImage')
       .lean(),
   ]);
@@ -44,7 +39,7 @@ const getDashboardStats = asyncHandler(async (req, res) => {
         wishlistCount: shelfCounts[SHELF_TYPES.WISHLIST] || 0,
         droppedBooks: shelfCounts[SHELF_TYPES.DROPPED] || 0,
       },
-      recentBooks,
+      recentBooks: recentLibrary,
       recentActivity: recentLibrary,
     },
   });

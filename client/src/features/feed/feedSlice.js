@@ -59,6 +59,15 @@ const feedSlice = createSlice({
     removePostFromFeed: (state, action) => {
       state.posts = state.posts.filter((post) => post._id !== action.payload);
     },
+    updatePostInFeed: (state, action) => {
+      const idx = state.posts.findIndex((p) => p._id === action.payload._id);
+      if (idx !== -1) {
+        state.posts[idx] = {
+          ...state.posts[idx],
+          ...action.payload,
+        };
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -104,7 +113,7 @@ const feedSlice = createSlice({
   },
 });
 
-export const { resetFeed, removePostFromFeed } = feedSlice.actions;
+export const { resetFeed, removePostFromFeed, updatePostInFeed } = feedSlice.actions;
 
 export const selectAllPosts = (state) => state.feed.posts;
 export const selectFeedStatus = (state) => state.feed.status;

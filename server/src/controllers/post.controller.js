@@ -82,6 +82,48 @@ const deletePost = asyncHandler(async (req, res) => {
   return ApiResponse.success(res, { message: 'Post deleted successfully' });
 });
 
+const updatePost = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { content, visibility, hashtags } = req.body;
+
+  const post = await Post.findById(id);
+  if (!post) {
+    throw new AppError('Post not found', HTTP_STATUS.NOT_FOUND);
+  }
+
+  // Only the author can update their post
+  if (post.author.toString() !== req.user._id.toString()) {
+    throw new AppError('Unauthorized to update this post', HTTP_STATUS.FORBIDDEN);
+  }
+
+  if (content !== undefined) post.content = content;
+  if (visibility !== undefined) post.visibility = visibility;
+  if (hashtags !== undefined) post.hashtags = hashtags;
+
+  await post.save();
+
+  const populatedPost = await Post.findById(post._id)
+    .populate('author', 'name username avatar')
+    .populate('bookRef', 'title author coverImage')
+    .lean();
+
+  const [likeDoc, saveDoc] = await Promise.all([
+    Like.findOne({ user: req.user._id, post: post._id }),
+    SavedPost.findOne({ user: req.user._id, post: post._id })
+  ]);
+
+  const augmentedPost = {
+    ...populatedPost,
+    isLiked: !!likeDoc,
+    isSaved: !!saveDoc
+  };
+
+  return ApiResponse.success(res, {
+    message: 'Post updated successfully',
+    data: augmentedPost,
+  });
+});
+
 // =====================================
 // LIKES
 // =====================================
@@ -207,6 +249,7 @@ module.exports = {
   createPost,
   getPostById,
   deletePost,
+  updatePost,
   toggleLike,
   addComment,
   getComments,

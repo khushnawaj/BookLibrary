@@ -65,6 +65,7 @@ export const feedService = {
 export const postService = {
   createPost: async (data) => api.post('/posts', data),
   getPost: async (id) => api.get(`/posts/${id}`),
+  updatePost: async (id, data) => api.put(`/posts/${id}`, data),
   deletePost: async (id) => api.delete(`/posts/${id}`),
   toggleLike: async (id) => api.post(`/posts/${id}/like`),
   toggleSave: async (id) => api.post(`/posts/${id}/save`),

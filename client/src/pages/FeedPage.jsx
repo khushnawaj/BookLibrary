@@ -24,28 +24,35 @@ export default function FeedPage() {
   const status = useSelector(selectFeedStatus);
   const { hasNextPage, nextCursor, isFetchingMore } = useSelector((state) => state.feed);
 
+  const [feedType, setFeedType] = useState('global');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { ref, inView } = useInView({ threshold: 0.1 });
 
   useEffect(() => {
     if (status === 'idle') {
-      dispatch(fetchFeed({ limit: 10, type: 'global' }));
+      dispatch(fetchFeed({ limit: 10, type: feedType }));
     }
-  }, [status, dispatch]);
+  }, [status, feedType, dispatch]);
 
   useEffect(() => {
     if (inView && hasNextPage && !isFetchingMore && status === 'succeeded') {
-      dispatch(fetchFeed({ cursor: nextCursor, limit: 10, type: 'global' }));
+      dispatch(fetchFeed({ cursor: nextCursor, limit: 10, type: feedType }));
     }
-  }, [inView, hasNextPage, isFetchingMore, nextCursor, status, dispatch]);
+  }, [inView, hasNextPage, isFetchingMore, nextCursor, status, feedType, dispatch]);
 
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     dispatch(resetFeed());
-    await dispatch(fetchFeed({ limit: 10, type: 'global' }));
+    await dispatch(fetchFeed({ limit: 10, type: feedType }));
     setIsRefreshing(false);
-  }, [dispatch]);
+  }, [dispatch, feedType]);
+
+  const handleFeedTypeChange = (newType) => {
+    if (newType === feedType) return;
+    setFeedType(newType);
+    dispatch(resetFeed());
+  };
 
   const isInitialLoad = status === 'loading' && posts.length === 0;
 
@@ -57,9 +64,9 @@ export default function FeedPage() {
         {/* ── Left column: feed ── */}
         <div className="min-w-0 space-y-4">
 
-          {/* Sticky page header */}
+          {/* Sticky page header with Reddit-like Tabs */}
           <div className="sticky top-0 z-20 -mx-2 sm:-mx-4 px-2 sm:px-4 py-3.5
-                          bg-background/80 glass border-b border-glass-border">
+                          bg-background/80 glass border-b border-glass-border space-y-3">
             <div className="flex items-center justify-between">
               {/* Title */}
               <div className="flex items-center gap-3">
@@ -72,7 +79,7 @@ export default function FeedPage() {
                     <Sparkles className="h-3.5 w-3.5 text-primary" />
                   </h1>
                   <p className="text-[11px] text-muted-foreground hidden sm:block leading-none mt-0.5">
-                    Discover posts from all readers
+                    {feedType === 'global' ? 'Discover posts from all readers' : 'Showing posts from users you follow'}
                   </p>
                 </div>
               </div>
@@ -92,13 +99,41 @@ export default function FeedPage() {
 
                 <Button
                   onClick={() => setIsModalOpen(true)}
-                  className="h-9 px-3.5 gap-1.5 rounded-xl shadow-sm text-xs sm:text-sm"
+                  className="h-9 px-3.5 gap-1.5 rounded-xl shadow-sm text-xs sm:text-sm cursor-pointer"
                 >
                   <Plus className="w-4 h-4 shrink-0" />
                   <span className="hidden xs:inline">New Post</span>
                   <span className="inline xs:hidden">Post</span>
                 </Button>
               </div>
+            </div>
+
+            {/* Reddit-style tabs filter bar */}
+            <div className="flex items-center gap-1.5 pt-1 border-t border-glass-border/30">
+              <button
+                onClick={() => handleFeedTypeChange('global')}
+                className={cn(
+                  'px-3.5 py-1.5 rounded-full text-xs font-bold transition-all duration-150 border flex items-center gap-1.5 cursor-pointer',
+                  feedType === 'global'
+                    ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                    : 'bg-secondary/20 hover:bg-secondary/40 text-muted-foreground border-glass-border/50'
+                )}
+              >
+                <span>🌍</span> Global Feed
+              </button>
+              {user && (
+                <button
+                  onClick={() => handleFeedTypeChange('following')}
+                  className={cn(
+                    'px-3.5 py-1.5 rounded-full text-xs font-bold transition-all duration-150 border flex items-center gap-1.5 cursor-pointer',
+                    feedType === 'following'
+                      ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                      : 'bg-secondary/20 hover:bg-secondary/40 text-muted-foreground border-glass-border/50'
+                  )}
+                >
+                  <span>👥</span> Following
+                </button>
+              )}
             </div>
           </div>
 
@@ -170,15 +205,17 @@ export default function FeedPage() {
                 </div>
                 <p className="font-bold text-foreground text-base mb-1.5">No posts yet</p>
                 <p className="text-xs text-muted-foreground mb-6 max-w-[260px] leading-relaxed">
-                  Be the first to share a review, recommendation, or reading milestone!
+                  {feedType === 'global' 
+                    ? 'Be the first to share a review, recommendation, or reading milestone!'
+                    : 'No posts from users you follow. Explore the Global feed to discover readers!'}
                 </p>
                 <Button
                   variant="outline"
-                  onClick={() => setIsModalOpen(true)}
-                  className="rounded-xl gap-2"
+                  onClick={() => feedType === 'global' ? setIsModalOpen(true) : setFeedType('global')}
+                  className="rounded-xl gap-2 cursor-pointer"
                 >
                   <Plus className="h-4 w-4 shrink-0" />
-                  Create your first post
+                  {feedType === 'global' ? 'Create your first post' : 'Go to Global Feed'}
                 </Button>
               </motion.div>
 
@@ -245,7 +282,7 @@ export default function FeedPage() {
               variant="outline"
               size="sm"
               onClick={() => setIsModalOpen(true)}
-              className="w-full mt-1 rounded-xl gap-1.5 text-xs"
+              className="w-full mt-1 rounded-xl gap-1.5 text-xs cursor-pointer"
             >
               <Plus className="h-3.5 w-3.5 shrink-0" />
               Create a post
