@@ -18,7 +18,8 @@ import RegisterPage from '@/pages/RegisterPage';
 import SettingsPage from '@/pages/SettingsPage';
 import WishlistPage from '@/pages/WishlistPage';
 import NotFoundPage from '@/pages/NotFoundPage';
-import { ProtectedRoute, PublicRoute } from '@/routes/ProtectedRoute';
+import AdminDashboard from '@/pages/AdminDashboard';
+import { ProtectedRoute, PublicRoute, AdminRoute } from '@/routes/ProtectedRoute';
 
 function RootLayout() {
   return (
@@ -73,6 +74,14 @@ export const router = createBrowserRouter([
           { path: ROUTES.PROFILE, element: <ProfilePage /> },
           { path: `${ROUTES.PROFILE}/:username`, element: <ProfilePage /> },
           { path: ROUTES.SETTINGS, element: <SettingsPage /> },
+          {
+            path: ROUTES.ADMIN,
+            element: (
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            ),
+          },
         ],
       },
       { path: '*', element: <NotFoundPage /> },

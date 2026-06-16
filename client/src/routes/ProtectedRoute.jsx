@@ -34,3 +34,22 @@ export function PublicRoute({ children }) {
 
 // Backward-compatible alias
 export const PublicOnlyRoute = PublicRoute;
+
+export function AdminRoute({ children }) {
+  const { isAuthenticated, user, initialized } = useAuth();
+  const location = useLocation();
+
+  if (!initialized) {
+    return <PageLoader />;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to={ROUTES.LOGIN} state={{ from: location }} replace />;
+  }
+
+  if (user?.role !== 'ADMIN') {
+    return <Navigate to={ROUTES.DASHBOARD} replace />;
+  }
+
+  return children;
+}

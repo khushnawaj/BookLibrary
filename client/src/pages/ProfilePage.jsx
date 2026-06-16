@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '@/features/auth/authHooks';
 import { useAppDispatch } from '@/hooks/useAppStore';
 import { updateUserProfile } from '@/features/auth/authApi';
-import { uploadService, userService } from '@/services';
+import { uploadService, userService, postService } from '@/services';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -15,7 +15,7 @@ import { PostCard } from '@/components/social/PostCard';
 import { Modal } from '@/components/ui/modal';
 import {
   Camera, Edit2, Check, X, Loader2, Mail, Shield, AtSign,
-  BookOpen, Users, UserCheck, Calendar, BookMarked
+  BookOpen, Users, UserCheck, Calendar, BookMarked, Bookmark
 } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
@@ -35,10 +35,12 @@ export default function ProfilePage() {
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
 
   // Tabs state
-  const [activeTab, setActiveTab] = useState('posts'); // 'posts' | 'library' | 'about'
+  const [activeTab, setActiveTab] = useState('posts'); // 'posts' | 'saved' | 'library' | 'about'
   const [posts, setPosts] = useState([]);
+  const [savedPosts, setSavedPosts] = useState([]);
   const [libraryEntries, setLibraryEntries] = useState([]);
   const [isLoadingPosts, setIsLoadingPosts] = useState(false);
+  const [isLoadingSavedPosts, setIsLoadingSavedPosts] = useState(false);
   const [isLoadingLibrary, setIsLoadingLibrary] = useState(false);
 
   // Editing state
@@ -135,6 +137,26 @@ export default function ProfilePage() {
     fetchPosts();
   }, [targetUsername, activeTab]);
 
+  // Fetch saved posts when tab is active
+  useEffect(() => {
+    if (!isOwnProfile || activeTab !== 'saved') return;
+
+    const fetchSavedPosts = async () => {
+      try {
+        setIsLoadingSavedPosts(true);
+        const res = await postService.getSavedPosts();
+        setSavedPosts(res.data.data);
+      } catch (err) {
+        console.error(err);
+        toast.error('Failed to load saved posts');
+      } finally {
+        setIsLoadingSavedPosts(false);
+      }
+    };
+
+    fetchSavedPosts();
+  }, [activeTab, isOwnProfile]);
+
   // Fetch library when tab is active
   useEffect(() => {
     if (!targetUsername || activeTab !== 'library') return;
@@ -158,7 +180,7 @@ export default function ProfilePage() {
   if (isLoadingProfile) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 text-[#8B4513] animate-spin" />
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
       </div>
     );
   }
@@ -166,9 +188,9 @@ export default function ProfilePage() {
   if (!profile) {
     return (
       <div className="text-center py-12 max-w-3xl mx-auto">
-        <h2 className="text-2xl font-bold text-[#1C1A17]">User not found</h2>
-        <p className="text-[#8A7F74] mt-2">The profile you are looking for does not exist or is private.</p>
-        <Button asChild className="mt-4 bg-[#8B4513] hover:bg-[#C0622F] text-white">
+        <h2 className="text-2xl font-bold text-foreground">User not found</h2>
+        <p className="text-muted-foreground mt-2">The profile you are looking for does not exist or is private.</p>
+        <Button asChild className="mt-4 bg-primary hover:bg-primary/90 text-primary-foreground">
           <Link to="/feed">Back to Feed</Link>
         </Button>
       </div>
@@ -281,19 +303,19 @@ export default function ProfilePage() {
       {/* ── Page Header ── */}
       <div className="flex items-center justify-between">
         <div>
-          <Badge variant="secondary" className="mb-2 bg-[#8B4513]/10 text-[#8B4513] border-none font-medium">
+          <Badge variant="secondary" className="mb-2 bg-primary/10 text-primary border-none font-medium">
             {isOwnProfile ? 'Your Space' : 'Community Profile'}
           </Badge>
-          <h1 className="font-display text-3xl font-bold tracking-tight text-[#1C1A17]">
+          <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">
             {isOwnProfile ? 'Your Profile' : `${profile.name}'s Profile`}
           </h1>
         </div>
-        
+
         {isOwnProfile ? (
           !isEditing && (
             <Button
               onClick={() => setIsEditing(true)}
-              className="bg-[#8B4513] hover:bg-[#C0622F] text-white flex items-center gap-1.5 shadow-sm"
+              className="bg-primary hover:bg-primary/95 text-primary-foreground flex items-center gap-1.5 shadow-sm rounded-xl"
             >
               <Edit2 className="w-4 h-4" /> Edit Profile
             </Button>
@@ -302,10 +324,10 @@ export default function ProfilePage() {
           <Button
             onClick={handleFollowToggle}
             className={cn(
-              "flex items-center gap-1.5 transition-all shadow-sm border",
+              "flex items-center gap-1.5 transition-all shadow-sm border rounded-xl",
               profile.isFollowing
-                ? "bg-[#F5F0E8] text-[#8B4513] border-[#DDD4C4] hover:bg-[#EDE6D8]"
-                : "bg-[#8B4513] hover:bg-[#C0622F] text-white border-transparent"
+                ? "bg-secondary text-primary border-glass-border hover:bg-secondary/80"
+                : "bg-primary hover:bg-primary/95 text-primary-foreground border-transparent"
             )}
           >
             {profile.isFollowing ? (
@@ -318,17 +340,17 @@ export default function ProfilePage() {
       </div>
 
       <MotionCard>
-        <Card className="border-[#DDD4C4] bg-white shadow-sm overflow-hidden rounded-2xl">
+        <Card className="border-glass-border bg-card/70 glass-card shadow-sm overflow-hidden rounded-2xl">
           {/* Header Banner */}
-          <div className="h-36 w-full bg-gradient-to-r from-[#8B4513] via-[#C0622F] to-[#D4931A]" />
-          
+          <div className="h-36 w-full bg-gradient-to-r from-primary via-primary/80 to-secondary/35" />
+
           <CardHeader className="relative pb-4 pt-0">
             {/* Avatar overlapping the banner */}
             <div className="absolute -top-16 left-6">
-              <div 
+              <div
                 onClick={handleAvatarClick}
                 className={cn(
-                  "relative group rounded-full border-4 border-white shadow-md overflow-hidden",
+                  "relative group rounded-full border-4 border-background shadow-md overflow-hidden",
                   isEditing && isOwnProfile ? 'cursor-pointer' : ''
                 )}
               >
@@ -343,63 +365,74 @@ export default function ProfilePage() {
                   </div>
                 )}
               </div>
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                className="hidden" 
-                accept="image/*" 
-                onChange={handleFileChange} 
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/*"
+                onChange={handleFileChange}
               />
             </div>
-            
+
             {/* Display names & follow stats */}
             <div className="pt-12 pl-2 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
               <div>
-                <CardTitle className="text-2xl font-bold text-[#1C1A17]">{profile.name}</CardTitle>
-                <p className="text-sm text-[#8A7F74] mt-0.5">@{profile.username}</p>
+                <CardTitle className="text-2xl font-bold text-foreground">{profile.name}</CardTitle>
+                <p className="text-sm text-muted-foreground mt-0.5">@{profile.username}</p>
                 {profile.bio && !isEditing && (
-                  <p className="text-sm text-[#3D3530] mt-3 max-w-xl italic leading-relaxed">
+                  <p className="text-sm text-foreground/80 mt-3 max-w-xl italic leading-relaxed">
                     "{profile.bio}"
                   </p>
                 )}
               </div>
 
               {/* Counts dashboard */}
-              <div className="flex items-center gap-6 bg-[#F5F0E8] border border-[#DDD4C4] rounded-xl px-4 py-2.5 shrink-0">
+              <div className="flex items-center gap-6 bg-secondary/40 border border-glass-border rounded-xl px-4 py-2.5 shrink-0">
                 <div className="text-center">
-                  <span className="block text-lg font-bold text-[#8B4513]">{profile.booksRead || 0}</span>
-                  <span className="text-[10px] font-bold text-[#8A7F74] uppercase tracking-wider">Books Read</span>
+                  <span className="block text-lg font-bold text-primary">{profile.booksRead || 0}</span>
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Books Read</span>
                 </div>
-                <div className="w-px h-8 bg-[#DDD4C4]" />
+                <div className="w-px h-8 bg-glass-border" />
                 <div onClick={handleOpenFollowers} className="text-center cursor-pointer hover:opacity-80 transition-opacity">
-                  <span className="block text-lg font-bold text-[#8B4513]">{profile.followersCount || 0}</span>
-                  <span className="text-[10px] font-bold text-[#8A7F74] uppercase tracking-wider">Followers</span>
+                  <span className="block text-lg font-bold text-primary">{profile.followersCount || 0}</span>
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Followers</span>
                 </div>
-                <div className="w-px h-8 bg-[#DDD4C4]" />
+                <div className="w-px h-8 bg-glass-border" />
                 <div onClick={handleOpenFollowing} className="text-center cursor-pointer hover:opacity-80 transition-opacity">
-                  <span className="block text-lg font-bold text-[#8B4513]">{profile.followingCount || 0}</span>
-                  <span className="text-[10px] font-bold text-[#8A7F74] uppercase tracking-wider">Following</span>
+                  <span className="block text-lg font-bold text-primary">{profile.followingCount || 0}</span>
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Following</span>
                 </div>
               </div>
             </div>
 
             {/* Tab navigation */}
             {!isEditing && (
-              <div className="flex border-b border-[#DDD4C4]/50 gap-6 mt-8">
+              <div className="flex border-b border-glass-border gap-6 mt-8 overflow-x-auto scrollbar-none">
                 <button
                   onClick={() => setActiveTab('posts')}
                   className={cn(
-                    "pb-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-1.5",
-                    activeTab === 'posts' ? "border-[#8B4513] text-[#8B4513]" : "border-transparent text-[#8A7F74] hover:text-[#1C1A17]"
+                    "pb-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap",
+                    activeTab === 'posts' ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
                   )}
                 >
                   <BookMarked className="w-4 h-4" /> Activity Feed
                 </button>
+                {isOwnProfile && (
+                  <button
+                    onClick={() => setActiveTab('saved')}
+                    className={cn(
+                      "pb-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap",
+                      activeTab === 'saved' ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <Bookmark className="w-4 h-4" /> Bookmarks
+                  </button>
+                )}
                 <button
                   onClick={() => setActiveTab('library')}
                   className={cn(
-                    "pb-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-1.5",
-                    activeTab === 'library' ? "border-[#8B4513] text-[#8B4513]" : "border-transparent text-[#8A7F74] hover:text-[#1C1A17]"
+                    "pb-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap",
+                    activeTab === 'library' ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
                   )}
                 >
                   <BookOpen className="w-4 h-4" /> Library Collection
@@ -407,8 +440,8 @@ export default function ProfilePage() {
                 <button
                   onClick={() => setActiveTab('about')}
                   className={cn(
-                    "pb-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-1.5",
-                    activeTab === 'about' ? "border-[#8B4513] text-[#8B4513]" : "border-transparent text-[#8A7F74] hover:text-[#1C1A17]"
+                    "pb-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap",
+                    activeTab === 'about' ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
                   )}
                 >
                   <Users className="w-4 h-4" /> About Details
@@ -422,20 +455,20 @@ export default function ProfilePage() {
               <form onSubmit={handleSave} className="space-y-5">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="profile-name" className="text-sm font-semibold text-[#3D3530]">Display Name</Label>
+                    <Label htmlFor="profile-name" className="text-sm font-semibold text-foreground/80">Display Name</Label>
                     <Input
                       id="profile-name"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Your name"
-                      className="border-[#DDD4C4] focus:ring-[#8B4513] bg-[#F5F0E8]/20"
+                      className="border-glass-border focus:ring-primary bg-secondary/15 rounded-xl"
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="profile-username" className="text-sm font-semibold text-[#3D3530]">Username</Label>
+                    <Label htmlFor="profile-username" className="text-sm font-semibold text-foreground/80">Username</Label>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8A7F74]">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                         <AtSign className="w-4 h-4" />
                       </span>
                       <Input
@@ -443,7 +476,7 @@ export default function ProfilePage() {
                         value={usernameInput}
                         onChange={(e) => setUsernameInput(e.target.value)}
                         placeholder="username"
-                        className="pl-9 border-[#DDD4C4] focus:ring-[#8B4513] bg-[#F5F0E8]/20"
+                        className="pl-9 border-glass-border focus:ring-primary bg-secondary/15 rounded-xl"
                         required
                       />
                     </div>
@@ -451,34 +484,34 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="profile-bio" className="text-sm font-semibold text-[#3D3530]">Biography</Label>
+                  <Label htmlFor="profile-bio" className="text-sm font-semibold text-foreground/80">Biography</Label>
                   <textarea
                     id="profile-bio"
                     value={bio}
                     onChange={(e) => setBio(e.target.value)}
                     placeholder="Tell other readers about yourself..."
-                    className="w-full min-h-[100px] rounded-lg border border-[#DDD4C4] bg-[#F5F0E8]/20 p-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#8B4513]"
+                    className="w-full min-h-[100px] rounded-xl border border-glass-border bg-secondary/15 p-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                     maxLength={500}
                   />
-                  <p className="text-[11px] text-[#8A7F74] text-right">
+                  <p className="text-[11px] text-muted-foreground text-right">
                     {bio.length}/500 characters
                   </p>
                 </div>
 
-                <div className="flex justify-end gap-3 pt-3 border-t border-[#DDD4C4]/60">
+                <div className="flex justify-end gap-3 pt-3 border-t border-glass-border">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={handleCancel}
                     disabled={isSaving || isUploading}
-                    className="border-[#DDD4C4] text-[#3D3530] hover:bg-[#F5F0E8] flex items-center gap-1.5"
+                    className="border-glass-border text-foreground hover:bg-secondary/40 flex items-center gap-1.5 rounded-xl"
                   >
                     <X className="w-4 h-4" /> Cancel
                   </Button>
                   <Button
                     type="submit"
                     disabled={isSaving || isUploading}
-                    className="bg-[#8B4513] hover:bg-[#C0622F] text-white flex items-center gap-1.5"
+                    className="bg-primary hover:bg-primary/95 text-primary-foreground flex items-center gap-1.5 rounded-xl"
                   >
                     {isSaving ? (
                       <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
@@ -495,16 +528,37 @@ export default function ProfilePage() {
                   <div className="space-y-4">
                     {isLoadingPosts ? (
                       <div className="flex justify-center py-12">
-                        <Loader2 className="w-8 h-8 text-[#8B4513] animate-spin" />
+                        <Loader2 className="w-8 h-8 text-primary animate-spin" />
                       </div>
                     ) : posts.length === 0 ? (
-                      <div className="text-center py-16 bg-[#F5F0E8]/20 rounded-2xl border border-dashed border-[#DDD4C4] p-6 text-[#8A7F74]">
-                        <BookMarked className="w-8 h-8 mx-auto mb-2 text-[#DDD4C4]" />
+                      <div className="text-center py-16 bg-secondary/10 rounded-2xl border border-dashed border-glass-border p-6 text-muted-foreground">
+                        <BookMarked className="w-8 h-8 mx-auto mb-2 text-muted-foreground/45" />
                         <p className="font-semibold text-sm">No activity yet</p>
-                        <p className="text-xs text-[#8A7F74] mt-0.5">This user hasn't posted anything to the feed.</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">This user hasn't posted anything to the feed.</p>
                       </div>
                     ) : (
                       posts.map((post) => (
+                        <PostCard key={post._id} post={post} />
+                      ))
+                    )}
+                  </div>
+                )}
+
+                {/* ── Tab: Saved Posts (Bookmarks) ── */}
+                {activeTab === 'saved' && isOwnProfile && (
+                  <div className="space-y-4">
+                    {isLoadingSavedPosts ? (
+                      <div className="flex justify-center py-12">
+                        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                      </div>
+                    ) : savedPosts.length === 0 ? (
+                      <div className="text-center py-16 bg-secondary/10 rounded-2xl border border-dashed border-glass-border p-6 text-muted-foreground">
+                        <Bookmark className="w-8 h-8 mx-auto mb-2 text-muted-foreground/45" />
+                        <p className="font-semibold text-sm">No saved posts</p>
+                        <p className="text-xs text-muted-foreground/80 mt-0.5">Posts you bookmark will appear here.</p>
+                      </div>
+                    ) : (
+                      savedPosts.map((post) => (
                         <PostCard key={post._id} post={post} />
                       ))
                     )}
@@ -516,41 +570,41 @@ export default function ProfilePage() {
                   <div>
                     {isLoadingLibrary ? (
                       <div className="flex justify-center py-12">
-                        <Loader2 className="w-8 h-8 text-[#8B4513] animate-spin" />
+                        <Loader2 className="w-8 h-8 text-primary animate-spin" />
                       </div>
                     ) : libraryEntries.length === 0 ? (
-                      <div className="text-center py-16 bg-[#F5F0E8]/20 rounded-2xl border border-dashed border-[#DDD4C4] p-6 text-[#8A7F74]">
-                        <BookOpen className="w-8 h-8 mx-auto mb-2 text-[#DDD4C4]" />
+                      <div className="text-center py-16 bg-secondary/10 rounded-2xl border border-dashed border-glass-border p-6 text-muted-foreground">
+                        <BookOpen className="w-8 h-8 mx-auto mb-2 text-muted-foreground/45" />
                         <p className="font-semibold text-sm">Library is empty</p>
-                        <p className="text-xs text-[#8A7F74] mt-0.5">No books have been logged by this user yet.</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">No books have been logged by this user yet.</p>
                       </div>
                     ) : (
                       <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
                         {libraryEntries.map((entry) => (
-                          <div 
-                            key={entry._id} 
-                            className="bg-white rounded-xl border border-[#DDD4C4] p-3 flex gap-3 hover:shadow-md transition-shadow"
+                          <div
+                            key={entry._id}
+                            className="bg-card/60 glass-card rounded-xl border border-glass-border p-3 flex gap-3 hover:shadow-md transition-shadow"
                           >
                             {entry.book?.coverImage ? (
-                              <img 
-                                src={entry.book.coverImage} 
-                                className="w-16 h-24 object-cover rounded-lg border border-[#DDD4C4] shrink-0" 
-                                alt="Book cover" 
+                              <img
+                                src={entry.book.coverImage}
+                                className="w-16 h-24 object-cover rounded-lg border border-glass-border shrink-0"
+                                alt="Book cover"
                               />
                             ) : (
-                              <div className="w-16 h-24 bg-[#F5F0E8] rounded-lg border border-[#DDD4C4] flex items-center justify-center shrink-0">
-                                <BookOpen className="w-6 h-6 text-[#8A7F74]" />
+                              <div className="w-16 h-24 bg-secondary/20 rounded-lg border border-glass-border flex items-center justify-center shrink-0">
+                                <BookOpen className="w-6 h-6 text-muted-foreground" />
                               </div>
                             )}
                             <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
                               <div>
-                                <h4 className="font-semibold text-sm text-[#1C1A17] line-clamp-2 leading-tight">
+                                <h4 className="font-semibold text-sm text-foreground line-clamp-2 leading-tight">
                                   {entry.book?.title}
                                 </h4>
-                                <p className="text-xs text-[#8A7F74] mt-1 truncate">{entry.book?.author}</p>
+                                <p className="text-xs text-muted-foreground mt-1 truncate">{entry.book?.author}</p>
                               </div>
                               <div className="flex items-center justify-between">
-                                <Badge className={cn("text-[10px] px-2 py-0.5 font-medium border-none", 
+                                <Badge className={cn("text-[10px] px-2 py-0.5 font-medium border-none",
                                   entry.shelfType === 'READ' && 'bg-green-100 text-green-800',
                                   entry.shelfType === 'READING' && 'bg-blue-100 text-blue-800',
                                   entry.shelfType === 'WISHLIST' && 'bg-yellow-100 text-yellow-800',
@@ -574,37 +628,37 @@ export default function ProfilePage() {
                 {activeTab === 'about' && (
                   <div className="space-y-6 max-w-2xl">
                     <div className="grid gap-6 sm:grid-cols-2">
-                      <div className="flex items-start gap-3 p-4 rounded-xl bg-[#F5F0E8]/50 border border-[#DDD4C4]/50">
-                        <Mail className="w-5 h-5 text-[#8B4513] shrink-0 mt-0.5" />
+                      <div className="flex items-start gap-3 p-4 rounded-xl bg-secondary/25 border border-glass-border">
+                        <Mail className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                         <div>
-                          <p className="text-[11px] font-bold uppercase tracking-wider text-[#8A7F74]">Email Address</p>
-                          <p className="mt-0.5 text-sm font-medium text-[#3D3530] truncate">
+                          <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Email Address</p>
+                          <p className="mt-0.5 text-sm font-medium text-foreground truncate">
                             {isOwnProfile ? currentUser?.email : 'Hidden for privacy'}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-start gap-3 p-4 rounded-xl bg-[#F5F0E8]/50 border border-[#DDD4C4]/50">
-                        <Shield className="w-5 h-5 text-[#8B4513] shrink-0 mt-0.5" />
+                      <div className="flex items-start gap-3 p-4 rounded-xl bg-secondary/25 border border-glass-border">
+                        <Shield className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                         <div>
-                          <p className="text-[11px] font-bold uppercase tracking-wider text-[#8A7F74]">Account Role</p>
-                          <p className="mt-0.5 text-sm font-medium text-[#3D3530] capitalize">{profile.role || 'Member'}</p>
+                          <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Account Role</p>
+                          <p className="mt-0.5 text-sm font-medium text-foreground capitalize">{profile.role || 'Member'}</p>
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex items-start gap-3 p-4 rounded-xl bg-[#F5F0E8]/50 border border-[#DDD4C4]/50">
-                      <Calendar className="w-5 h-5 text-[#8B4513] shrink-0 mt-0.5" />
+                    <div className="flex items-start gap-3 p-4 rounded-xl bg-secondary/25 border border-glass-border">
+                      <Calendar className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-[11px] font-bold uppercase tracking-wider text-[#8A7F74]">Member Since</p>
-                        <p className="mt-0.5 text-sm font-medium text-[#3D3530]">
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Member Since</p>
+                        <p className="mt-0.5 text-sm font-medium text-foreground">
                           {profile.createdAt ? format(new Date(profile.createdAt), 'MMMM dd, yyyy') : 'Recently joined'}
                         </p>
                       </div>
                     </div>
 
-                    <div className="pt-4 border-t border-[#DDD4C4]/60">
-                      <p className="text-xs font-bold uppercase tracking-wider text-[#8A7F74]">Biography</p>
-                      <p className="mt-2 text-sm text-[#3D3530] leading-relaxed whitespace-pre-line bg-[#F5F0E8]/40 p-4 rounded-xl border border-[#DDD4C4]/40">
+                    <div className="pt-4 border-t border-glass-border">
+                      <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Biography</p>
+                      <p className="mt-2 text-sm text-foreground leading-relaxed whitespace-pre-line bg-secondary/15 p-4 rounded-xl border border-glass-border">
                         {profile.bio || 'No bio yet.'}
                       </p>
                     </div>
@@ -625,17 +679,17 @@ export default function ProfilePage() {
       >
         {isLoadingFollowers ? (
           <div className="flex justify-center py-8">
-            <Loader2 className="w-6 h-6 text-[#8B4513] animate-spin" />
+            <Loader2 className="w-6 h-6 text-primary animate-spin" />
           </div>
         ) : followersList.length === 0 ? (
-          <p className="text-center py-8 text-sm text-[#8A7F74]">No followers yet.</p>
+          <p className="text-center py-8 text-sm text-muted-foreground">No followers yet.</p>
         ) : (
           <div className="max-h-[350px] overflow-y-auto space-y-3 pr-1">
             {followersList.map((item) => {
               const followerUser = item.follower;
               if (!followerUser) return null;
               return (
-                <div key={item._id} className="flex items-center justify-between py-2 border-b border-[#DDD4C4]/30 last:border-b-0">
+                <div key={item._id} className="flex items-center justify-between py-2 border-b border-glass-border last:border-b-0">
                   <Link
                     to={`/profile/${followerUser.username}`}
                     onClick={() => setIsFollowersOpen(false)}
@@ -643,8 +697,8 @@ export default function ProfilePage() {
                   >
                     <Avatar src={followerUser.avatar} name={followerUser.name} size="sm" />
                     <div>
-                      <p className="font-semibold text-sm text-[#1C1A17]">{followerUser.name}</p>
-                      <p className="text-xs text-[#8A7F74]">@{followerUser.username}</p>
+                      <p className="font-semibold text-sm text-foreground">{followerUser.name}</p>
+                      <p className="text-xs text-muted-foreground">@{followerUser.username}</p>
                     </div>
                   </Link>
                 </div>
@@ -663,17 +717,17 @@ export default function ProfilePage() {
       >
         {isLoadingFollowing ? (
           <div className="flex justify-center py-8">
-            <Loader2 className="w-6 h-6 text-[#8B4513] animate-spin" />
+            <Loader2 className="w-6 h-6 text-primary animate-spin" />
           </div>
         ) : followingList.length === 0 ? (
-          <p className="text-center py-8 text-sm text-[#8A7F74]">Not following anyone yet.</p>
+          <p className="text-center py-8 text-sm text-muted-foreground">Not following anyone yet.</p>
         ) : (
           <div className="max-h-[350px] overflow-y-auto space-y-3 pr-1">
             {followingList.map((item) => {
               const followingUser = item.following;
               if (!followingUser) return null;
               return (
-                <div key={item._id} className="flex items-center justify-between py-2 border-b border-[#DDD4C4]/30 last:border-b-0">
+                <div key={item._id} className="flex items-center justify-between py-2 border-b border-glass-border last:border-b-0">
                   <Link
                     to={`/profile/${followingUser.username}`}
                     onClick={() => setIsFollowingOpen(false)}
@@ -681,8 +735,8 @@ export default function ProfilePage() {
                   >
                     <Avatar src={followingUser.avatar} name={followingUser.name} size="sm" />
                     <div>
-                      <p className="font-semibold text-sm text-[#1C1A17]">{followingUser.name}</p>
-                      <p className="text-xs text-[#8A7F74]">@{followingUser.username}</p>
+                      <p className="font-semibold text-sm text-foreground">{followingUser.name}</p>
+                      <p className="text-xs text-muted-foreground">@{followingUser.username}</p>
                     </div>
                   </Link>
                 </div>

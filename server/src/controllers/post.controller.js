@@ -159,6 +159,43 @@ const toggleSavePost = asyncHandler(async (req, res) => {
   }
 });
 
+const getSavedPosts = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+
+  const savedPostDocs = await SavedPost.find({ user: userId })
+    .populate({
+      path: 'post',
+      populate: [
+        { path: 'author', select: 'name username avatar' },
+        { path: 'bookRef' },
+        { path: 'activityRef' }
+      ]
+    })
+    .sort({ createdAt: -1 });
+
+  const savedPosts = savedPostDocs
+    .map(doc => doc.post)
+    .filter(Boolean);
+
+  const postIds = savedPosts.map(p => p._id);
+  const userLikes = await Like.find({ user: userId, post: { $in: postIds } });
+  const likedPostIds = new Set(userLikes.map(l => l.post.toString()));
+
+  const augmentedPosts = savedPosts.map(post => {
+    const postObj = post.toObject ? post.toObject() : post;
+    return {
+      ...postObj,
+      isLiked: likedPostIds.has(post._id.toString()),
+      isSaved: true
+    };
+  });
+
+  return ApiResponse.success(res, {
+    message: 'Saved posts retrieved successfully',
+    data: augmentedPosts
+  });
+});
+
 module.exports = {
   createPost,
   getPostById,
@@ -168,4 +205,5 @@ module.exports = {
   getComments,
   deleteComment,
   toggleSavePost,
+  getSavedPosts,
 };

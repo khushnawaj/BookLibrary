@@ -68,6 +68,7 @@ export const postService = {
   deletePost: async (id) => api.delete(`/posts/${id}`),
   toggleLike: async (id) => api.post(`/posts/${id}/like`),
   toggleSave: async (id) => api.post(`/posts/${id}/save`),
+  getSavedPosts: async () => api.get('/posts/saved'),
   getComments: async (id) => api.get(`/posts/${id}/comments`),
   addComment: async (id, data) => api.post(`/posts/${id}/comments`, data),
   deleteComment: async (postId, commentId) => api.delete(`/posts/${postId}/comments/${commentId}`),
@@ -95,4 +96,11 @@ export const uploadService = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
+};
+
+export const adminService = {
+  getOverview: () => api.get('/admin/overview'),
+  getUsers: () => api.get('/admin/users'),
+  updateUserRole: (id, role) => api.put(`/admin/users/${id}/role`, { role }),
+  deleteUser: (id) => api.delete(`/admin/users/${id}`),
 };

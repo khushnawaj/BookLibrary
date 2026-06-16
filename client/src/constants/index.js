@@ -18,6 +18,7 @@ export const ROUTES = {
   WISHLIST: '/wishlist',
   PROFILE: '/profile',
   SETTINGS: '/settings',
+  ADMIN: '/admin',
 };
 
 export const SHELF_TYPES = {

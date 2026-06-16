@@ -9,10 +9,12 @@ import {
   BookOpen,
   Import,
   UserCircle,
+  Shield,
 } from 'lucide-react';
 import { Logo } from '@/components/common/Logo';
 import { cn } from '@/lib/utils';
 import { ROUTES } from '@/constants';
+import { useAuth } from '@/features/auth/authHooks';
 
 const NAV_SECTIONS = [
   {
@@ -46,10 +48,20 @@ const NAV_SECTIONS = [
   },
 ];
 
-// Flat list kept for legacy usage
-export const navItems = NAV_SECTIONS.flatMap(s => s.items);
-
 export function Sidebar({ className, onNavigate }) {
+  const { user } = useAuth();
+
+  // Dynamically add Admin controls if authorized
+  const activeSections = [...NAV_SECTIONS];
+  if (user?.role === 'ADMIN') {
+    activeSections.push({
+      label: 'Admin Controls',
+      items: [
+        { to: ROUTES.ADMIN, label: 'Control Panel', icon: Shield },
+      ],
+    });
+  }
+
   return (
     <aside
       className={cn(
@@ -66,7 +78,7 @@ export function Sidebar({ className, onNavigate }) {
 
       {/* Nav sections */}
       <nav className="flex flex-1 flex-col gap-6 overflow-y-auto px-3 py-5 scrollbar-none">
-        {NAV_SECTIONS.map((section) => (
+        {activeSections.map((section) => (
           <div key={section.label}>
             <p className="mb-2 px-3 text-[9px] font-bold uppercase tracking-[0.14em] text-muted-foreground/50">
               {section.label}
