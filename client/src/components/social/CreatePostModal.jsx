@@ -173,16 +173,20 @@ export function CreatePostModal({ isOpen, onClose }) {
             </span>
           </div>
 
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder={activeType.placeholder}
-            className={cn(
-              'w-full min-h-[160px] resize-none border-none outline-none focus:outline-none focus:ring-0 text-sm sm:text-base p-1 bg-transparent text-foreground',
-              'placeholder:text-muted-foreground/50 leading-relaxed',
-              postType === 'poem' && 'font-mono text-sm italic'
-            )}
-          />
+          <div className="rounded-xl border border-glass-border bg-secondary/10 px-4 py-3 mt-1">
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder={activeType.placeholder}
+              style={{ color: 'var(--color-foreground)' }}
+              className={cn(
+                'w-full min-h-[150px] resize-none border-none outline-none focus:outline-none focus:ring-0',
+                'text-sm sm:text-base bg-transparent leading-relaxed',
+                'placeholder:text-muted-foreground/50',
+                postType === 'poem' && 'font-mono text-sm italic'
+              )}
+            />
+          </div>
 
           {showImageUpload && (
             <div className="mt-4 p-2 border border-glass-border rounded-xl bg-secondary/10 relative">

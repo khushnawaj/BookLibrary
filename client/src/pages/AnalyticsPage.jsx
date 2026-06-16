@@ -408,7 +408,7 @@ export default function AnalyticsPage() {
                   </CardHeader>
                   <CardContent className="h-[280px]">
                     {booksPerMonth.length > 0 ? (
-                      <ResponsiveContainer width="100%" height="100%">
+                      <ResponsiveContainer width="100%" height={280} minWidth={0}>
                         <BarChart data={booksPerMonth} barSize={28}>
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                           <XAxis dataKey="month" stroke="#64748b" tick={{ fontSize: 12 }} />
@@ -436,7 +436,7 @@ export default function AnalyticsPage() {
                   </CardHeader>
                   <CardContent className="h-[280px]">
                     {genreDistribution.length > 0 ? (
-                      <ResponsiveContainer width="100%" height="100%">
+                      <ResponsiveContainer width="100%" height={280} minWidth={0}>
                         <PieChart>
                           <Pie
                             data={genreDistribution}

@@ -13,27 +13,31 @@ cloudinary.config({
 });
 
 const isCloudinaryConfigured = () => {
+  const name = process.env.CLOUDINARY_CLOUD_NAME;
+  const key = process.env.CLOUDINARY_API_KEY;
+  const secret = process.env.CLOUDINARY_API_SECRET;
+  const invalidNames = ['demo', 'cloudinary_key', 'your_cloud_name', ''];
+  const invalidKeys = ['8942398423', 'your_api_key', ''];
   return !!(
-    process.env.CLOUDINARY_CLOUD_NAME &&
-    process.env.CLOUDINARY_CLOUD_NAME !== 'demo' &&
-    process.env.CLOUDINARY_API_KEY &&
-    process.env.CLOUDINARY_API_KEY !== '8942398423'
+    name && !invalidNames.includes(name) &&
+    key && !invalidKeys.includes(key) &&
+    secret && !['your_api_secret', ''].includes(secret)
   );
 };
 
-// Configure Multer Storage for Cloudinary with Local Fallback
 const getCloudinaryStorage = (folderName) => {
   if (isCloudinaryConfigured()) {
+    console.log(`[Cloudinary] Using cloud storage for folder: bookverse/${folderName}`);
     return new CloudinaryStorage({
       cloudinary: cloudinary,
-      params: {
+      params: async (req, file) => ({
         folder: `bookverse/${folderName}`,
-        allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
-        transformation: [{ width: 800, height: 1200, crop: 'limit' }, { quality: 'auto', fetch_format: 'auto' }],
-      },
+        allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'gif'],
+        transformation: [{ width: 800, height: 800, crop: 'limit', quality: 'auto' }],
+      }),
     });
   } else {
-    // Local fallback disk storage
+    console.log(`[Cloudinary] Cloudinary not configured — using local disk storage for: ${folderName}`);
     const uploadPath = path.join(__dirname, '../../uploads', folderName);
     if (!fs.existsSync(uploadPath)) {
       fs.mkdirSync(uploadPath, { recursive: true });

@@ -139,6 +139,8 @@
 
   body {
     @apply bg-background text-foreground font-sans min-h-screen text-base;
+    font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+    color: var(--color-foreground);
     background-color: var(--color-background);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -356,10 +358,16 @@
   }
 
   /* ─── Input focus ring ─── */
-  input:focus-visible, textarea:focus-visible, select:focus-visible {
+  input:focus-visible, select:focus-visible {
     outline: none;
     box-shadow: 0 0 0 2px var(--color-glow-3);
     border-color: var(--color-mint) !important;
+  }
+  /* Textareas: only styled wrappers get focus ring, not raw textareas */
+  textarea:focus-visible {
+    outline: none;
+    box-shadow: none;
+    border-color: transparent !important;
   }
 
   /* ─── Animate in ─── */

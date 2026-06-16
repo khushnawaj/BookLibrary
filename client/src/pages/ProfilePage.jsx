@@ -377,10 +377,10 @@ export default function ProfilePage() {
             {/* Display names & follow stats */}
             <div className="pt-12 pl-2 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
               <div>
-                <CardTitle className="text-2xl font-bold text-foreground">{profile.name}</CardTitle>
-                <p className="text-sm text-muted-foreground mt-0.5">@{profile.username}</p>
+                <CardTitle className="text-2xl font-bold" style={{ color: 'var(--color-foreground)' }}>{profile.name}</CardTitle>
+                <p className="text-sm mt-0.5" style={{ color: 'var(--color-muted-foreground)' }}>@{profile.username}</p>
                 {profile.bio && !isEditing && (
-                  <p className="text-sm text-foreground/80 mt-3 max-w-xl italic leading-relaxed">
+                  <p className="text-sm mt-3 max-w-xl italic leading-relaxed" style={{ color: 'var(--color-foreground)', opacity: 0.8 }}>
                     "{profile.bio}"
                   </p>
                 )}
@@ -484,16 +484,17 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="profile-bio" className="text-sm font-semibold text-foreground/80">Biography</Label>
+                  <Label htmlFor="profile-bio" className="text-sm font-semibold" style={{ color: 'var(--color-foreground)', opacity: 0.8 }}>Biography</Label>
                   <textarea
                     id="profile-bio"
                     value={bio}
                     onChange={(e) => setBio(e.target.value)}
                     placeholder="Tell other readers about yourself..."
+                    style={{ color: 'var(--color-foreground)' }}
                     className="w-full min-h-[100px] rounded-xl border border-glass-border bg-secondary/15 p-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                     maxLength={500}
                   />
-                  <p className="text-[11px] text-muted-foreground text-right">
+                  <p className="text-[11px] text-right" style={{ color: 'var(--color-muted-foreground)' }}>
                     {bio.length}/500 characters
                   </p>
                 </div>
