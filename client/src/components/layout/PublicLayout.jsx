@@ -1,10 +1,13 @@
 import { Link, Outlet } from 'react-router-dom';
 import { BookOpen, Sparkles } from 'lucide-react';
+import { useSelector } from 'react-redux';
 import { Button } from '@/components/ui/button';
 import { APP_NAME, ROUTES } from '@/constants';
 import { LiquidGlassBackground } from '@/components/common/LiquidGlassBackground';
 
 export function PublicLayout() {
+  const { isAuthenticated } = useSelector((state) => state.auth);
+
   return (
     <LiquidGlassBackground className="text-foreground">
       <header className="fixed inset-x-0 top-0 z-50 border-b border-border/60 bg-background/60 backdrop-blur-xl">
@@ -27,12 +30,20 @@ export function PublicLayout() {
           </div>
 
           <nav className="flex items-center gap-2">
-            <Button asChild variant="ghost" size="sm" className="hover:bg-secondary/60">
-              <Link to={ROUTES.LOGIN}>Sign in</Link>
-            </Button>
-            <Button asChild size="sm">
-              <Link to={ROUTES.REGISTER}>Get started</Link>
-            </Button>
+            {isAuthenticated ? (
+              <Button asChild size="sm">
+                <Link to={ROUTES.DASHBOARD}>Dashboard</Link>
+              </Button>
+            ) : (
+              <>
+                <Button asChild variant="ghost" size="sm" className="hover:bg-secondary/60">
+                  <Link to={ROUTES.LOGIN}>Sign in</Link>
+                </Button>
+                <Button asChild size="sm">
+                  <Link to={ROUTES.REGISTER}>Get started</Link>
+                </Button>
+              </>
+            )}
           </nav>
         </div>
       </header>
