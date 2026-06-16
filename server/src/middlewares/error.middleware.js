@@ -42,13 +42,11 @@ const errorMiddleware = (err, req, res, next) => {
     }
   }
 
-  if (process.env.NODE_ENV === 'development') {
-    console.error('[Error]', {
-      message: error.message,
-      statusCode: error.statusCode,
-      stack: err.stack,
-    });
-  }
+  console.error('[Error]', {
+    message: error.message,
+    statusCode: error.statusCode,
+    stack: err.stack,
+  });
 
   return ApiResponse.error(res, {
     statusCode: error.statusCode,
