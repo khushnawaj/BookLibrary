@@ -1,13 +1,13 @@
 import { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import {
   Heart, MessageCircle, Bookmark, Share2,
-  MoreHorizontal, BookOpen, Globe, Lock, Users,
+  MoreHorizontal, BookOpen, Globe, Lock, Users, Trash2,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { toggleLike } from '@/features/feed/feedSlice';
+import { toggleLike, removePostFromFeed } from '@/features/feed/feedSlice';
 import { postService } from '@/services';
 import { Button } from '@/components/ui/button';
 import { Avatar } from '@/components/ui/avatar';
@@ -23,9 +23,14 @@ const VISIBILITY_ICON = {
 
 export function PostCard({ post }) {
   const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
   const [isSaved, setIsSaved]           = useState(post.isSaved);
   const [showComments, setShowComments] = useState(false);
   const [imgError, setImgError]         = useState({});
+
+  const isAuthor = user && post.author && (user._id === post.author._id || user._id === post.author);
+  const isAdmin = user && user.role === 'ADMIN';
+  const canDelete = isAuthor || isAdmin;
 
   const handleLike  = () => dispatch(toggleLike(post._id));
 
@@ -43,6 +48,19 @@ export function PostCard({ post }) {
   const handleShare = () => {
     navigator.clipboard.writeText(`${window.location.origin}/post/${post._id}`);
     toast.success('Link copied to clipboard!');
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
+      return;
+    }
+    try {
+      await postService.deletePost(post._id);
+      dispatch(removePostFromFeed(post._id));
+      toast.success('Post deleted successfully');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to delete post');
+    }
   };
 
   const VisibilityIcon = VISIBILITY_ICON[post.visibility] ?? Globe;
@@ -91,14 +109,18 @@ export function PostCard({ post }) {
           </div>
         </div>
 
-        {/* More menu */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 rounded-xl text-muted-foreground/60 hover:text-foreground hover:bg-secondary/40 shrink-0 -mr-1.5 -mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-        >
-          <MoreHorizontal className="w-4 h-4" />
-        </Button>
+        {/* Delete option for Author or Admin */}
+        {canDelete && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleDelete}
+            className="h-8 w-8 rounded-xl text-red-500/70 hover:text-red-600 hover:bg-red-50/50 shrink-0 -mr-1.5 -mt-0.5 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity"
+            title="Delete post"
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        )}
       </div>
 
       {/* ── Content ── */}

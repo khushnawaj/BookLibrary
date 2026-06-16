@@ -3,7 +3,6 @@ import { useDispatch } from 'react-redux';
 import { X, Image as ImageIcon, Sparkles, Brain, BookOpen, Feather, Heart, Trophy } from 'lucide-react';
 import { createPost } from '@/features/feed/feedSlice';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { ImageUpload } from '@/components/common/ImageUpload';
 import { toast } from 'react-hot-toast';
 import { cn } from '@/lib/utils';
@@ -174,12 +173,12 @@ export function CreatePostModal({ isOpen, onClose }) {
             </span>
           </div>
 
-          <Textarea
+          <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder={activeType.placeholder}
             className={cn(
-              'min-h-[160px] resize-none border-none focus-visible:ring-0 text-sm sm:text-base p-0 bg-transparent',
+              'w-full min-h-[160px] resize-none border-none outline-none focus:outline-none focus:ring-0 text-sm sm:text-base p-1 bg-transparent text-foreground',
               'placeholder:text-muted-foreground/50 leading-relaxed',
               postType === 'poem' && 'font-mono text-sm italic'
             )}

@@ -59,11 +59,18 @@ const getPostById = asyncHandler(async (req, res) => {
 
 const deletePost = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const post = await Post.findOneAndDelete({ _id: id, author: req.user._id });
   
+  const post = await Post.findById(id);
   if (!post) {
-    throw new AppError('Post not found or unauthorized', HTTP_STATUS.NOT_FOUND);
+    throw new AppError('Post not found', HTTP_STATUS.NOT_FOUND);
   }
+
+  // Allow deletion if requester is author OR admin
+  if (post.author.toString() !== req.user._id.toString() && req.user.role !== 'ADMIN') {
+    throw new AppError('Unauthorized to delete this post', HTTP_STATUS.FORBIDDEN);
+  }
+
+  await Post.findByIdAndDelete(id);
 
   // Cleanup references
   await Promise.all([

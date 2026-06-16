@@ -18,55 +18,55 @@
   --spacing-section: 1.5rem;
   --spacing-card:    1.5rem;
 
-  /* ── Map Tailwind Theme keys to CSS Custom Properties for Live Dark/Light Mode ── */
-  --color-background:         var(--color-background);
-  --color-foreground:         var(--color-foreground);
-  --color-card:               var(--color-card);
-  --color-card-foreground:    var(--color-card-foreground);
-  --color-popover:            var(--color-popover);
-  --color-popover-foreground: var(--color-popover-foreground);
+  /* ── Map Tailwind Theme keys to direct CSS Custom Properties for Live Dark/Light Mode ── */
+  --color-background:         #F5F0E8;
+  --color-foreground:         #1C1A17;
+  --color-card:               #FFFFFF;
+  --color-card-foreground:    #1C1A17;
+  --color-popover:            #FFFFFF;
+  --color-popover-foreground: #1C1A17;
 
-  --color-primary:            var(--color-primary);
-  --color-primary-foreground: var(--color-primary-foreground);
-  --color-secondary:          var(--color-secondary);
-  --color-secondary-foreground: var(--color-secondary-foreground);
+  --color-primary:            #8B4513;
+  --color-primary-foreground: #FFFFFF;
+  --color-secondary:          #EDE6D8;
+  --color-secondary-foreground: #3D3530;
 
-  --color-muted:              var(--color-muted);
-  --color-muted-foreground:   var(--color-muted-foreground);
+  --color-muted:              #EDE6D8;
+  --color-muted-foreground:   #8A7F74;
 
-  --color-accent:             var(--color-accent);
-  --color-accent-foreground:  var(--color-accent-foreground);
+  --color-accent:             #C0622F;
+  --color-accent-foreground:  #FFFFFF;
 
-  --color-mint:               var(--color-mint);
-  --color-mint-foreground:    var(--color-mint-foreground);
-  --color-forest:             var(--color-forest);
+  --color-mint:               #C0622F;
+  --color-mint-foreground:    #FFFFFF;
+  --color-forest:             #5C7A3E;
 
-  --color-success:            var(--color-success);
-  --color-success-foreground: var(--color-success-foreground);
-  --color-warning:            var(--color-warning);
-  --color-destructive:        var(--color-destructive);
-  --color-destructive-foreground: var(--color-destructive-foreground);
+  --color-success:            #5C7A3E;
+  --color-success-foreground: #FFFFFF;
+  --color-warning:            #D4931A;
+  --color-destructive:        #C0392B;
+  --color-destructive-foreground: #FFFFFF;
 
-  --color-border:             var(--color-border);
-  --color-input:              var(--color-input);
-  --color-ring:               var(--color-ring);
+  --color-border:             #DDD4C4;
+  --color-input:              #FFFFFF;
+  --color-ring:               #8B4513;
 
-  --color-glass:              var(--color-glass);
-  --color-sidebar:            var(--color-sidebar);
-  --color-sidebar-foreground: var(--color-sidebar-foreground);
-  --color-sidebar-active:     var(--color-sidebar-active);
+  --color-glass:              rgba(255,255,255,0.72);
+  --color-sidebar:            #1E1915;
+  --color-sidebar-foreground: #EDE6D8;
+  --color-sidebar-active:     #8B4513;
 
-  --color-glow-1:             var(--color-glow-1);
-  --color-glow-2:             var(--color-glow-2);
-  --color-glow-3:             var(--color-glow-3);
+  --color-glow-1:             rgba(139,69,19,0.08);
+  --color-glow-2:             rgba(192,98,47,0.06);
+  --color-glow-3:             rgba(212,147,26,0.04);
 
-  --color-gradient-start:     var(--color-gradient-start);
-  --color-gradient-mid:       var(--color-gradient-mid);
-  --color-gradient-end:       var(--color-gradient-end);
+  --color-gradient-start:     #C0622F;
+  --color-gradient-mid:       #8B4513;
+  --color-gradient-end:       #5C3010;
 
-  --color-glass-border:       var(--color-glass-border);
-  --color-glass-highlight:    var(--color-glass-highlight);
-  --color-selection-bg:       var(--color-selection-bg);
+  --color-glass-border:       rgba(139,69,19,0.12);
+  --color-glass-highlight:    rgba(255,255,255,0.6);
+  --color-selection-bg:       rgba(139,69,19,0.18);
 
   --radius-sm:  0.375rem;
   --radius-md:  0.5rem;
