@@ -12,7 +12,7 @@ const register = asyncHandler(async (req, res) => {
   return ApiResponse.success(res, {
     statusCode: HTTP_STATUS.CREATED,
     message: 'Account created successfully',
-    data: { user: user.toPublicProfile() },
+    data: { user: user.toPublicProfile(), accessToken },
   });
 });
 
@@ -23,7 +23,7 @@ const login = asyncHandler(async (req, res) => {
 
   return ApiResponse.success(res, {
     message: 'Logged in successfully',
-    data: { user: user.toPublicProfile() },
+    data: { user: user.toPublicProfile(), accessToken },
   });
 });
 
@@ -46,7 +46,9 @@ const getMe = asyncHandler(async (req, res) => {
 });
 
 const refresh = asyncHandler(async (req, res) => {
-  const incomingRefreshToken = req.cookies[COOKIE_NAMES.REFRESH_TOKEN];
+  // Support both cookie-based (same domain) and body-based (cross domain) refresh tokens
+  const incomingRefreshToken =
+    req.cookies[COOKIE_NAMES.REFRESH_TOKEN] || req.body.refreshToken;
 
   const { accessToken, refreshToken, user } = await authService.refreshUserTokens(incomingRefreshToken);
 
@@ -54,7 +56,7 @@ const refresh = asyncHandler(async (req, res) => {
 
   return ApiResponse.success(res, {
     message: 'Token refreshed successfully',
-    data: { user: user.toPublicProfile() },
+    data: { user: user.toPublicProfile(), accessToken, refreshToken },
   });
 });
 

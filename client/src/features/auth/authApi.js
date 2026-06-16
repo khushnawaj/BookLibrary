@@ -1,13 +1,17 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { authService } from '@/services';
 import { extractApiError } from '@/utils/apiError';
+import { tokenStorage } from '@/services/api';
 
 export const registerUser = createAsyncThunk(
   'auth/register',
   async (payload, { rejectWithValue }) => {
     try {
       const { data } = await authService.register(payload);
-      return data.data.user;
+      const { user, accessToken, refreshToken } = data.data;
+      if (accessToken) tokenStorage.setAccess(accessToken);
+      if (refreshToken) tokenStorage.setRefresh(refreshToken);
+      return { user, accessToken };
     } catch (error) {
       return rejectWithValue(extractApiError(error));
     }
@@ -19,7 +23,10 @@ export const loginUser = createAsyncThunk(
   async (payload, { rejectWithValue }) => {
     try {
       const { data } = await authService.login(payload);
-      return data.data.user;
+      const { user, accessToken, refreshToken } = data.data;
+      if (accessToken) tokenStorage.setAccess(accessToken);
+      if (refreshToken) tokenStorage.setRefresh(refreshToken);
+      return { user, accessToken };
     } catch (error) {
       return rejectWithValue(extractApiError(error));
     }
@@ -31,10 +38,12 @@ export const logoutUser = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       await authService.logout();
-      return null;
-    } catch (error) {
-      return rejectWithValue(extractApiError(error));
+    } catch (_err) {
+      // Even if server logout fails, clear local tokens
+    } finally {
+      tokenStorage.clear();
     }
+    return null;
   }
 );
 
@@ -42,9 +51,14 @@ export const fetchCurrentUser = createAsyncThunk(
   'auth/fetchCurrentUser',
   async (_, { rejectWithValue }) => {
     try {
+      // If no token in storage, skip the network call entirely
+      const token = tokenStorage.getAccess();
+      if (!token) return rejectWithValue('No token');
+
       const { data } = await authService.getProfile();
-      return data.data.user;
+      return { user: data.data.user, accessToken: token };
     } catch (error) {
+      tokenStorage.clear();
       return rejectWithValue(extractApiError(error));
     }
   }

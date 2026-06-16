@@ -16,9 +16,9 @@ const initialState = {
   initialized: false,
 };
 
-const setAuthenticated = (state, user) => {
+const setAuthenticated = (state, user, accessToken) => {
   state.user = user;
-  state.accessToken = 'httponly-cookie';
+  state.accessToken = accessToken || state.accessToken;
   state.isAuthenticated = true;
   state.error = null;
 };
@@ -35,6 +35,7 @@ const authSlice = createSlice({
       state.accessToken = null;
       state.isAuthenticated = false;
       state.error = null;
+      state.initialized = true;
     },
   },
   extraReducers: (builder) => {
@@ -46,7 +47,7 @@ const authSlice = createSlice({
       })
       .addCase(registerUser.fulfilled, (state, action) => {
         state.loading = false;
-        setAuthenticated(state, action.payload);
+        setAuthenticated(state, action.payload.user, action.payload.accessToken);
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.loading = false;
@@ -59,7 +60,7 @@ const authSlice = createSlice({
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
-        setAuthenticated(state, action.payload);
+        setAuthenticated(state, action.payload.user, action.payload.accessToken);
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
@@ -76,12 +77,13 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
         state.error = null;
       })
-      .addCase(logoutUser.rejected, (state, action) => {
+      .addCase(logoutUser.rejected, (state) => {
+        // Force clear even on server error
         state.loading = false;
         state.user = null;
         state.accessToken = null;
         state.isAuthenticated = false;
-        state.error = action.payload;
+        state.error = null;
       })
       // Fetch current user (session bootstrap)
       .addCase(fetchCurrentUser.pending, (state) => {
@@ -90,17 +92,15 @@ const authSlice = createSlice({
       .addCase(fetchCurrentUser.fulfilled, (state, action) => {
         state.loading = false;
         state.initialized = true;
-        setAuthenticated(state, action.payload);
+        setAuthenticated(state, action.payload.user, action.payload.accessToken);
       })
       .addCase(fetchCurrentUser.rejected, (state) => {
-        // A 401 here is normal — user simply isn't logged in yet.
-        // Do NOT set error state here, it would flash error messages on landing page.
         state.loading = false;
         state.initialized = true;
         state.user = null;
         state.accessToken = null;
         state.isAuthenticated = false;
-        state.error = null; // intentionally null — not a real error
+        state.error = null; // not a real error — no token or expired
       })
       // Update User Profile
       .addCase(updateUserProfile.pending, (state) => {
