@@ -1,3 +1,4 @@
+import { useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 import {
   ArrowRight,
@@ -127,6 +128,8 @@ function FeatureCard({ feature, index }) {
 }
 
 export default function LandingPage() {
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
+
   return (
     <div className="overflow-hidden bg-transparent">
       <section className="mx-auto grid min-h-[calc(100vh-4rem)] max-w-7xl items-center gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:py-20">
@@ -139,7 +142,7 @@ export default function LandingPage() {
               className="mb-6 inline-flex items-center gap-2 rounded-full border border-glass-border bg-glass/60 backdrop-blur-sm px-4 py-2 text-sm font-semibold text-foreground shadow-sm"
             >
               <CheckCircle2 className="h-4 w-4 text-success" />
-              Built for readers who track what matters
+              {isAuthenticated ? `Welcome back, ${user?.name || user?.username}!` : 'Built for readers who track what matters'}
             </motion.div>
 
             <h1 className="font-display text-5xl font-bold leading-[1.02] text-foreground sm:text-6xl lg:text-7xl">
@@ -151,15 +154,31 @@ export default function LandingPage() {
             </p>
 
             <div className="mt-8 flex flex-col gap-3.5 sm:flex-row">
-              <Button asChild size="lg">
-                <Link to={ROUTES.REGISTER}>
-                  Start your library
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size="lg">
-                <Link to={ROUTES.LOGIN}>Sign in</Link>
-              </Button>
+              {isAuthenticated ? (
+                <>
+                  <Button asChild size="lg">
+                    <Link to={ROUTES.DASHBOARD}>
+                      Go to Dashboard
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" size="lg">
+                    <Link to={ROUTES.LIBRARY}>View your library</Link>
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button asChild size="lg">
+                    <Link to={ROUTES.REGISTER}>
+                      Start your library
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" size="lg">
+                    <Link to={ROUTES.LOGIN}>Sign in</Link>
+                  </Button>
+                </>
+              )}
             </div>
 
             <div className="mt-8 grid max-w-xl grid-cols-3 gap-3.5">
