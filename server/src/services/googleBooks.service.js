@@ -1,9 +1,10 @@
 const axios = require('axios');
 const AppError = require('../utils/AppError');
 const { HTTP_STATUS } = require('../constants');
+const { redisClient } = require('../../config/redis')
 
-const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
-const searchCache = new Map();
+// const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+// const searchCache = new Map();
 
 const normalizeDate = (date) => {
   if (!date) return '';
@@ -39,7 +40,8 @@ const mapGoogleBook = (book) => {
   };
 };
 
-const getCacheKey = (query) => query.trim().toLowerCase();
+const getCacheKey = (query) =>
+  `google-books:${query.trim().toLowerCase()}`;
 
 const getGoogleBooksApiKey = () =>
   process.env.GOOGLE_BOOKS_API_KEY || process.env.googleBooKApiKey;
@@ -70,14 +72,23 @@ const handleGoogleBooksError = (error) => {
 
 const searchBooks = async (query) => {
   const cacheKey = getCacheKey(query);
-  const cached = searchCache.get(cacheKey);
 
-  if (cached && cached.expiresAt > Date.now()) {
+  let cached = null;
+  if (redisClient.isOpen) {
+    try {
+      cached = await redisClient.get(cacheKey);
+    } catch (err) {
+      console.warn('redis cache error', err.message);
+    }
+  }
+  if (cached) {
+    console.log('Redis cache hit')
     return {
-      books: cached.books,
-      source: 'cache',
+      ...JSON.parse(cached),
+      source: 'redis-cache'
     };
   }
+  console.log('google book api hit')
 
   try {
     const response = await axios.get('https://www.googleapis.com/books/v1/volumes', {
@@ -91,10 +102,22 @@ const searchBooks = async (query) => {
 
     const books = (response.data.items || []).map(mapGoogleBook);
 
-    searchCache.set(cacheKey, {
-      books,
-      expiresAt: Date.now() + CACHE_TTL_MS,
-    });
+    if (redisClient.isOpen) {
+      try {
+        await redisClient.set(
+          cacheKey,
+          JSON.stringify({
+            books,
+            totalItems: response.data.totalItems || 0,
+          }),
+          {
+            EX: 21600,
+          }
+        );
+      } catch (err) {
+        console.warn('redis cache set error', err.message);
+      }
+    }
 
     return {
       books,

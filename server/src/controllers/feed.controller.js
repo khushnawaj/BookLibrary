@@ -13,20 +13,23 @@ const getFeed = asyncHandler(async (req, res) => {
     query.createdAt = { $lt: new Date(cursor) };
   }
 
+  // Replace lines 16-29 with an OR clause:
   if (type === 'following') {
-    // Get list of followed users
     const follows = await Follow.find({ follower: userId }).select('following');
     const followingIds = follows.map((f) => f.following);
-
-    // Include user's own posts + following
     followingIds.push(userId);
 
-    query.author = { $in: followingIds };
-    query.visibility = { $in: ['PUBLIC', 'FOLLOWERS'] };
+    query.$or = [
+      { author: { $in: followingIds }, visibility: { $in: ['PUBLIC', 'FOLLOWERS'] } },
+      { author: userId, visibility: 'PRIVATE' }
+    ];
   } else {
-    // Global / community feed — show all public posts
-    query.visibility = { $in: ['PUBLIC', 'FOLLOWERS'] };
+    query.$or = [
+      { visibility: { $in: ['PUBLIC', 'FOLLOWERS'] } },
+      { author: userId, visibility: 'PRIVATE' }
+    ];
   }
+
 
   const posts = await Post.find(query)
     .sort({ createdAt: -1 })

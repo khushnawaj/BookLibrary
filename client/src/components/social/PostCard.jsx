@@ -5,7 +5,8 @@ import { formatDistanceToNow } from 'date-fns';
 import {
   MessageCircle, Bookmark, Share2,
   BookOpen, Globe, Lock, Users, Trash2,
-  ArrowUp, ArrowDown, Edit2, Loader2
+  ArrowUp, ArrowDown, Edit2, Loader2,
+  MoreVertical
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toggleLike, removePostFromFeed, updatePostInFeed } from '@/features/feed/feedSlice';
@@ -79,8 +80,11 @@ export function PostCard({ post, onDelete, onUpdate }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(post.content);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
 
-  const isAuthor = user && post.author && (user._id === post.author._id || user._id === post.author);
+  const currentUserId = user?.id || user?._id;
+  const postAuthorId = post.author?.id || post.author?._id || post.author;
+  const isAuthor = currentUserId && postAuthorId && String(currentUserId) === String(postAuthorId);
   const isAdmin = user && user.role === 'ADMIN';
   const canDelete = isAuthor || isAdmin;
 
@@ -260,6 +264,49 @@ export function PostCard({ post, onDelete, onUpdate }) {
               </div>
             </div>
           </div>
+
+          {/* Kebab Menu for Actions */}
+          {canDelete && (
+            <div className="relative shrink-0">
+              <button
+                onClick={() => setShowMenu((v) => !v)}
+                className="p-1.5 rounded-full text-muted-foreground/75 hover:text-foreground hover:bg-secondary/50 transition-colors cursor-pointer"
+                title="Post options"
+              >
+                <MoreVertical className="w-4.5 h-4.5" />
+              </button>
+
+              {showMenu && (
+                <>
+                  <div className="fixed inset-0 z-20" onClick={() => setShowMenu(false)} />
+                  <div className="absolute right-0 mt-1 w-36 rounded-xl border border-glass-border bg-card/95 glass-card shadow-lg p-1 z-30 animate-in fade-in slide-in-from-top-2 duration-150">
+                    {isAuthor && !isEditing && (
+                      <button
+                        onClick={() => {
+                          setIsEditing(true);
+                          setShowMenu(false);
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg text-foreground hover:bg-secondary/60 transition-colors text-left cursor-pointer"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                        Edit Post
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        handleDelete();
+                        setShowMenu(false);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg text-red-500 hover:bg-red-500/10 transition-colors text-left cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      Delete Post
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </div>
 
         {/* ── Post Content ── */}
@@ -465,34 +512,6 @@ export function PostCard({ post, onDelete, onUpdate }) {
             <span>{isSaved ? 'Saved' : 'Save'}</span>
           </button>
 
-          {/* Edit Pill for Author */}
-          {isAuthor && !isEditing && (
-            <button
-              onClick={() => setIsEditing(true)}
-              className="flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-semibold shrink-0 ml-auto
-                         bg-primary/5 hover:bg-primary/10 text-primary border border-primary/10
-                         transition-all duration-150 cursor-pointer"
-              title="Edit post"
-            >
-              <Edit2 className="w-3.5 h-3.5 shrink-0" />
-              <span>Edit</span>
-            </button>
-          )}
-
-          {/* Delete Pill for Author or Admin */}
-          {canDelete && (
-            <button
-              onClick={handleDelete}
-              className={cn(
-                "flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-semibold shrink-0 transition-all duration-150 cursor-pointer",
-                isAuthor ? "ml-0 bg-red-500/5 hover:bg-red-500/10 text-red-500/70 hover:text-red-500 border border-red-500/10" : "ml-auto bg-red-500/5 hover:bg-red-500/10 text-red-500/70 hover:text-red-500 border border-red-500/10"
-              )}
-              title="Delete post"
-            >
-              <Trash2 className="w-3.5 h-3.5 shrink-0" />
-              <span className="hidden xs:inline">Delete</span>
-            </button>
-          )}
         </div>
 
         {/* ── Comments ── */}

@@ -134,7 +134,7 @@ export function CommentSection({ postId }) {
                 </div>
 
                 {/* Comment Actions (Delete) */}
-                {user?._id === comment.user?._id && (
+                {((user?.id || user?._id) && (comment.user?.id || comment.user?._id) && String(user?.id || user?._id) === String(comment.user?.id || comment.user?._id)) && (
                   <div className="mt-1 pl-1 flex items-center gap-2">
                     <button
                       onClick={() => handleDelete(comment._id)}

@@ -9,6 +9,7 @@ import {
   SlidersHorizontal,
   X,
   BookOpen,
+  Library,
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppStore';
 import {
@@ -22,6 +23,7 @@ import {
   selectLibraryFilters,
 } from '@/features/library/librarySlice';
 import { BookCard, BookListItem } from '@/components/common/BookCard';
+import { BookShelfView } from '@/components/common/BookShelfView';
 import { BookCardSkeleton, BookListSkeleton } from '@/components/common/Skeletons';
 import { EmptyState } from '@/components/common/EmptyState';
 import { Pagination } from '@/components/common/Pagination';
@@ -126,7 +128,7 @@ export default function LibraryPage() {
   };
 
   const hasActiveFilters = filters.search || filters.shelfType || filters.sort;
-  const skeletonCount = viewMode === 'grid' ? 12 : 5;
+  const skeletonCount = viewMode === 'list' ? 5 : 12;
 
   return (
     <div className="space-y-6">
@@ -214,27 +216,42 @@ export default function LibraryPage() {
           </Select>
 
           {/* View toggle */}
-          <div className="flex items-center rounded-lg border border-border p-0.5">
+          <div className="flex items-center rounded-lg border border-border p-0.5 bg-secondary/5">
             <button
               onClick={() => setViewMode('grid')}
               id="view-grid"
+              title="Grid View"
               className={cn(
-                'rounded-md p-1.5 transition-colors',
+                'rounded-md p-1.5 transition-colors cursor-pointer',
                 viewMode === 'grid'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40'
               )}
             >
               <Grid3X3 className="h-4 w-4" />
             </button>
             <button
+              onClick={() => setViewMode('shelf')}
+              id="view-shelf"
+              title="Shelf View"
+              className={cn(
+                'rounded-md p-1.5 transition-colors cursor-pointer',
+                viewMode === 'shelf'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40'
+              )}
+            >
+              <Library className="h-4 w-4" />
+            </button>
+            <button
               onClick={() => setViewMode('list')}
               id="view-list"
+              title="List View"
               className={cn(
-                'rounded-md p-1.5 transition-colors',
+                'rounded-md p-1.5 transition-colors cursor-pointer',
                 viewMode === 'list'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40'
               )}
             >
               <List className="h-4 w-4" />
@@ -274,16 +291,16 @@ export default function LibraryPage() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className={
-              viewMode === 'grid'
-                ? 'grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
-                : 'space-y-3'
+              viewMode === 'list'
+                ? 'space-y-3'
+                : 'grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
             }
           >
             {Array.from({ length: skeletonCount }).map((_, i) =>
-              viewMode === 'grid' ? (
-                <BookCardSkeleton key={i} />
-              ) : (
+              viewMode === 'list' ? (
                 <BookListSkeleton key={i} />
+              ) : (
+                <BookCardSkeleton key={i} />
               )
             )}
           </motion.div>
@@ -323,24 +340,34 @@ export default function LibraryPage() {
             className={
               viewMode === 'grid'
                 ? 'grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
+                : viewMode === 'shelf'
+                ? 'w-full'
                 : 'space-y-3'
             }
           >
-            {entries.map((entry) =>
-              viewMode === 'grid' ? (
-                <BookCard
-                  key={entry._id}
-                  entry={entry}
-                  onEdit={handleEdit}
-                  onDelete={setDeleteTarget}
-                />
-              ) : (
-                <BookListItem
-                  key={entry._id}
-                  entry={entry}
-                  onEdit={handleEdit}
-                  onDelete={setDeleteTarget}
-                />
+            {viewMode === 'shelf' ? (
+              <BookShelfView
+                entries={entries}
+                onEdit={handleEdit}
+                onDelete={setDeleteTarget}
+              />
+            ) : (
+              entries.map((entry) =>
+                viewMode === 'grid' ? (
+                  <BookCard
+                    key={entry._id}
+                    entry={entry}
+                    onEdit={handleEdit}
+                    onDelete={setDeleteTarget}
+                  />
+                ) : (
+                  <BookListItem
+                    key={entry._id}
+                    entry={entry}
+                    onEdit={handleEdit}
+                    onDelete={setDeleteTarget}
+                  />
+                )
               )
             )}
           </motion.div>

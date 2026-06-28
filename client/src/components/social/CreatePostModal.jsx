@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import { X, Image as ImageIcon, Sparkles, Brain, BookOpen, Feather, Heart, Trophy } from 'lucide-react';
+import { X, Image as ImageIcon, Sparkles, Brain, BookOpen, Feather, Heart, Trophy, Calendar, Book } from 'lucide-react';
 import { createPost } from '@/features/feed/feedSlice';
 import { Button } from '@/components/ui/button';
 import { ImageUpload } from '@/components/common/ImageUpload';
@@ -9,6 +9,17 @@ import { cn } from '@/lib/utils';
 
 // ── Post type definitions ──────────────────────────────────────────────────────
 const POST_TYPES = [
+  {
+    id: 'journal',
+    label: 'Journal',
+    emoji: '📔',
+    Icon: Book,
+    placeholder: "Dear Diary, write down your day here...",
+    color: 'text-teal-500',
+    bg: 'bg-teal-500/10',
+    border: 'border-teal-500/30',
+    activeBg: 'bg-teal-500/15',
+  },
   {
     id: 'thought',
     label: 'Thought',
@@ -72,21 +83,152 @@ export function CreatePostModal({ isOpen, onClose }) {
   const [content, setContent] = useState('');
   const [images, setImages] = useState([]);
   const [visibility, setVisibility] = useState('PUBLIC');
-  const [postType, setPostType] = useState('thought');
+  const [postType, setPostType] = useState('journal');
   const [showImageUpload, setShowImageUpload] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  if (!isOpen) return null;
-
   const activeType = POST_TYPES.find((t) => t.id === postType);
+
+  const [isDraftSaved, setIsDraftSaved] = useState(false);
+
+  // Load draft on mount/open
+  useEffect(() => {
+    if (isOpen) {
+      const savedDraft = localStorage.getItem('sf_post_draft');
+      if (savedDraft && !content) {
+        setContent(savedDraft);
+        toast.success('Recovered your unsaved draft! 📝', {
+          style: {
+            borderRadius: '12px',
+            background: 'var(--color-card)',
+            color: 'var(--color-foreground)',
+            border: '1px solid var(--color-glass-border)',
+            fontSize: '12px',
+          }
+        });
+      }
+    }
+  }, [isOpen]);
+
+  // Auto-save draft
+  useEffect(() => {
+    if (content.trim()) {
+      localStorage.setItem('sf_post_draft', content);
+      setIsDraftSaved(true);
+    } else {
+      localStorage.removeItem('sf_post_draft');
+      setIsDraftSaved(false);
+    }
+  }, [content]);
+
+  // Pre-fill journal template on open if empty
+  useEffect(() => {
+    if (isOpen && postType === 'journal') {
+      const savedDraft = localStorage.getItem('sf_post_draft');
+      if (!savedDraft && !content.trim()) {
+        const now = new Date();
+        const dateString = now.toLocaleString('en-US', {
+          weekday: 'short',
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+        setContent(`📅 ${dateString}\n\n`);
+      }
+    }
+  }, [isOpen, postType]);
 
   const handleClose = () => {
     setContent('');
     setImages([]);
     setVisibility('PUBLIC');
-    setPostType('thought');
+    setPostType('journal');
     setShowImageUpload(false);
+    localStorage.removeItem('sf_post_draft');
     onClose();
+  };
+
+  const handlePostTypeChange = (typeId) => {
+    setPostType(typeId);
+    
+    if (typeId === 'journal') {
+      if (!content.trim() || (content.startsWith('📅 ') && content.split('\n').length <= 3)) {
+        const now = new Date();
+        const dateString = now.toLocaleString('en-US', {
+          weekday: 'short',
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+        setContent(`📅 ${dateString}\n\n`);
+      }
+    } else {
+      if (content.startsWith('📅 ') && content.split('\n').length <= 3) {
+        setContent('');
+      }
+    }
+  };
+
+
+  const insertEmoji = (emoji) => {
+    const textarea = document.getElementById('post-composer-textarea');
+    if (textarea) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const text = textarea.value;
+
+      setContent(text.substring(0, start) + emoji + text.substring(end));
+
+      setTimeout(() => {
+        textarea.focus();
+        textarea.setSelectionRange(start + emoji.length, start + emoji.length);
+      }, 0);
+    } else {
+      setContent((prev) => prev + emoji);
+    }
+  };
+
+  const insertTimestamp = () => {
+    const now = new Date();
+    const dateString = now.toLocaleString('en-US', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    const timestamp = `📅 ${dateString}`;
+
+    const textarea = document.getElementById('post-composer-textarea');
+    if (textarea) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const text = textarea.value;
+
+      setContent(text.substring(0, start) + timestamp + text.substring(end));
+
+      setTimeout(() => {
+        textarea.focus();
+        textarea.setSelectionRange(start + timestamp.length, start + timestamp.length);
+      }, 0);
+    } else {
+      setContent((prev) => prev + timestamp);
+    }
+
+    toast.success('Timestamp inserted!', {
+      style: {
+        borderRadius: '12px',
+        background: 'var(--color-card)',
+        color: 'var(--color-foreground)',
+        border: '1px solid var(--color-glass-border)',
+        fontSize: '11px',
+      }
+    });
   };
 
   const handleSubmit = async () => {
@@ -117,6 +259,8 @@ export function CreatePostModal({ isOpen, onClose }) {
     }
   };
 
+  if (!isOpen) return null;
+
   return (
     <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
       <div className="bg-card/95 glass-card w-full max-w-[560px] rounded-t-2xl sm:rounded-2xl border border-glass-border shadow-2xl flex flex-col max-h-[92vh] animate-in slide-in-from-bottom-10 sm:slide-in-from-bottom-4 duration-300">
@@ -138,11 +282,11 @@ export function CreatePostModal({ isOpen, onClose }) {
         </div>
 
         {/* ── Post type selector ── */}
-        <div className="flex items-center gap-1.5 px-4 pt-3 pb-0 overflow-x-auto scrollbar-none">
+        <div className="flex flex-wrap items-center gap-1.5 px-4 pt-3 pb-1">
           {POST_TYPES.map((type) => (
             <button
               key={type.id}
-              onClick={() => setPostType(type.id)}
+              onClick={() => handlePostTypeChange(type.id)}
               className={cn(
                 'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-150 border shrink-0',
                 postType === type.id
@@ -159,33 +303,83 @@ export function CreatePostModal({ isOpen, onClose }) {
         {/* ── Body ── */}
         <div className="p-4 flex-1 overflow-y-auto min-h-0">
           {/* Active type hint bar */}
-          <div className={cn(
-            'flex items-center gap-2 mb-3 px-3 py-2 rounded-xl text-xs font-medium border',
-            activeType.bg, activeType.border, activeType.color
-          )}>
-            <activeType.Icon className="w-3.5 h-3.5 shrink-0" />
-            <span>
-              {postType === 'thought' && 'Sharing a thought'}
-              {postType === 'poem' && 'Writing a poem'}
-              {postType === 'emotion' && 'Expressing a feeling'}
-              {postType === 'book' && 'Talking about a book'}
-              {postType === 'milestone' && 'Celebrating a milestone'}
-            </span>
+          <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
+            <div className={cn(
+              'flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium border',
+              activeType.bg, activeType.border, activeType.color
+            )}>
+              <activeType.Icon className="w-3.5 h-3.5 shrink-0" />
+              <span>
+                {postType === 'journal' && 'Writing in your daily journal'}
+                {postType === 'thought' && 'Sharing a thought'}
+                {postType === 'poem' && 'Writing a poem'}
+                {postType === 'emotion' && 'Expressing a feeling'}
+                {postType === 'book' && 'Talking about a book'}
+                {postType === 'milestone' && 'Celebrating a milestone'}
+              </span>
+            </div>
           </div>
 
-          <div className="rounded-xl border border-glass-border bg-secondary/10 px-4 py-3 mt-1">
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder={activeType.placeholder}
-              style={{ color: 'var(--color-foreground)' }}
-              className={cn(
-                'w-full min-h-[150px] resize-none border-none outline-none focus:outline-none focus:ring-0',
-                'text-sm sm:text-base bg-transparent leading-relaxed',
-                'placeholder:text-muted-foreground/50',
-                postType === 'poem' && 'font-mono text-sm italic'
-              )}
-            />
+          <div className="flex flex-col mt-1">
+            {/* Mood Emojis Toolbar */}
+            <div className="flex items-center justify-between px-3 py-2 border border-glass-border bg-secondary/15 rounded-t-xl select-none">
+              <span className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-wider">Mood:</span>
+              <div className="flex items-center gap-1">
+                {[
+                  { emoji: '😊', label: 'Happy' },
+                  { emoji: '🧘', label: 'Calm' },
+                  { emoji: '😔', label: 'Sad' },
+                  { emoji: '⚡', label: 'Excited' },
+                  { emoji: '🍂', label: 'Reflective' },
+                ].map((m) => (
+                  <button
+                    key={m.label}
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => insertEmoji(m.emoji)}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg text-base hover:bg-secondary/50 transition-colors cursor-pointer"
+                    title={m.label}
+                  >
+                    {m.emoji}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Textarea container */}
+            <div className={cn(
+              "rounded-b-xl border border-t-0 border-glass-border bg-secondary/10 px-4 py-3.5 transition-all duration-200",
+              postType === 'journal' && 'focus-within:border-teal-500/40 focus-within:ring-4 focus-within:ring-teal-500/10',
+              postType === 'thought' && 'focus-within:border-violet-500/40 focus-within:ring-4 focus-within:ring-violet-500/10',
+              postType === 'poem' && 'focus-within:border-pink-500/40 focus-within:ring-4 focus-within:ring-pink-500/10',
+              postType === 'emotion' && 'focus-within:border-rose-500/40 focus-within:ring-4 focus-within:ring-rose-500/10',
+              postType === 'book' && 'focus-within:border-primary/40 focus-within:ring-4 focus-within:ring-primary/10',
+              postType === 'milestone' && 'focus-within:border-amber-500/40 focus-within:ring-4 focus-within:ring-amber-500/10'
+            )}>
+              <textarea
+                id="post-composer-textarea"
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder={activeType.placeholder}
+                style={{
+                  color: 'var(--color-foreground)',
+                  ...(postType === 'journal' ? {
+                    backgroundImage: 'linear-gradient(rgba(156, 163, 175, 0.15) 1px, transparent 1px)',
+                    backgroundSize: '100% 28px',
+                    lineHeight: '28px',
+                    paddingTop: '6px',
+                  } : {
+                    lineHeight: '24px',
+                  })
+                }}
+                className={cn(
+                  'w-full min-h-[220px] resize-none border-none outline-none focus:outline-none focus:ring-0 p-0',
+                  'bg-transparent text-[15.5px] font-serif tracking-wide text-foreground/90',
+                  'placeholder:text-muted-foreground/50',
+                  postType === 'poem' ? 'italic leading-loose text-center' : 'text-left'
+                )}
+              />
+            </div>
           </div>
 
           {showImageUpload && (
@@ -208,13 +402,24 @@ export function CreatePostModal({ isOpen, onClose }) {
             </div>
           )}
 
-          {/* Char count */}
-          <div className="mt-2 flex justify-end">
+          {/* Stats Bar */}
+          <div className="mt-2.5 flex items-center justify-between px-1">
+            <div className="flex gap-3 text-[10.5px] font-bold text-muted-foreground/50 select-none">
+              <span>{content.trim() ? content.trim().split(/\s+/).length : 0} words</span>
+              <span>•</span>
+              <span>{Math.max(1, Math.ceil((content.trim() ? content.trim().split(/\s+/).length : 0) / 200))} min read</span>
+              {isDraftSaved && (
+                <>
+                  <span>•</span>
+                  <span className="text-emerald-500/80 animate-pulse font-extrabold">✓ Auto-saved</span>
+                </>
+              )}
+            </div>
             <span className={cn(
-              'text-[10px] font-medium',
-              content.length > 1800 ? 'text-destructive' : 'text-muted-foreground/40'
+              'text-[10.5px] font-bold',
+              content.length > 1800 ? 'text-destructive' : 'text-muted-foreground/45'
             )}>
-              {content.length} / 2000
+              {content.length} / 2000 characters
             </span>
           </div>
         </div>
@@ -231,6 +436,18 @@ export function CreatePostModal({ isOpen, onClose }) {
               title="Add image"
             >
               <ImageIcon className="w-4 h-4" />
+            </Button>
+
+            {/* Timestamp button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full hover:text-primary hover:bg-primary/10 h-9 w-9 text-muted-foreground"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={insertTimestamp}
+              title="Insert Date & Time"
+            >
+              <Calendar className="w-4 h-4" />
             </Button>
 
             {/* Visibility Selector */}

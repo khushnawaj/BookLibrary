@@ -12,7 +12,7 @@ const register = asyncHandler(async (req, res) => {
   return ApiResponse.success(res, {
     statusCode: HTTP_STATUS.CREATED,
     message: 'Account created successfully',
-    data: { user: user.toPublicProfile(), accessToken },
+    data: { user: user.toPublicProfile(), accessToken, refreshToken },
   });
 });
 
@@ -23,7 +23,7 @@ const login = asyncHandler(async (req, res) => {
 
   return ApiResponse.success(res, {
     message: 'Logged in successfully',
-    data: { user: user.toPublicProfile(), accessToken },
+    data: { user: user.toPublicProfile(), accessToken, refreshToken },
   });
 });
 

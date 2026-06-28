@@ -21,6 +21,15 @@ import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 import { cn } from '@/lib/utils';
 
+const AVATAR_STYLES = [
+  { id: 'lorelei', name: 'Lorelei' },
+  { id: 'adventurer', name: 'Adventurer' },
+  { id: 'bottts', name: 'Bottts' },
+  { id: 'pixel-art', name: 'Pixel' },
+  { id: 'avataaars', name: 'Avataaars' },
+  { id: 'croodles', name: 'Croodles' }
+];
+
 export default function ProfilePage() {
   const { username: urlUsername } = useParams();
   const { user: currentUser } = useAuth();
@@ -51,6 +60,23 @@ export default function ProfilePage() {
   const [avatar, setAvatar] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [avatarStyle, setAvatarStyle] = useState('lorelei');
+  const [avatarSeed, setAvatarSeed] = useState('');
+
+  const handleGenerateAvatar = () => {
+    const seedValue = avatarSeed.trim() || Math.random().toString(36).substring(7);
+    const url = `https://api.dicebear.com/9.x/${avatarStyle}/svg?seed=${encodeURIComponent(seedValue)}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5cc,ffdfbf`;
+    setAvatar(url);
+    toast.success('Generated avatar preview!');
+  };
+
+  const handleShuffleAvatar = () => {
+    const randomSeed = Math.random().toString(36).substring(2, 10);
+    setAvatarSeed(randomSeed);
+    const url = `https://api.dicebear.com/9.x/${avatarStyle}/svg?seed=${randomSeed}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5cc,ffdfbf`;
+    setAvatar(url);
+    toast.success('Generated random avatar preview!');
+  };
 
   // Follow modal states
   const [isFollowersOpen, setIsFollowersOpen] = useState(false);
@@ -247,12 +273,13 @@ export default function ProfilePage() {
         })
       ).unwrap();
 
+      const userData = res.user || res;
       setProfile((prev) => ({
         ...prev,
-        name: res.user.name,
-        username: res.user.username,
-        bio: res.user.bio,
-        avatar: res.user.avatar,
+        name: userData.name,
+        username: userData.username,
+        bio: userData.bio,
+        avatar: userData.avatar,
       }));
 
       toast.success('Profile updated successfully!');
@@ -324,7 +351,27 @@ export default function ProfilePage() {
         {isOwnProfile ? (
           !isEditing && (
             <Button
-              onClick={() => setIsEditing(true)}
+              onClick={() => {
+                setName(profile.name);
+                setUsernameInput(profile.username);
+                setBio(profile.bio || '');
+                setAvatar(profile.avatar || '');
+                if (profile.avatar && profile.avatar.includes('api.dicebear.com')) {
+                  try {
+                    const url = new URL(profile.avatar);
+                    const pathParts = url.pathname.split('/');
+                    const style = pathParts[2];
+                    const seedParam = url.searchParams.get('seed');
+                    if (style) setAvatarStyle(style);
+                    if (seedParam) setAvatarSeed(seedParam);
+                  } catch (e) {
+                    setAvatarSeed(profile.username);
+                  }
+                } else {
+                  setAvatarSeed(profile.username);
+                }
+                setIsEditing(true);
+              }}
               className="bg-primary hover:bg-primary/95 text-primary-foreground flex items-center gap-1.5 shadow-sm rounded-xl"
             >
               <Edit2 className="w-4 h-4" /> Edit Profile
@@ -507,6 +554,120 @@ export default function ProfilePage() {
                   <p className="text-[11px] text-right" style={{ color: 'var(--color-muted-foreground)' }}>
                     {bio.length}/500 characters
                   </p>
+                </div>
+
+                {/* ── Profile Picture Selection Section ── */}
+                <div className="space-y-3">
+                  <Label className="text-sm font-semibold text-foreground/80">Profile Picture Selection</Label>
+                  <div className="flex flex-col md:flex-row gap-6 items-start p-4 border border-glass-border bg-secondary/5 rounded-2xl">
+                    {/* Live Preview Circle */}
+                    <div className="flex flex-col items-center gap-2 shrink-0 self-center md:self-start">
+                      <div className="relative group rounded-full border-4 border-background shadow-md overflow-hidden h-24 w-24">
+                        <Avatar src={avatar} name={name} size="xl" className="h-full w-full text-2xl" />
+                        {isUploading && (
+                          <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center">
+                            <Loader2 className="w-6 h-6 text-white animate-spin" />
+                          </div>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Preview</span>
+                    </div>
+
+                    {/* Actions and inputs */}
+                    <div className="flex-1 w-full space-y-4">
+                      {/* Option 1: File upload */}
+                      <div className="space-y-2">
+                        <span className="text-xs font-semibold text-foreground/85 block">Option 1: Upload Profile Image</span>
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <Button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isUploading || isSaving}
+                            variant="outline"
+                            className="border-glass-border text-foreground hover:bg-secondary/40 flex items-center gap-1.5 rounded-xl text-xs h-9 cursor-pointer"
+                          >
+                            <Camera className="w-4 h-4" /> Choose Local File
+                          </Button>
+                          <span className="text-xs text-muted-foreground">Supports JPG, PNG, GIF</span>
+                        </div>
+                      </div>
+
+                      <div className="h-px bg-glass-border" />
+
+                      {/* Option 2: DiceBear generator */}
+                      <div className="space-y-4">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-xs font-semibold text-foreground/85">Option 2: Generate Vector Avatar</span>
+                          <span className="text-[10px] text-muted-foreground">Choose a style below and customize the seed!</span>
+                        </div>
+
+                        {/* Style visual selector */}
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Styles Preview</Label>
+                          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                            {AVATAR_STYLES.map((style) => {
+                              const styleUrl = `https://api.dicebear.com/9.x/${style.id}/svg?seed=${encodeURIComponent(avatarSeed || 'preview')}&backgroundColor=ffdfbf`;
+                              const isSelected = avatarStyle === style.id;
+                              return (
+                                <button
+                                  key={style.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setAvatarStyle(style.id);
+                                    const url = `https://api.dicebear.com/9.x/${style.id}/svg?seed=${encodeURIComponent(avatarSeed || 'preview')}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5cc,ffdfbf`;
+                                    setAvatar(url);
+                                  }}
+                                  className={cn(
+                                    "relative p-1.5 rounded-xl border-2 transition-all hover:scale-105 flex flex-col items-center gap-1 bg-background cursor-pointer",
+                                    isSelected ? "border-primary shadow-sm bg-primary/5" : "border-glass-border hover:border-muted-foreground"
+                                  )}
+                                >
+                                  <img src={styleUrl} alt={style.name} className="w-10 h-10 rounded-full" />
+                                  <span className="text-[9px] font-semibold text-foreground/80">{style.name}</span>
+                                  {isSelected && (
+                                    <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full p-0.5 shadow-sm">
+                                      <Check className="w-2.5 h-2.5" />
+                                    </span>
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Seed Input */}
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between flex-wrap gap-1">
+                            <Label htmlFor="avatar-seed" className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Avatar Seed</Label>
+                            <span className="text-[9px] text-muted-foreground italic">Type any word/name to generate a unique character face.</span>
+                          </div>
+                          <div className="flex gap-2">
+                            <Input
+                              id="avatar-seed"
+                              value={avatarSeed}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setAvatarSeed(val);
+                                // Live update the avatar preview URL as the user types!
+                                const url = `https://api.dicebear.com/9.x/${avatarStyle}/svg?seed=${encodeURIComponent(val || 'preview')}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5cc,ffdfbf`;
+                                setAvatar(url);
+                              }}
+                              placeholder="Type seed (e.g. your name)"
+                              className="h-9 border-glass-border focus:ring-primary bg-secondary/15 rounded-lg text-xs"
+                            />
+                            <Button
+                              type="button"
+                              onClick={handleShuffleAvatar}
+                              variant="outline"
+                              className="h-9 px-3 text-xs border-glass-border text-foreground hover:bg-secondary/40 rounded-lg cursor-pointer flex items-center gap-1 shrink-0"
+                            >
+                              Shuffle
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="flex justify-end gap-3 pt-3 border-t border-glass-border">
