@@ -11,6 +11,11 @@ const {
 
 const router = express.Router();
 
+// ── Public view route (any authenticated user, no ownership check) ──
+// Used by the feed's book reference cards
+router.get('/:id/view', authenticate, bookIdValidator, validate, bookController.getBookByIdPublic);
+
+// ── Owner-only routes ──
 router.use(authenticate);
 
 router.post('/', createBookValidator, validate, bookController.createBook);

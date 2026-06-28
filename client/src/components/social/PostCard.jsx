@@ -1,16 +1,16 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import {
   MessageCircle, Bookmark, Share2,
   BookOpen, Globe, Lock, Users, Trash2,
   ArrowUp, ArrowDown, Edit2, Loader2,
-  MoreVertical
+  MoreVertical, Plus, Check, ChevronDown, Library
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toggleLike, removePostFromFeed, updatePostInFeed } from '@/features/feed/feedSlice';
-import { postService } from '@/services';
+import { postService, libraryService } from '@/services';
 import { Avatar } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { toast } from 'react-hot-toast';
@@ -71,6 +71,7 @@ const parsePostContent = (content) => {
 
 export function PostCard({ post, onDelete, onUpdate }) {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
   const [isSaved, setIsSaved]           = useState(post.isSaved);
   const [showComments, setShowComments] = useState(false);
@@ -81,6 +82,69 @@ export function PostCard({ post, onDelete, onUpdate }) {
   const [editContent, setEditContent] = useState(post.content);
   const [isUpdating, setIsUpdating] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+
+  // Book-to-library states
+  const [showShelfPicker, setShowShelfPicker] = useState(false);
+  const [libraryStatus, setLibraryStatus] = useState(null); // null | 'adding' | 'WISHLIST' | 'READING' | 'READ'
+  const shelfPickerRef = useRef(null);
+
+  // Close shelf picker on outside click
+  useEffect(() => {
+    if (!showShelfPicker) return;
+    const handler = (e) => {
+      if (shelfPickerRef.current && !shelfPickerRef.current.contains(e.target)) {
+        setShowShelfPicker(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showShelfPicker]);
+
+  const SHELF_OPTIONS = [
+    { value: 'WISHLIST',  label: 'Want to Read',   emoji: '🔖' },
+    { value: 'READING',   label: 'Currently Reading', emoji: '📖' },
+    { value: 'READ',      label: 'Already Read',   emoji: '✅' },
+  ];
+
+  const handleAddToLibrary = async (shelfType) => {
+    if (!user) {
+      toast.error('Please log in to add books to your library');
+      return;
+    }
+    setShowShelfPicker(false);
+    setLibraryStatus('adding');
+    try {
+      await libraryService.add({ bookId: post.bookRef._id, shelfType });
+      setLibraryStatus(shelfType);
+      const option = SHELF_OPTIONS.find(o => o.value === shelfType);
+      toast.success(`Added to your library as "${option?.label}"!`, {
+        icon: option?.emoji,
+        style: {
+          borderRadius: '12px',
+          background: 'var(--color-card)',
+          color: 'var(--color-foreground)',
+          border: '1px solid var(--color-glass-border)',
+        },
+      });
+    } catch (err) {
+      const msg = err.response?.data?.message || '';
+      if (msg.toLowerCase().includes('already') || err.response?.status === 409) {
+        setLibraryStatus('EXISTS');
+        toast('This book is already in your library!', {
+          icon: '📚',
+          style: {
+            borderRadius: '12px',
+            background: 'var(--color-card)',
+            color: 'var(--color-foreground)',
+            border: '1px solid var(--color-glass-border)',
+          },
+        });
+      } else {
+        setLibraryStatus(null);
+        toast.error('Failed to add book to library');
+      }
+    }
+  };
 
   const currentUserId = user?.id || user?._id;
   const postAuthorId = post.author?.id || post.author?._id || post.author;
@@ -415,27 +479,88 @@ export function PostCard({ post, onDelete, onUpdate }) {
 
           {/* Book Reference Embed Card */}
           {post.bookRef && (
-            <div className="mt-3.5 flex items-center gap-3 p-3 rounded-xl
-                            border border-glass-border/60 bg-secondary/20 hover:bg-secondary/35 hover:border-primary/20
-                            cursor-pointer transition-all duration-200">
-              {post.bookRef.coverImage ? (
-                <img
-                  src={post.bookRef.coverImage}
-                  className="w-10 h-[56px] object-cover rounded-lg border border-glass-border shadow-sm shrink-0"
-                  alt="Book cover"
-                />
-              ) : (
-                <div className="w-10 h-[56px] bg-secondary/30 rounded-lg flex items-center justify-center border border-glass-border shrink-0">
-                  <BookOpen className="w-4 h-4 text-muted-foreground" />
+            <div className="mt-3.5 rounded-xl border border-glass-border/60 bg-secondary/15 hover:bg-secondary/25 transition-all duration-200 overflow-hidden">
+              {/* Clickable area → book detail */}
+              <Link
+                to={`/books/${post.bookRef._id}`}
+                className="flex items-center gap-3 p-3 group/book"
+              >
+                {/* Cover */}
+                {post.bookRef.coverImage ? (
+                  <img
+                    src={post.bookRef.coverImage}
+                    className="w-11 h-16 object-cover rounded-lg border border-glass-border shadow-sm shrink-0 group-hover/book:shadow-md transition-shadow"
+                    alt="Book cover"
+                  />
+                ) : (
+                  <div className="w-11 h-16 bg-secondary/30 rounded-lg flex items-center justify-center border border-glass-border shrink-0">
+                    <BookOpen className="w-4 h-4 text-muted-foreground" />
+                  </div>
+                )}
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-primary mb-0.5 flex items-center gap-1">
+                    <BookOpen className="w-3 h-3" /> Book Reference
+                    <span className="ml-auto text-[9px] text-muted-foreground font-normal normal-case tracking-normal">Tap to view →</span>
+                  </p>
+                  <p className="font-bold text-[13px] text-foreground truncate group-hover/book:text-primary transition-colors">{post.bookRef.title}</p>
+                  <p className="text-[11px] text-muted-foreground truncate">{post.bookRef.author}</p>
+                </div>
+              </Link>
+
+              {/* Add to Library strip */}
+              {user && (
+                <div className="border-t border-glass-border/40 px-3 py-2 flex items-center justify-between bg-secondary/10">
+                  <span className="text-[10px] text-muted-foreground font-medium flex items-center gap-1">
+                    <Library className="w-3 h-3" /> Add to your library
+                  </span>
+
+                  {/* Status when added */}
+                  {libraryStatus && libraryStatus !== 'adding' ? (
+                    <span className={cn(
+                      'flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full',
+                      libraryStatus === 'EXISTS'
+                        ? 'bg-secondary/40 text-muted-foreground'
+                        : 'bg-success/15 text-success'
+                    )}>
+                      <Check className="w-3 h-3" />
+                      {libraryStatus === 'EXISTS' ? 'In Library' : SHELF_OPTIONS.find(o => o.value === libraryStatus)?.label}
+                    </span>
+                  ) : libraryStatus === 'adding' ? (
+                    <span className="flex items-center gap-1 text-[11px] text-muted-foreground px-2">
+                      <Loader2 className="w-3 h-3 animate-spin" /> Adding...
+                    </span>
+                  ) : (
+                    /* Shelf picker dropdown */
+                    <div className="relative" ref={shelfPickerRef}>
+                      <button
+                        onClick={() => setShowShelfPicker(v => !v)}
+                        className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors border border-primary/20 cursor-pointer"
+                      >
+                        <Plus className="w-3 h-3" />
+                        Add
+                        <ChevronDown className={cn('w-3 h-3 transition-transform', showShelfPicker && 'rotate-180')} />
+                      </button>
+
+                      {showShelfPicker && (
+                        <div className="absolute right-0 bottom-full mb-1 w-44 rounded-xl border border-glass-border bg-card/98 shadow-xl z-40 overflow-hidden">
+                          {SHELF_OPTIONS.map(opt => (
+                            <button
+                              key={opt.value}
+                              onClick={() => handleAddToLibrary(opt.value)}
+                              className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs font-medium text-foreground hover:bg-secondary/50 transition-colors text-left cursor-pointer"
+                            >
+                              <span className="text-base leading-none">{opt.emoji}</span>
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-primary mb-0.5 flex items-center gap-1">
-                  <BookOpen className="w-3 h-3" /> Book Reference
-                </p>
-                <p className="font-bold text-[13px] text-foreground truncate">{post.bookRef.title}</p>
-                <p className="text-[11px] text-muted-foreground truncate">{post.bookRef.author}</p>
-              </div>
             </div>
           )}
         </div>

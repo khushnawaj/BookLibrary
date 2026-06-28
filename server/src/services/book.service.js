@@ -68,6 +68,13 @@ const getBookById = async (userId, bookId) => {
   return book;
 };
 
+// Public lookup — no ownership check, used for feed book references
+const getBookByIdPublic = async (bookId) => {
+  const book = await Book.findById(bookId).populate('owner', OWNER_FIELDS);
+  if (!book) throw new AppError('Book not found', HTTP_STATUS.NOT_FOUND);
+  return book;
+};
+
 const updateBook = async (userId, bookId, updateData) => {
   const book = await Book.findById(bookId);
   assertBookOwner(book, userId);
@@ -102,6 +109,7 @@ module.exports = {
   createBook,
   getBooks,
   getBookById,
+  getBookByIdPublic,
   updateBook,
   deleteBook,
 };

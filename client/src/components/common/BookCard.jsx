@@ -71,7 +71,6 @@ export function BookCard({ entry, onEdit, onDelete }) {
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: 'easeOut' }}
-      whileHover={{ y: -3 }}
       className="glass-card group overflow-hidden"
     >
       {/* Cover */}

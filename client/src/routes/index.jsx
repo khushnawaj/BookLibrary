@@ -14,6 +14,7 @@ import LandingPage from '@/pages/LandingPage';
 import LibraryPage from '@/pages/LibraryPage';
 import LoginPage from '@/pages/LoginPage';
 import ProfilePage from '@/pages/ProfilePage';
+import PublicBookPage from '@/pages/PublicBookPage';
 import RegisterPage from '@/pages/RegisterPage';
 import SettingsPage from '@/pages/SettingsPage';
 import WishlistPage from '@/pages/WishlistPage';
@@ -69,6 +70,7 @@ export const router = createBrowserRouter([
           { path: ROUTES.LIBRARY_IMPORT, element: <ImportBooksPage /> },
           { path: ROUTES.LIBRARY_BOOK, element: <BookDetailsPage /> },
           { path: ROUTES.LIBRARY_EDIT, element: <EditBookPage /> },
+          { path: '/books/:id', element: <PublicBookPage /> },
           { path: ROUTES.ANALYTICS, element: <AnalyticsPage /> },
           { path: ROUTES.WISHLIST, element: <WishlistPage /> },
           { path: ROUTES.PROFILE, element: <ProfilePage /> },

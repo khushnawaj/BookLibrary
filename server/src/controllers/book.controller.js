@@ -32,6 +32,16 @@ const getBookById = asyncHandler(async (req, res) => {
   });
 });
 
+// Public view — any authenticated user can view any book (used for feed references)
+const getBookByIdPublic = asyncHandler(async (req, res) => {
+  const book = await bookService.getBookByIdPublic(req.params.id);
+
+  return ApiResponse.success(res, {
+    message: 'Book retrieved successfully',
+    data: { book },
+  });
+});
+
 const updateBook = asyncHandler(async (req, res) => {
   const book = await bookService.updateBook(req.user._id, req.params.id, req.body);
 
@@ -53,6 +63,7 @@ module.exports = {
   createBook,
   getBooks,
   getBookById,
+  getBookByIdPublic,
   updateBook,
   deleteBook,
 };
