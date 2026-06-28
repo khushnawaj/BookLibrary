@@ -1,4 +1,4 @@
-# BookVerse
+# BookVerse [![Quickdraw](https://img.shields.io/badge/Quickdraw-Achievement-gold?style=flat&logo=github)](https://github.com/khushnawaj)
 
 A production-ready MERN stack social platform for book lovers. Dark-mode-first UI inspired by Linear, Notion, Spotify, and modern Goodreads.
 
