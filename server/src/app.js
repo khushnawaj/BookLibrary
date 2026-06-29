@@ -14,8 +14,11 @@ const errorHandler = require('./middlewares/errorHandler');
 const app = express();
 
 // ── SECURITY & PERFORMANCE MIDDLEWARE ─────────────────────────────────────────
-// Security headers (CSP disabled to avoid blocking Cloudinary/external media)
-app.use(helmet({ contentSecurityPolicy: false }));
+// Security headers (CSP + COEP disabled to avoid blocking Cloudinary/external media)
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false,
+}));
 
 // Gzip payload compression
 app.use(compression());

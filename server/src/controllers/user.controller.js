@@ -108,27 +108,39 @@ const updateProfile = asyncHandler(async (req, res) => {
   const currentUserId = req.user._id;
   const { name, username, bio, avatar, bannerImage } = req.body;
 
-  const user = await User.findById(currentUserId);
-  if (!user) throw new AppError('User not found', HTTP_STATUS.NOT_FOUND);
+  // Check username uniqueness first if it's being changed
+  if (username) {
+    const currentUser = await User.findById(currentUserId).select('username');
+    if (!currentUser) throw new AppError('User not found', HTTP_STATUS.NOT_FOUND);
 
-  if (username && username !== user.username) {
-    const existingUser = await User.findOne({ username: username.toLowerCase() });
-    if (existingUser) {
-      throw new AppError('Username is already taken', HTTP_STATUS.BAD_REQUEST);
+    if (username.toLowerCase() !== currentUser.username) {
+      const existingUser = await User.findOne({ username: username.toLowerCase() });
+      if (existingUser) {
+        throw new AppError('Username is already taken', HTTP_STATUS.BAD_REQUEST);
+      }
     }
-    user.username = username.toLowerCase();
   }
 
-  if (name) user.name = name;
-  if (bio !== undefined) user.bio = bio;
-  if (avatar !== undefined) user.avatar = avatar;
-  if (bannerImage !== undefined) user.bannerImage = bannerImage;
+  // Build update object — only include fields that were provided
+  const updateFields = {};
+  if (name !== undefined) updateFields.name = name.trim();
+  if (username !== undefined) updateFields.username = username.toLowerCase().trim();
+  if (bio !== undefined) updateFields.bio = bio.trim();
+  if (avatar !== undefined) updateFields.avatar = avatar;
+  if (bannerImage !== undefined) updateFields.bannerImage = bannerImage;
 
-  await user.save();
+  // Use findByIdAndUpdate to avoid full-document validation (password select:false issue)
+  const updatedUser = await User.findByIdAndUpdate(
+    currentUserId,
+    { $set: updateFields },
+    { new: true, runValidators: true, context: 'query' }
+  );
+
+  if (!updatedUser) throw new AppError('User not found', HTTP_STATUS.NOT_FOUND);
 
   return ApiResponse.success(res, {
     message: 'Profile updated successfully',
-    data: { user: user.toPublicProfile() },
+    data: { user: updatedUser.toPublicProfile() },
   });
 });
 
