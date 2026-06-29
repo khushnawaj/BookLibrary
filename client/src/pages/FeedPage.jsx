@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Loader2, Plus, RefreshCw, Sparkles, Users } from 'lucide-react';
+import { Loader2, Plus, RefreshCw, Sparkles, Users, Globe } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   fetchFeed,
@@ -119,7 +119,7 @@ export default function FeedPage() {
                     : 'bg-secondary/20 hover:bg-secondary/40 text-muted-foreground border-glass-border/50'
                 )}
               >
-                <span>🌍</span> Global Feed
+                <Globe className="w-3.5 h-3.5 shrink-0" /> Global Feed
               </button>
               {user && (
                 <button
@@ -131,7 +131,7 @@ export default function FeedPage() {
                       : 'bg-secondary/20 hover:bg-secondary/40 text-muted-foreground border-glass-border/50'
                   )}
                 >
-                  <span>👥</span> Following
+                  <Users className="w-3.5 h-3.5 shrink-0" /> Following
                 </button>
               )}
             </div>

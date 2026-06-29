@@ -38,7 +38,7 @@ const fade = (delay = 0) => ({
 const SHELF_COLORS = {
   READ: 'bg-success/15 text-success border-success/20',
   READING: 'bg-primary/15 text-primary border-primary/20',
-  WISHLIST: 'bg-amber-500/15 text-amber-500 border-amber-500/20',
+  WISHLIST: 'bg-primary/15 text-primary border-primary/20',
   DROPPED: 'bg-destructive/15 text-destructive border-destructive/20',
 };
 
@@ -53,7 +53,7 @@ const metricPalette = {
   total: { iconBg: 'bg-primary/10', iconColor: 'text-primary' },
   reading: { iconBg: 'bg-primary/15', iconColor: 'text-primary' },
   finished: { iconBg: 'bg-success/15', iconColor: 'text-success' },
-  wishlist: { iconBg: 'bg-amber-500/15', iconColor: 'text-amber-500' },
+  wishlist: { iconBg: 'bg-primary/15', iconColor: 'text-primary' },
 };
 
 const formatNumber = (value) => new Intl.NumberFormat().format(value ?? 0);

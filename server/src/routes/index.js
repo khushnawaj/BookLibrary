@@ -23,5 +23,7 @@ router.use('/posts', require('./post.routes'));
 router.use('/feed', require('./feed.routes'));
 router.use('/google-books', require('./googleBooks.routes'));
 router.use('/admin', require('./admin.routes'));
+router.use('/feedback', require('./feedback.routes'));
+router.use('/notifications', require('./notification.routes'));
 
 module.exports = router;

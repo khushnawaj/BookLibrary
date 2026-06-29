@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
-import { Send, Loader2, Trash2 } from 'lucide-react';
+import { Send, Loader2, Trash2, LogIn } from 'lucide-react';
 import { postService } from '@/services';
 import { Avatar } from '@/components/ui/avatar';
 import { toast } from 'react-hot-toast';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { setShowGuestWarning } from '@/features/auth/authSlice';
 import { cn } from '@/lib/utils';
 
 export function CommentSection({ postId }) {
@@ -14,6 +15,8 @@ export function CommentSection({ postId }) {
   const [content, setContent]         = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const user = useSelector((state) => state.auth.user);
+  const dispatch = useDispatch();
+  const isGuest = user?.role === 'GUEST';
 
   useEffect(() => { fetchComments(); }, [postId]);
 
@@ -152,44 +155,57 @@ export function CommentSection({ postId }) {
         )}
       </div>
 
-      {/* Compose Row */}
-      <form onSubmit={handleSubmit} className="flex items-center gap-2.5 pt-2 border-t border-glass-border/20">
-        <Avatar
-          src={user?.avatar}
-          name={user?.name}
-          size="sm"
-          className="shrink-0 hidden sm:flex ring-1 ring-glass-border"
-        />
-        
-        <div className="relative flex-1">
-          <input
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="What are your thoughts on this?"
-            style={{ color: 'var(--color-foreground)' }}
-            className="w-full h-9 text-[13px] bg-secondary/15 border border-glass-border
-                       rounded-xl pl-4 pr-10 text-foreground placeholder:text-muted-foreground/50
-                       focus:outline-none focus:ring-2 focus:ring-primary/20
-                       focus:border-primary/40 transition-all"
+      {/* Compose Row — hidden for guests, replaced with sign-in nudge */}
+      {isGuest ? (
+        <button
+          onClick={() => dispatch(setShowGuestWarning(true))}
+          className="flex items-center gap-2.5 w-full pt-3 border-t border-glass-border/20 text-left group"
+        >
+          <Avatar src={null} name="?" size="sm" className="shrink-0 hidden sm:flex ring-1 ring-glass-border opacity-40" />
+          <div className="flex-1 h-9 flex items-center px-4 rounded-xl border border-dashed border-primary/30 bg-primary/5 text-[13px] text-primary/70 hover:text-primary hover:bg-primary/10 hover:border-primary/50 transition-all gap-2">
+            <LogIn className="w-3.5 h-3.5 shrink-0" />
+            Sign in to join the conversation...
+          </div>
+        </button>
+      ) : (
+        <form onSubmit={handleSubmit} className="flex items-center gap-2.5 pt-2 border-t border-glass-border/20">
+          <Avatar
+            src={user?.avatar}
+            name={user?.name}
+            size="sm"
+            className="shrink-0 hidden sm:flex ring-1 ring-glass-border"
           />
           
-          <button
-            type="submit"
-            disabled={!content.trim() || isSubmitting}
-            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7
-                       flex items-center justify-center rounded-lg
-                       text-primary hover:bg-primary/10
-                       disabled:opacity-40 disabled:cursor-not-allowed
-                       transition-all"
-          >
-            {isSubmitting
-              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              : <Send className="w-3.5 h-3.5" />
-            }
-          </button>
-        </div>
-      </form>
+          <div className="relative flex-1">
+            <input
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="What are your thoughts on this?"
+              style={{ color: 'var(--color-foreground)' }}
+              className="w-full h-9 text-[13px] bg-secondary/15 border border-glass-border
+                         rounded-xl pl-4 pr-10 text-foreground placeholder:text-muted-foreground/50
+                         focus:outline-none focus:ring-2 focus:ring-primary/20
+                         focus:border-primary/40 transition-all"
+            />
+            
+            <button
+              type="submit"
+              disabled={!content.trim() || isSubmitting}
+              className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7
+                         flex items-center justify-center rounded-lg
+                         text-primary hover:bg-primary/10
+                         disabled:opacity-40 disabled:cursor-not-allowed
+                         transition-all"
+            >
+              {isSubmitting
+                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                : <Send className="w-3.5 h-3.5" />
+              }
+            </button>
+          </div>
+        </form>
+      )}
     </div>
   );
 }

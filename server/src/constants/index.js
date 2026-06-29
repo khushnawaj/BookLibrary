@@ -15,6 +15,7 @@ const HTTP_STATUS = {
 const USER_ROLES = {
   USER: 'USER',
   ADMIN: 'ADMIN',
+  GUEST: 'GUEST',
 };
 
 const SHELF_TYPES = {

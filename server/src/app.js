@@ -2,6 +2,9 @@ const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const path = require('path');
+const helmet = require('helmet');
+const compression = require('compression');
+const rateLimit = require('express-rate-limit');
 
 const routes = require('./routes');
 
@@ -9,6 +12,26 @@ const notFound = require('./middlewares/notFound');
 const errorHandler = require('./middlewares/errorHandler');
 
 const app = express();
+
+// ── SECURITY & PERFORMANCE MIDDLEWARE ─────────────────────────────────────────
+// Security headers (CSP disabled to avoid blocking Cloudinary/external media)
+app.use(helmet({ contentSecurityPolicy: false }));
+
+// Gzip payload compression
+app.use(compression());
+
+// Global API rate limiting
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 mins
+  max: 500, // limit each IP to 500 requests per 15 mins
+  message: {
+    success: false,
+    message: 'Too many requests from this IP, please try again later.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/api', apiLimiter);
 
 // ── CORS ─────────────────────────────────────────────────────────────────────
 // Allow multiple origins: local dev + any production CLIENT_URL

@@ -35,7 +35,7 @@ export const THEME_TOKENS = {
       secondary: 'rgba(255, 255, 255, 0.05)',
       'secondary-foreground': '#f5f0e8',
       muted: 'rgba(255, 255, 255, 0.03)',
-      'muted-foreground': '#a89d90',
+      'muted-foreground': '#c5bbae',
       accent: 'rgba(255, 255, 255, 0.08)',
       'accent-foreground': '#ffffff',
       mint: '#c2410c', // Cinnamon accent
@@ -72,7 +72,7 @@ export const THEME_TOKENS = {
       secondary: 'rgba(0, 0, 0, 0.03)',
       'secondary-foreground': '#1c1a17',
       muted: 'rgba(0, 0, 0, 0.02)',
-      'muted-foreground': '#7c6f62',
+      'muted-foreground': '#5c5044',
       accent: 'rgba(0, 0, 0, 0.05)',
       'accent-foreground': '#1c1a17',
       mint: '#8B4513',

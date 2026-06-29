@@ -5,6 +5,7 @@ import {
   logoutUser,
   fetchCurrentUser,
   updateUserProfile,
+  guestLoginUser,
 } from './authApi';
 
 const initialState = {
@@ -14,6 +15,7 @@ const initialState = {
   loading: false,
   error: null,
   initialized: false,
+  showGuestWarning: false,
 };
 
 const setAuthenticated = (state, user, accessToken) => {
@@ -36,6 +38,10 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.error = null;
       state.initialized = true;
+      state.showGuestWarning = false;
+    },
+    setShowGuestWarning: (state, action) => {
+      state.showGuestWarning = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -63,6 +69,19 @@ const authSlice = createSlice({
         setAuthenticated(state, action.payload.user, action.payload.accessToken);
       })
       .addCase(loginUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Guest Login
+      .addCase(guestLoginUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(guestLoginUser.fulfilled, (state, action) => {
+        state.loading = false;
+        setAuthenticated(state, action.payload.user, action.payload.accessToken);
+      })
+      .addCase(guestLoginUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
@@ -118,5 +137,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { clearAuthError, resetAuth } = authSlice.actions;
+export const { clearAuthError, resetAuth, setShowGuestWarning } = authSlice.actions;
 export default authSlice.reducer;

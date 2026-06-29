@@ -98,6 +98,22 @@ const refreshUserTokens = async (refreshToken) => {
   return issueAuthTokens(user);
 };
 
+const loginAsGuest = async () => {
+  let user = await User.findOne({ email: 'guest@shelfforge.com' }).select('+refreshToken');
+  
+  if (!user) {
+    user = await User.create({
+      name: 'Guest Reader',
+      username: 'guest',
+      email: 'guest@shelfforge.com',
+      password: 'guest-temp-pass-super-secret-1234',
+      role: 'GUEST'
+    });
+  }
+
+  return issueAuthTokens(user);
+};
+
 module.exports = {
   registerUser,
   loginUser,
@@ -105,4 +121,5 @@ module.exports = {
   getCurrentUser,
   refreshUserTokens,
   issueAuthTokens,
+  loginAsGuest,
 };

@@ -20,5 +20,6 @@ router.post('/login', authLimiter, loginValidator, validate, authController.logi
 router.post('/refresh', authController.refresh);
 router.post('/logout', authenticate, authController.logout);
 router.get('/me', authenticate, authController.getMe);
+router.post('/guest-login', authController.guestLogin);
 
 module.exports = router;

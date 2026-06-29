@@ -19,6 +19,7 @@ export const ROUTES = {
   PROFILE: '/profile',
   SETTINGS: '/settings',
   ADMIN: '/admin',
+  FEEDBACK: '/feedback',
 };
 
 export const SHELF_TYPES = {

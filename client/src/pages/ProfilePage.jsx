@@ -873,12 +873,7 @@ export default function ProfilePage() {
                             <p className="text-xs text-muted-foreground mt-1 truncate">{entry.book?.author}</p>
                           </div>
                           <div className="flex items-center justify-between">
-                            <Badge className={cn("text-[10px] px-2 py-0.5 font-medium border-none",
-                              entry.shelfType === 'READ' && 'bg-green-100/80 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-                              entry.shelfType === 'READING' && 'bg-blue-100/80 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-                              entry.shelfType === 'WISHLIST' && 'bg-yellow-100/80 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-                              entry.shelfType === 'DROPPED' && 'bg-red-100/80 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                            )}>
+                            <Badge className="text-[10px] px-2 py-0.5 font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/20 rounded-md">
                               {entry.shelfType}
                             </Badge>
                             {entry.rating > 0 && (

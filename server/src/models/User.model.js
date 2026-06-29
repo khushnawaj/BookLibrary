@@ -128,6 +128,8 @@ userSchema.methods.toPublicProfile = function toPublicProfile() {
   };
 };
 
+userSchema.index({ name: 'text', username: 'text', email: 'text' });
+
 const User = mongoose.model('User', userSchema);
 
 module.exports = User;

@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft, BookOpen, User, Calendar, Hash, Globe,
   Layers, Building, FileText, ExternalLink, Plus, Check,
-  Loader2, Library, ChevronDown,
+  Loader2, Library, ChevronDown, Bookmark
 } from 'lucide-react';
 import { bookService, libraryService } from '@/services';
 import { useAuth } from '@/features/auth/authHooks';
@@ -14,9 +14,9 @@ import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
 const SHELF_OPTIONS = [
-  { value: 'WISHLIST', label: 'Want to Read',      emoji: '🔖' },
-  { value: 'READING',  label: 'Currently Reading', emoji: '📖' },
-  { value: 'READ',     label: 'Already Read',      emoji: '✅' },
+  { value: 'WISHLIST', label: 'Want to Read',      icon: Bookmark },
+  { value: 'READING',  label: 'Currently Reading', icon: BookOpen },
+  { value: 'READ',     label: 'Already Read',      icon: Check },
 ];
 
 const SHELF_STYLES = {
@@ -40,12 +40,14 @@ export default function PublicBookPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const pickerRef = useRef(null);
 
   const [book, setBook]             = useState(null);
   const [isLoading, setIsLoading]   = useState(true);
   const [imgError, setImgError]     = useState(false);
   const [showPicker, setShowPicker] = useState(false);
   const [libStatus, setLibStatus]   = useState(null); // null | 'adding' | shelf | 'EXISTS'
+  const [libraryEntryId, setLibraryEntryId] = useState(null);
 
   useEffect(() => {
     if (!id) return;
@@ -60,15 +62,53 @@ export default function PublicBookPage() {
       .finally(() => setIsLoading(false));
   }, [id]);
 
+  useEffect(() => {
+    if (user && id) {
+      libraryService.getAll({ limit: 1000 })
+        .then(res => {
+          const entries = res.data?.data?.entries || [];
+          const found = entries.find(e => e.book?._id === id);
+          if (found) {
+            setLibStatus(found.shelfType);
+            setLibraryEntryId(found._id);
+          }
+        })
+        .catch(err => console.error('Failed to fetch library entries', err));
+    }
+  }, [id, user]);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (pickerRef.current && !pickerRef.current.contains(event.target)) {
+        setShowPicker(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const handleAddToLibrary = async (shelfType) => {
     if (!user) { toast.error('Please log in to add books to your library'); return; }
     setShowPicker(false);
     setLibStatus('adding');
     try {
-      await libraryService.add({ bookId: id, shelfType });
-      setLibStatus(shelfType);
-      const opt = SHELF_OPTIONS.find(o => o.value === shelfType);
-      toast.success(`Added to your library as "${opt?.label}"!`, { icon: opt?.emoji });
+      if (libraryEntryId) {
+        // Update existing entry shelf!
+        await libraryService.update(libraryEntryId, { shelfType });
+        setLibStatus(shelfType);
+        const opt = SHELF_OPTIONS.find(o => o.value === shelfType);
+        toast.success(`Moved to "${opt?.label}"!`, { icon: opt?.emoji });
+      } else {
+        // Add new entry!
+        const res = await libraryService.add({ bookId: id, shelfType });
+        const newEntry = res.data?.data?.entry;
+        if (newEntry) {
+          setLibraryEntryId(newEntry._id);
+        }
+        setLibStatus(shelfType);
+        const opt = SHELF_OPTIONS.find(o => o.value === shelfType);
+        toast.success(`Added to library as "${opt?.label}"!`, { icon: opt?.emoji });
+      }
     } catch (err) {
       const msg = err.response?.data?.message || '';
       if (msg.toLowerCase().includes('already') || err.response?.status === 409) {
@@ -76,7 +116,7 @@ export default function PublicBookPage() {
         toast('This book is already in your library!', { icon: '📚' });
       } else {
         setLibStatus(null);
-        toast.error('Failed to add book to library');
+        toast.error('Failed to update library');
       }
     }
   };
@@ -137,30 +177,55 @@ export default function PublicBookPage() {
 
           {/* Add to Library card */}
           {user && (
-            <div className="glass-card rounded-2xl p-4 space-y-3">
+            <div className="glass-card rounded-2xl p-4 space-y-3 !overflow-visible">
               <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                 <Library className="w-3.5 h-3.5" /> Add to Library
               </h3>
 
-              {/* Already added state */}
-              {libStatus && libStatus !== 'adding' ? (
-                <div className={cn(
-                  'flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-semibold',
-                  libStatus === 'EXISTS'
-                    ? 'bg-secondary/40 text-muted-foreground border-glass-border'
-                    : SHELF_STYLES[libStatus]
-                )}>
-                  <Check className="w-4 h-4 shrink-0" />
-                  {libStatus === 'EXISTS'
-                    ? 'Already in your library'
-                    : SHELF_OPTIONS.find(o => o.value === libStatus)?.label}
-                </div>
-              ) : libStatus === 'adding' ? (
+              {/* Library Button / Shelf Selector */}
+              {libStatus === 'adding' ? (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground px-1">
                   <Loader2 className="w-4 h-4 animate-spin" /> Adding to library…
                 </div>
+              ) : libStatus && libStatus !== 'EXISTS' ? (
+                /* Interactive Shelf Selector (Already Added State) */
+                <div className="relative" ref={pickerRef}>
+                  <Button
+                    onClick={() => setShowPicker(v => !v)}
+                    className={cn(
+                      'w-full gap-2 rounded-xl border text-sm font-semibold hover:opacity-90 transition-all flex items-center justify-between',
+                      SHELF_STYLES[libStatus]
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Check className="w-4 h-4 shrink-0" />
+                      <span>{SHELF_OPTIONS.find(o => o.value === libStatus)?.label}</span>
+                    </div>
+                    <ChevronDown className={cn('w-4 h-4 transition-transform', showPicker && 'rotate-180')} />
+                  </Button>
+
+                  {showPicker && (
+                    <div className="absolute left-0 right-0 top-full mt-1 rounded-xl border border-glass-border bg-card/95 backdrop-blur-md shadow-xl z-40 overflow-hidden">
+                      {SHELF_OPTIONS.map(opt => (
+                        <button
+                          key={opt.value}
+                          onClick={() => handleAddToLibrary(opt.value)}
+                          className={cn(
+                            "w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold transition-colors text-left cursor-pointer",
+                            opt.value === libStatus ? "bg-primary/10 text-primary font-semibold" : "text-foreground hover:bg-secondary/50"
+                          )}
+                        >
+                          <opt.icon className="w-4 h-4 shrink-0 text-muted-foreground" />
+                          <span>{opt.label}</span>
+                          {opt.value === libStatus && <Check className="w-4 h-4 ml-auto text-primary" />}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               ) : (
-                <div className="relative">
+                /* Add to Library State */
+                <div className="relative" ref={pickerRef}>
                   <Button
                     onClick={() => setShowPicker(v => !v)}
                     className="w-full gap-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground"
@@ -171,15 +236,15 @@ export default function PublicBookPage() {
                   </Button>
 
                   {showPicker && (
-                    <div className="absolute left-0 right-0 top-full mt-1 rounded-xl border border-glass-border bg-card/98 shadow-xl z-40 overflow-hidden">
+                    <div className="absolute left-0 right-0 top-full mt-1 rounded-xl border border-glass-border bg-card/95 backdrop-blur-md shadow-xl z-40 overflow-hidden">
                       {SHELF_OPTIONS.map(opt => (
                         <button
                           key={opt.value}
                           onClick={() => handleAddToLibrary(opt.value)}
-                          className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary/50 transition-colors text-left cursor-pointer"
+                          className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-foreground hover:bg-secondary/50 transition-colors text-left cursor-pointer"
                         >
-                          <span className="text-lg leading-none">{opt.emoji}</span>
-                          {opt.label}
+                          <opt.icon className="w-4 h-4 shrink-0 text-muted-foreground" />
+                          <span>{opt.label}</span>
                         </button>
                       ))}
                     </div>

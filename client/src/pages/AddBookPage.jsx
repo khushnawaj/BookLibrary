@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Import } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppStore';
 import { createBook, selectBooksLoading } from '@/features/books/booksSlice';
 import { addToLibrary } from '@/features/library/librarySlice';
@@ -20,10 +20,10 @@ import {
 import { Label } from '@/components/ui/label';
 
 const SHELF_OPTIONS = [
-  { value: SHELF_TYPES.WISHLIST, label: '📋 Wishlist' },
-  { value: SHELF_TYPES.READING, label: '📖 Currently Reading' },
-  { value: SHELF_TYPES.READ, label: '✅ Already Read' },
-  { value: SHELF_TYPES.DROPPED, label: '🚫 Dropped' },
+  { value: SHELF_TYPES.WISHLIST, label: 'Wishlist' },
+  { value: SHELF_TYPES.READING, label: 'Currently Reading' },
+  { value: SHELF_TYPES.READ, label: 'Already Read' },
+  { value: SHELF_TYPES.DROPPED, label: 'Dropped' },
 ];
 
 export default function AddBookPage() {
@@ -69,24 +69,35 @@ export default function AddBookPage() {
       <motion.div
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center gap-4"
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
       >
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigate(-1)}
-          id="add-book-back"
-          className="shrink-0"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div>
-          <Badge variant="secondary" className="mb-1">New Book</Badge>
-          <h1 className="font-display text-3xl font-bold tracking-tight">Add a Book</h1>
-          <p className="mt-1 text-muted-foreground">
-            Fill in the details below to add a book to your collection.
-          </p>
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate(-1)}
+            id="add-book-back"
+            className="shrink-0"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div>
+            <Badge variant="secondary" className="mb-1">New Book</Badge>
+            <h1 className="font-display text-3xl font-bold tracking-tight">Add a Book</h1>
+            <p className="mt-1 text-muted-foreground">
+              Fill in the details below to add a book to your collection.
+            </p>
+          </div>
         </div>
+
+        <Button
+          variant="outline"
+          onClick={() => navigate(ROUTES.LIBRARY_IMPORT)}
+          className="gap-2 sm:self-end self-start rounded-xl cursor-pointer"
+        >
+          <Import className="h-4 w-4" />
+          <span>Import Books (CSV/JSON)</span>
+        </Button>
       </motion.div>
 
       {/* Form Card */}

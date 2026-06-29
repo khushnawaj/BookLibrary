@@ -37,6 +37,11 @@ const authenticate = asyncHandler(async (req, _res, next) => {
     throw new AppError('User no longer exists', HTTP_STATUS.UNAUTHORIZED);
   }
 
+  // Restrict write actions for GUEST role
+  if (user.role === 'GUEST' && req.method !== 'GET') {
+    throw new AppError('Guest account is read-only. Please register or sign in to perform actions, save books, or interact.', HTTP_STATUS.FORBIDDEN);
+  }
+
   req.user = user;
   req.auth = {
     userId: user._id,

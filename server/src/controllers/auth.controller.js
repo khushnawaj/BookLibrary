@@ -60,4 +60,15 @@ const refresh = asyncHandler(async (req, res) => {
   });
 });
 
-module.exports = { register, login, logout, getMe, refresh };
+const guestLogin = asyncHandler(async (req, res) => {
+  const { accessToken, refreshToken, user } = await authService.loginAsGuest();
+
+  setTokenCookies(res, accessToken, refreshToken);
+
+  return ApiResponse.success(res, {
+    message: 'Logged in as guest',
+    data: { user: user.toPublicProfile(), accessToken, refreshToken },
+  });
+});
+
+module.exports = { register, login, logout, getMe, refresh, guestLogin };

@@ -6,7 +6,7 @@ import {
 } from 'recharts';
 import {
   BookOpen, TrendingUp, Star, Flame, Target, Plus, Trash2,
-  Loader2, Trophy, X, BookMarked, Zap,
+  Loader2, Trophy, X, BookMarked, Zap, FileText,
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppStore';
 import {
@@ -22,13 +22,24 @@ import { SkeletonBox } from '@/components/common/Skeletons';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
-const COLORS = ['#14b8a6', '#0f766e', '#2dd4bf', '#5eead4', '#99f6e4', '#115e59'];
+const COLORS = ['#8B4513', '#C0622F', '#D27D2D', '#B58463', '#9C6644', '#7F5539'];
 
 const TABS = [
   { id: 'overview', label: 'Overview', icon: TrendingUp },
   { id: 'goals', label: 'Goals', icon: Target },
   { id: 'achievements', label: 'Achievements', icon: Trophy },
 ];
+
+const ACHIEVEMENT_ICONS = {
+  first_book: { icon: BookOpen, color: 'text-primary bg-primary/10 border-primary/20' },
+  '10_books': { icon: Trophy, color: 'text-[#CD7F32] bg-[#CD7F32]/10 border-[#CD7F32]/20' }, // Bronze
+  '25_books': { icon: Trophy, color: 'text-[#C0C0C0] bg-[#C0C0C0]/10 border-[#C0C0C0]/20' }, // Silver
+  '50_books': { icon: Trophy, color: 'text-[#FFD700] bg-[#FFD700]/10 border-[#FFD700]/20' }, // Gold
+  '100_books': { icon: Trophy, color: 'text-[#E5E4E2] bg-[#E5E4E2]/10 border-[#E5E4E2]/20' }, // Platinum
+  '1000_pages': { icon: FileText, color: 'text-mint bg-mint/10 border-mint/20' },
+  streak_7: { icon: Flame, color: 'text-destructive bg-destructive/10 border-destructive/20' },
+  streak_30: { icon: Zap, color: 'text-warning bg-warning/10 border-warning/20' },
+};
 
 /* ── Create Goal Modal ─────────────────────────────────────────── */
 function CreateGoalModal({ open, onClose, onSave, isLoading }) {
@@ -94,22 +105,25 @@ function CreateGoalModal({ open, onClose, onSave, isLoading }) {
             <Label>Goal Type *</Label>
             <div className="grid grid-cols-2 gap-2">
               {[
-                { value: 'BOOKS', label: '📚 Books', desc: 'Number of books' },
-                { value: 'PAGES', label: '📄 Pages', desc: 'Number of pages' },
+                { value: 'BOOKS', label: 'Books', icon: BookOpen, desc: 'Number of books' },
+                { value: 'PAGES', label: 'Pages', icon: FileText, desc: 'Number of pages' },
               ].map((t) => (
                 <button
                   key={t.value}
                   type="button"
                   onClick={() => set('targetType', t.value)}
                   className={cn(
-                    'rounded-xl border p-3 text-left transition-all',
+                    'rounded-xl border p-3.5 text-left transition-all flex items-start gap-2.5 w-full',
                     form.targetType === t.value
                       ? 'border-primary bg-primary/10 text-primary'
                       : 'border-border hover:border-primary/50'
                   )}
                 >
-                  <div className="font-medium text-sm">{t.label}</div>
-                  <div className="text-xs text-muted-foreground">{t.desc}</div>
+                  <t.icon className={cn("h-4 w-4 shrink-0 mt-0.5", form.targetType === t.value ? "text-primary" : "text-muted-foreground")} />
+                  <div className="min-w-0">
+                    <div className="font-semibold text-sm leading-none">{t.label}</div>
+                    <div className="text-[11px] text-muted-foreground mt-1 leading-none">{t.desc}</div>
+                  </div>
                 </button>
               ))}
             </div>
@@ -172,7 +186,7 @@ function GoalCard({ goal, onDelete }) {
   const isFailed = goal.status === 'FAILED';
 
   const barColor = isCompleted
-    ? 'bg-emerald-500'
+    ? 'bg-success'
     : isFailed
     ? 'bg-destructive'
     : 'bg-primary';
@@ -230,7 +244,7 @@ function GoalCard({ goal, onDelete }) {
           <Badge
             className={cn(
               'text-xs',
-              isCompleted && 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+              isCompleted && 'bg-success/20 text-success border-success/30',
               isFailed && 'bg-destructive/20 text-destructive border-destructive/30',
               !isCompleted && !isFailed && 'bg-primary/20 text-primary border-primary/30'
             )}
@@ -414,7 +428,7 @@ export default function AnalyticsPage() {
                           <XAxis dataKey="month" stroke="#64748b" tick={{ fontSize: 12 }} />
                           <YAxis stroke="#64748b" tick={{ fontSize: 12 }} allowDecimals={false} />
                           <RechartsTooltip content={<CustomTooltip />} />
-                          <Bar dataKey="count" name="Books" fill="#14b8a6" radius={[6, 6, 0, 0]} />
+                          <Bar dataKey="count" name="Books" fill="var(--color-primary)" radius={[6, 6, 0, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
                     ) : (
@@ -546,7 +560,15 @@ export default function AnalyticsPage() {
                       whileHover={{ scale: 1.04, y: -4 }}
                       className="glass-card flex flex-col items-center justify-center p-6 text-center space-y-3 cursor-default"
                     >
-                      <div className="text-5xl drop-shadow">{ach.icon}</div>
+                      {(() => {
+                        const config = ACHIEVEMENT_ICONS[ach.badgeId] || { icon: Trophy, color: 'text-warning bg-warning/10 border-warning/20' };
+                        const IconComponent = config.icon;
+                        return (
+                          <div className={cn("p-4 rounded-full border shadow-inner flex items-center justify-center transition-transform group-hover:scale-110 duration-200", config.color)}>
+                            <IconComponent className="h-8 w-8" />
+                          </div>
+                        );
+                      })()}
                       <div>
                         <h3 className="font-semibold">{ach.title}</h3>
                         <p className="text-xs text-muted-foreground mt-1">{ach.description}</p>

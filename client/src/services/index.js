@@ -7,6 +7,7 @@ export const authService = {
   refreshToken: () => api.post('/auth/refresh'),
   getProfile: () => api.get('/auth/me'),
   updateProfile: (data) => api.put('/users/profile', data),
+  guestLogin: () => api.post('/auth/guest-login'),
 };
 
 export const userService = {
@@ -105,4 +106,10 @@ export const adminService = {
   getUsers: () => api.get('/admin/users'),
   updateUserRole: (id, role) => api.put(`/admin/users/${id}/role`, { role }),
   deleteUser: (id) => api.delete(`/admin/users/${id}`),
+};
+
+export const feedbackService = {
+  submitFeedback: (data) => api.post('/feedback', data),
+  getAllFeedback: () => api.get('/feedback'),
+  updateFeedbackStatus: (id, status, extraData = {}) => api.put(`/feedback/${id}`, { status, ...extraData }),
 };

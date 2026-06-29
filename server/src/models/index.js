@@ -10,6 +10,8 @@ const Post = require('./Post.model');
 const Like = require('./Like.model');
 const Comment = require('./Comment.model');
 const SavedPost = require('./SavedPost.model');
+const Feedback = require('./Feedback.model');
+const Notification = require('./Notification.model');
 
 module.exports = {
   User,
@@ -24,4 +26,6 @@ module.exports = {
   Like,
   Comment,
   SavedPost,
+  Feedback,
+  Notification,
 };

@@ -6,10 +6,12 @@ import {
   MessageCircle, Bookmark, Share2,
   BookOpen, Globe, Lock, Users, Trash2,
   ArrowUp, ArrowDown, Edit2, Loader2,
-  MoreVertical, Plus, Check, ChevronDown, Library
+  MoreVertical, Plus, Check, ChevronDown, Library,
+  Sparkles, Feather, MessageSquare
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toggleLike, removePostFromFeed, updatePostInFeed } from '@/features/feed/feedSlice';
+import { setShowGuestWarning } from '@/features/auth/authSlice';
 import { postService, libraryService } from '@/services';
 import { Avatar } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
@@ -27,7 +29,7 @@ const getCommunityInfo = (post) => {
   if (post.bookRef) {
     return {
       name: 's/books',
-      icon: '📖',
+      icon: BookOpen,
       color: 'text-primary bg-primary/10 border-primary/20 hover:bg-primary/15',
     };
   }
@@ -35,22 +37,22 @@ const getCommunityInfo = (post) => {
     const mainTag = post.hashtags[0].toLowerCase();
     return {
       name: `s/${mainTag}`,
-      icon: '✨',
-      color: 'text-indigo-500 bg-indigo-500/10 border-indigo-500/20 hover:bg-indigo-500/15',
+      icon: Sparkles,
+      color: 'text-primary bg-primary/10 border-primary/20 hover:bg-primary/15',
     };
   }
   const linesCount = post.content.split('\n').length;
   if (linesCount > 4) {
     return {
       name: 's/poetry',
-      icon: '✍️',
-      color: 'text-pink-500 bg-pink-500/10 border-pink-500/20 hover:bg-pink-500/15',
+      icon: Feather,
+      color: 'text-primary bg-primary/10 border-primary/20 hover:bg-primary/15',
     };
   }
   return {
     name: 's/lounge',
-    icon: '💭',
-    color: 'text-amber-500 bg-amber-500/10 border-amber-500/20 hover:bg-amber-500/15',
+    icon: MessageSquare,
+    color: 'text-primary bg-primary/10 border-primary/20 hover:bg-primary/15',
   };
 };
 
@@ -101,14 +103,14 @@ export function PostCard({ post, onDelete, onUpdate }) {
   }, [showShelfPicker]);
 
   const SHELF_OPTIONS = [
-    { value: 'WISHLIST',  label: 'Want to Read',   emoji: '🔖' },
-    { value: 'READING',   label: 'Currently Reading', emoji: '📖' },
-    { value: 'READ',      label: 'Already Read',   emoji: '✅' },
+    { value: 'WISHLIST',  label: 'Want to Read',   icon: Bookmark },
+    { value: 'READING',   label: 'Currently Reading', icon: BookOpen },
+    { value: 'READ',      label: 'Already Read',   icon: Check },
   ];
 
   const handleAddToLibrary = async (shelfType) => {
-    if (!user) {
-      toast.error('Please log in to add books to your library');
+    if (!user || isGuest) {
+      dispatch(setShowGuestWarning(true));
       return;
     }
     setShowShelfPicker(false);
@@ -150,11 +152,16 @@ export function PostCard({ post, onDelete, onUpdate }) {
   const postAuthorId = post.author?.id || post.author?._id || post.author;
   const isAuthor = currentUserId && postAuthorId && String(currentUserId) === String(postAuthorId);
   const isAdmin = user && user.role === 'ADMIN';
+  const isGuest = user?.role === 'GUEST';
   const canDelete = isAuthor || isAdmin;
 
-  const handleLike = () => dispatch(toggleLike(post._id));
+  const handleLike = () => {
+    if (isGuest) { dispatch(setShowGuestWarning(true)); return; }
+    dispatch(toggleLike(post._id));
+  };
 
   const handleDownvote = () => {
+    if (isGuest) { dispatch(setShowGuestWarning(true)); return; }
     if (post.isLiked) {
       dispatch(toggleLike(post._id));
     } else {
@@ -172,6 +179,7 @@ export function PostCard({ post, onDelete, onUpdate }) {
   };
 
   const handleSave = async () => {
+    if (isGuest) { dispatch(setShowGuestWarning(true)); return; }
     try {
       const res = await postService.toggleSave(post._id);
       const { saved } = res.data.data;
@@ -251,17 +259,17 @@ export function PostCard({ post, onDelete, onUpdate }) {
     <article
       className="group bg-card/70 glass-card border border-glass-border rounded-2xl
                  shadow-sm hover:shadow-md hover:border-primary/20
-                 transition-all duration-200 overflow-hidden flex"
+                 transition-all duration-200 !overflow-visible flex"
     >
       {/* ── Left Vote Panel (desktop only) ── */}
-      <div className="hidden md:flex flex-col items-center w-12 shrink-0 pt-4 bg-secondary/15 border-r border-glass-border/30 select-none">
+      <div className="hidden md:flex flex-col items-center w-12 shrink-0 pt-4 bg-secondary/15 border-r border-glass-border/30 select-none rounded-l-2xl">
         <button
           onClick={handleLike}
           className={cn(
             'p-1.5 rounded-lg transition-all duration-150',
             post.isLiked
-              ? 'text-orange-500 bg-orange-500/10 hover:bg-orange-500/20'
-              : 'text-muted-foreground/70 hover:text-orange-500 hover:bg-secondary/40'
+              ? 'text-primary bg-primary/10 hover:bg-primary/20'
+              : 'text-muted-foreground/70 hover:text-primary hover:bg-secondary/40'
           )}
           title="Upvote"
         >
@@ -270,14 +278,14 @@ export function PostCard({ post, onDelete, onUpdate }) {
         
         <span className={cn(
           'text-[13px] font-extrabold my-1 text-center min-w-[20px] transition-colors duration-150',
-          post.isLiked ? 'text-orange-500' : 'text-foreground/80'
+          post.isLiked ? 'text-primary' : 'text-foreground/80'
         )}>
           {post.likesCount}
         </span>
 
         <button
           onClick={handleDownvote}
-          className="p-1.5 rounded-lg text-muted-foreground/70 hover:text-blue-500 hover:bg-secondary/40 transition-all duration-150"
+          className="p-1.5 rounded-lg text-muted-foreground/70 hover:text-accent hover:bg-secondary/40 transition-all duration-150"
           title="Downvote"
         >
           <ArrowDown className="w-5 h-5" />
@@ -290,41 +298,48 @@ export function PostCard({ post, onDelete, onUpdate }) {
         <div className="flex items-start justify-between px-4 sm:px-5 pt-4 pb-1">
           <div className="flex items-center gap-3 min-w-0">
             {/* User Avatar */}
-            <Link to={`/profile/${post.author?.username}`} className="relative shrink-0 hover:opacity-90 transition-opacity">
+            <Link to={`/profile/${post.author?.username}`} className="shrink-0 hover:opacity-90 transition-opacity">
               <Avatar
                 src={post.author?.avatar}
                 name={post.author?.name}
                 size="md"
                 className="ring-2 ring-secondary/50 border border-glass-border"
               />
-              <span className="absolute -bottom-1 -right-1 bg-background border border-glass-border rounded-full p-0.5 text-[10px] shadow-sm leading-none flex items-center justify-center">
-                {community.icon}
-              </span>
             </Link>
 
             {/* Sub-community & Author Details */}
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5 flex-wrap leading-tight">
-                <span className="font-bold text-[13px] text-foreground hover:text-primary transition-colors cursor-pointer">
-                  {community.name}
+              <div className="flex items-center gap-x-2 gap-y-1.5 flex-wrap leading-tight text-[11px]">
+                {/* Community Pill Badge */}
+                <span className={cn(
+                  "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold border transition-colors cursor-pointer shrink-0",
+                  community.color
+                )}>
+                  <community.icon className="w-3.5 h-3.5 shrink-0" />
+                  <span>{community.name}</span>
                 </span>
-                <span className="text-[11px] text-muted-foreground/80">
-                  • Posted by
+
+                {/* Bullet Separator */}
+                <span className="text-muted-foreground/40 select-none">•</span>
+
+                {/* Author Info */}
+                <span className="text-muted-foreground/70 whitespace-nowrap">
+                  Posted by{' '}
+                  <Link
+                    to={`/profile/${post.author?.username}`}
+                    className="font-bold text-foreground/85 hover:text-primary hover:underline transition-colors"
+                  >
+                    u/{post.author?.username}
+                  </Link>
                 </span>
-                <Link
-                  to={`/profile/${post.author?.username}`}
-                  className="text-[11px] font-semibold text-muted-foreground hover:text-primary hover:underline transition-colors truncate max-w-[100px] sm:max-w-none"
-                >
-                  u/{post.author?.username}
-                </Link>
-                <span className="text-[10px] text-muted-foreground/60">
+
+                {/* Bullet Separator */}
+                <span className="text-muted-foreground/40 select-none">•</span>
+
+                {/* Time */}
+                <span className="text-muted-foreground/60 whitespace-nowrap">
                   {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
                 </span>
-              </div>
-              
-              <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-muted-foreground/60">
-                <VisibilityIcon className="h-3 w-3 shrink-0" />
-                <span className="capitalize">{post.visibility.toLowerCase()}</span>
               </div>
             </div>
           </div>
@@ -343,7 +358,7 @@ export function PostCard({ post, onDelete, onUpdate }) {
               {showMenu && (
                 <>
                   <div className="fixed inset-0 z-20" onClick={() => setShowMenu(false)} />
-                  <div className="absolute right-0 mt-1 w-36 rounded-xl border border-glass-border bg-card/95 glass-card shadow-lg p-1 z-30 animate-in fade-in slide-in-from-top-2 duration-150">
+                  <div className="absolute right-0 mt-1 w-36 rounded-xl border border-border bg-card shadow-xl p-1 z-30 animate-in fade-in slide-in-from-top-2 duration-150">
                     {isAuthor && !isEditing && (
                       <button
                         onClick={() => {
@@ -397,7 +412,7 @@ export function PostCard({ post, onDelete, onUpdate }) {
                 </button>
                 <button
                   onClick={handleUpdateSubmit}
-                  disabled={isUpdating || !editContent.trim()}
+                  disabled={isUpdating || !editContent.trim() || (editContent.trim() ? editContent.trim().split(/\s+/).length : 0) > 10000}
                   className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/95 transition-all flex items-center gap-1 cursor-pointer"
                 >
                   {isUpdating && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
@@ -479,11 +494,14 @@ export function PostCard({ post, onDelete, onUpdate }) {
 
           {/* Book Reference Embed Card */}
           {post.bookRef && (
-            <div className="mt-3.5 rounded-xl border border-glass-border/60 bg-secondary/15 hover:bg-secondary/25 transition-all duration-200 overflow-hidden">
+            <div className="mt-3.5 rounded-xl border border-glass-border/60 bg-secondary/15 hover:bg-secondary/25 transition-all duration-200">
               {/* Clickable area → book detail */}
               <Link
                 to={`/books/${post.bookRef._id}`}
-                className="flex items-center gap-3 p-3 group/book"
+                className={cn(
+                  "flex items-center gap-3 p-3 group/book",
+                  user ? "rounded-t-xl" : "rounded-xl"
+                )}
               >
                 {/* Cover */}
                 {post.bookRef.coverImage ? (
@@ -509,9 +527,9 @@ export function PostCard({ post, onDelete, onUpdate }) {
                 </div>
               </Link>
 
-              {/* Add to Library strip */}
+              {/* Add to Library strip — shown to all; guests see a sign-in prompt */}
               {user && (
-                <div className="border-t border-glass-border/40 px-3 py-2 flex items-center justify-between bg-secondary/10">
+                <div className="border-t border-glass-border/40 px-3 py-2 flex items-center justify-between bg-secondary/10 rounded-b-xl">
                   <span className="text-[10px] text-muted-foreground font-medium flex items-center gap-1">
                     <Library className="w-3 h-3" /> Add to your library
                   </span>
@@ -535,24 +553,24 @@ export function PostCard({ post, onDelete, onUpdate }) {
                     /* Shelf picker dropdown */
                     <div className="relative" ref={shelfPickerRef}>
                       <button
-                        onClick={() => setShowShelfPicker(v => !v)}
+                        onClick={() => isGuest ? dispatch(setShowGuestWarning(true)) : setShowShelfPicker(v => !v)}
                         className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors border border-primary/20 cursor-pointer"
                       >
                         <Plus className="w-3 h-3" />
                         Add
-                        <ChevronDown className={cn('w-3 h-3 transition-transform', showShelfPicker && 'rotate-180')} />
+                        {!isGuest && <ChevronDown className={cn('w-3 h-3 transition-transform', showShelfPicker && 'rotate-180')} />}
                       </button>
 
                       {showShelfPicker && (
-                        <div className="absolute right-0 bottom-full mb-1 w-44 rounded-xl border border-glass-border bg-card/98 shadow-xl z-40 overflow-hidden">
+                        <div className="absolute right-0 bottom-full mb-1 w-44 rounded-xl border border-glass-border bg-card/95 backdrop-blur-md shadow-xl z-40 overflow-hidden">
                           {SHELF_OPTIONS.map(opt => (
                             <button
                               key={opt.value}
                               onClick={() => handleAddToLibrary(opt.value)}
-                              className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs font-medium text-foreground hover:bg-secondary/50 transition-colors text-left cursor-pointer"
+                              className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold text-foreground hover:bg-secondary/50 transition-colors text-left cursor-pointer"
                             >
-                              <span className="text-base leading-none">{opt.emoji}</span>
-                              {opt.label}
+                              <opt.icon className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+                              <span>{opt.label}</span>
                             </button>
                           ))}
                         </div>
@@ -573,7 +591,7 @@ export function PostCard({ post, onDelete, onUpdate }) {
               onClick={handleLike}
               className={cn(
                 'p-1 rounded-full transition-colors duration-150',
-                post.isLiked ? 'text-orange-500 bg-orange-500/10' : 'text-muted-foreground/70'
+                post.isLiked ? 'text-primary bg-primary/10' : 'text-muted-foreground/70'
               )}
               title="Upvote"
             >
@@ -581,7 +599,7 @@ export function PostCard({ post, onDelete, onUpdate }) {
             </button>
             <span className={cn(
               'text-xs font-extrabold px-1.5 min-w-[20px] text-center transition-colors',
-              post.isLiked ? 'text-orange-500' : 'text-foreground/80'
+              post.isLiked ? 'text-primary' : 'text-foreground/80'
             )}>
               {post.likesCount}
             </span>
@@ -629,7 +647,7 @@ export function PostCard({ post, onDelete, onUpdate }) {
             className={cn(
               'flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-semibold shrink-0 transition-all duration-150 border',
               isSaved
-                ? 'bg-amber-500/10 text-amber-600 border-amber-500/20'
+                ? 'bg-primary/10 text-primary border-primary/20'
                 : 'bg-secondary/25 hover:bg-secondary/40 text-muted-foreground hover:text-foreground border-glass-border/40'
             )}
           >

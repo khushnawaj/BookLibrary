@@ -1,6 +1,10 @@
-import { useState, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
-import { X, Image as ImageIcon, Sparkles, Brain, BookOpen, Feather, Heart, Trophy, Calendar, Book } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { setShowGuestWarning } from '@/features/auth/authSlice';
+import {
+  X, Image as ImageIcon, Sparkles, Brain, BookOpen, Feather, Heart,
+  Trophy, Calendar, Book, Globe, Users, Lock, ChevronDown
+} from 'lucide-react';
 import { createPost } from '@/features/feed/feedSlice';
 import { Button } from '@/components/ui/button';
 import { ImageUpload } from '@/components/common/ImageUpload';
@@ -15,10 +19,10 @@ const POST_TYPES = [
     emoji: '📔',
     Icon: Book,
     placeholder: "Dear Diary, write down your day here...",
-    color: 'text-teal-500',
-    bg: 'bg-teal-500/10',
-    border: 'border-teal-500/30',
-    activeBg: 'bg-teal-500/15',
+    color: 'text-primary',
+    bg: 'bg-primary/10',
+    border: 'border-primary/20',
+    activeBg: 'bg-primary/15',
   },
   {
     id: 'thought',
@@ -26,10 +30,10 @@ const POST_TYPES = [
     emoji: '💭',
     Icon: Brain,
     placeholder: "What's on your mind right now? Share your ideas, opinions, or anything you're thinking about...",
-    color: 'text-violet-500',
-    bg: 'bg-violet-500/10',
-    border: 'border-violet-500/30',
-    activeBg: 'bg-violet-500/15',
+    color: 'text-primary',
+    bg: 'bg-primary/10',
+    border: 'border-primary/20',
+    activeBg: 'bg-primary/15',
   },
   {
     id: 'poem',
@@ -37,10 +41,10 @@ const POST_TYPES = [
     emoji: '✍️',
     Icon: Feather,
     placeholder: "Pour your words onto the page...\n\nEvery line a brushstroke,\nevery stanza a world.",
-    color: 'text-pink-500',
-    bg: 'bg-pink-500/10',
-    border: 'border-pink-500/30',
-    activeBg: 'bg-pink-500/15',
+    color: 'text-primary',
+    bg: 'bg-primary/10',
+    border: 'border-primary/20',
+    activeBg: 'bg-primary/15',
   },
   {
     id: 'emotion',
@@ -48,10 +52,10 @@ const POST_TYPES = [
     emoji: '🌊',
     Icon: Heart,
     placeholder: "How are you feeling today? Don't hold back — this is your safe space to express yourself...",
-    color: 'text-rose-500',
-    bg: 'bg-rose-500/10',
-    border: 'border-rose-500/30',
-    activeBg: 'bg-rose-500/15',
+    color: 'text-primary',
+    bg: 'bg-primary/10',
+    border: 'border-primary/20',
+    activeBg: 'bg-primary/15',
   },
   {
     id: 'book',
@@ -61,7 +65,7 @@ const POST_TYPES = [
     placeholder: "Share a book recommendation, a review, a favourite quote, or what you're reading right now...",
     color: 'text-primary',
     bg: 'bg-primary/10',
-    border: 'border-primary/30',
+    border: 'border-primary/20',
     activeBg: 'bg-primary/15',
   },
   {
@@ -70,16 +74,18 @@ const POST_TYPES = [
     emoji: '🏆',
     Icon: Trophy,
     placeholder: "Celebrate a reading milestone! Finished a tough book? Hit a reading goal? Share the win...",
-    color: 'text-amber-500',
-    bg: 'bg-amber-500/10',
-    border: 'border-amber-500/30',
-    activeBg: 'bg-amber-500/15',
+    color: 'text-primary',
+    bg: 'bg-primary/10',
+    border: 'border-primary/20',
+    activeBg: 'bg-primary/15',
   },
 ];
 
 // ── Component ──────────────────────────────────────────────────────────────────
 export function CreatePostModal({ isOpen, onClose }) {
   const dispatch = useDispatch();
+  const user = useSelector((state) => state.auth.user);
+  const isGuest = user?.role === 'GUEST';
   const [content, setContent] = useState('');
   const [images, setImages] = useState([]);
   const [visibility, setVisibility] = useState('PUBLIC');
@@ -87,9 +93,33 @@ export function CreatePostModal({ isOpen, onClose }) {
   const [showImageUpload, setShowImageUpload] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [showVisibilityDropdown, setShowVisibilityDropdown] = useState(false);
+  const visibilityDropdownRef = useRef(null);
+
+  const VISIBILITY_OPTIONS = [
+    { value: 'PUBLIC', label: 'Public', icon: Globe },
+    { value: 'FOLLOWERS', label: 'Followers', icon: Users },
+    { value: 'PRIVATE', label: 'Only me', icon: Lock },
+  ];
+
+  const activeVisibility = VISIBILITY_OPTIONS.find((v) => v.value === visibility) || VISIBILITY_OPTIONS[0];
+
   const activeType = POST_TYPES.find((t) => t.id === postType);
+  const wordCount = content.trim() ? content.trim().split(/\s+/).length : 0;
 
   const [isDraftSaved, setIsDraftSaved] = useState(false);
+
+  // Click outside visibility dropdown handler
+  useEffect(() => {
+    if (!showVisibilityDropdown) return;
+    const handler = (e) => {
+      if (visibilityDropdownRef.current && !visibilityDropdownRef.current.contains(e.target)) {
+        setShowVisibilityDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showVisibilityDropdown]);
 
   // Load draft on mount/open
   useEffect(() => {
@@ -232,6 +262,13 @@ export function CreatePostModal({ isOpen, onClose }) {
   };
 
   const handleSubmit = async () => {
+    // Guest guard — close modal and open sign-in prompt
+    if (isGuest) {
+      onClose();
+      dispatch(setShowGuestWarning(true));
+      return;
+    }
+
     if (!content.trim() && images.length === 0) {
       toast.error('Post cannot be empty');
       return;
@@ -294,8 +331,8 @@ export function CreatePostModal({ isOpen, onClose }) {
                   : 'text-muted-foreground border-transparent hover:bg-secondary/40 hover:text-foreground'
               )}
             >
-              <span>{type.emoji}</span>
-              {type.label}
+              <type.Icon className="w-3.5 h-3.5 shrink-0" />
+              <span>{type.label}</span>
             </button>
           ))}
         </div>
@@ -405,9 +442,11 @@ export function CreatePostModal({ isOpen, onClose }) {
           {/* Stats Bar */}
           <div className="mt-2.5 flex items-center justify-between px-1">
             <div className="flex gap-3 text-[10.5px] font-bold text-muted-foreground/50 select-none">
-              <span>{content.trim() ? content.trim().split(/\s+/).length : 0} words</span>
+              <span className={cn(wordCount > 10000 ? 'text-destructive font-extrabold' : '')}>
+                {wordCount} / 10,000 words
+              </span>
               <span>•</span>
-              <span>{Math.max(1, Math.ceil((content.trim() ? content.trim().split(/\s+/).length : 0) / 200))} min read</span>
+              <span>{Math.max(1, Math.ceil(wordCount / 200))} min read</span>
               {isDraftSaved && (
                 <>
                   <span>•</span>
@@ -415,11 +454,8 @@ export function CreatePostModal({ isOpen, onClose }) {
                 </>
               )}
             </div>
-            <span className={cn(
-              'text-[10.5px] font-bold',
-              content.length > 1800 ? 'text-destructive' : 'text-muted-foreground/45'
-            )}>
-              {content.length} / 2000 characters
+            <span className="text-[10.5px] font-bold text-muted-foreground/45">
+              {content.length} characters
             </span>
           </div>
         </div>
@@ -451,25 +487,44 @@ export function CreatePostModal({ isOpen, onClose }) {
             </Button>
 
             {/* Visibility Selector */}
-            <select
-              value={visibility}
-              onChange={(e) => setVisibility(e.target.value)}
-              style={{
-                backgroundColor: 'var(--color-card)',
-                color: 'var(--color-foreground)',
-                border: '1px solid var(--color-glass-border)',
-              }}
-              className="text-xs font-semibold rounded-xl px-2.5 py-1.5 focus:outline-none cursor-pointer hover:opacity-80 transition-opacity"
-            >
-              <option value="PUBLIC" style={{ backgroundColor: 'var(--color-card)', color: 'var(--color-foreground)' }}>🌍 Public</option>
-              <option value="FOLLOWERS" style={{ backgroundColor: 'var(--color-card)', color: 'var(--color-foreground)' }}>👥 Followers</option>
-              <option value="PRIVATE" style={{ backgroundColor: 'var(--color-card)', color: 'var(--color-foreground)' }}>🔒 Only me</option>
-            </select>
+            <div className="relative" ref={visibilityDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setShowVisibilityDropdown((v) => !v)}
+                className="flex items-center gap-1.5 text-xs font-semibold rounded-xl px-2.5 py-1.5 border border-border bg-card text-foreground hover:bg-secondary/40 transition-colors cursor-pointer"
+              >
+                <activeVisibility.icon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                <span>{activeVisibility.label}</span>
+                <ChevronDown className={cn("w-3 h-3 text-muted-foreground transition-transform shrink-0", showVisibilityDropdown && "rotate-180")} />
+              </button>
+
+              {showVisibilityDropdown && (
+                <div className="absolute left-0 bottom-full mb-1 w-32 rounded-xl border border-glass-border bg-card/95 backdrop-blur-md shadow-xl z-50 overflow-hidden py-1 animate-in fade-in duration-100">
+                  {VISIBILITY_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => {
+                        setVisibility(opt.value);
+                        setShowVisibilityDropdown(false);
+                      }}
+                      className={cn(
+                        "w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-left transition-colors cursor-pointer",
+                        opt.value === visibility ? "bg-primary/10 text-primary" : "text-foreground hover:bg-secondary/50"
+                      )}
+                    >
+                      <opt.icon className="w-3.5 h-3.5 shrink-0" />
+                      <span>{opt.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           <Button
             onClick={handleSubmit}
-            disabled={isSubmitting || (!content.trim() && images.length === 0)}
+            disabled={isSubmitting || (!content.trim() && images.length === 0) || wordCount > 10000}
             className={cn(
               'rounded-full px-6 font-semibold transition-all duration-150',
               activeType.id !== 'thought' && !isSubmitting ? `shadow-sm` : ''

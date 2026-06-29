@@ -33,6 +33,21 @@ export const loginUser = createAsyncThunk(
   }
 );
 
+export const guestLoginUser = createAsyncThunk(
+  'auth/guestLogin',
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await authService.guestLogin();
+      const { user, accessToken, refreshToken } = data.data;
+      if (accessToken) tokenStorage.setAccess(accessToken);
+      if (refreshToken) tokenStorage.setRefresh(refreshToken);
+      return { user, accessToken };
+    } catch (error) {
+      return rejectWithValue(extractApiError(error));
+    }
+  }
+);
+
 export const logoutUser = createAsyncThunk(
   'auth/logout',
   async (_, { rejectWithValue }) => {

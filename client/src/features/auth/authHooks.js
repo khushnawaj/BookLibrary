@@ -8,6 +8,7 @@ import {
   loginUser,
   logoutUser,
   fetchCurrentUser,
+  guestLoginUser,
 } from './authApi';
 import { clearAuthError } from './authSlice';
 
@@ -23,7 +24,7 @@ export const useAuth = () => {
       const result = await dispatch(registerUser(data));
       if (registerUser.fulfilled.match(result)) {
         toast.success('Welcome to ShelfForge!');
-        navigate(ROUTES.DASHBOARD);
+        navigate(ROUTES.FEED);
         return { success: true };
       }
       return { success: false, error: result.payload };
@@ -36,7 +37,20 @@ export const useAuth = () => {
       const result = await dispatch(loginUser(data));
       if (loginUser.fulfilled.match(result)) {
         toast.success('Welcome back!');
-        navigate(ROUTES.DASHBOARD);
+        navigate(ROUTES.FEED);
+        return { success: true };
+      }
+      return { success: false, error: result.payload };
+    },
+    [dispatch, navigate]
+  );
+
+  const guestLogin = useCallback(
+    async () => {
+      const result = await dispatch(guestLoginUser());
+      if (guestLoginUser.fulfilled.match(result)) {
+        toast.success('Browsing in Guest Mode!');
+        navigate(ROUTES.FEED);
         return { success: true };
       }
       return { success: false, error: result.payload };
@@ -67,6 +81,7 @@ export const useAuth = () => {
     initialized,
     register,
     login,
+    guestLogin,
     logout,
     bootstrapAuth,
     dismissError,

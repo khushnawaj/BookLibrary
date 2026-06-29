@@ -26,7 +26,7 @@ export function PublicRoute({ children }) {
   }
 
   if (isAuthenticated) {
-    return <Navigate to={ROUTES.DASHBOARD} replace />;
+    return <Navigate to={ROUTES.FEED} replace />;
   }
 
   return children;
@@ -48,7 +48,7 @@ export function AdminRoute({ children }) {
   }
 
   if (user?.role !== 'ADMIN') {
-    return <Navigate to={ROUTES.DASHBOARD} replace />;
+    return <Navigate to={ROUTES.FEED} replace />;
   }
 
   return children;

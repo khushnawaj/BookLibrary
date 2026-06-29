@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { API_BASE_URL } from '@/constants';
-import { resetAuth } from '@/features/auth/authSlice';
+import { resetAuth, setShowGuestWarning } from '@/features/auth/authSlice';
 
 // ── Token storage helpers ──────────────────────────────────────────────────────
 const TOKEN_KEY = 'sf_access_token';
@@ -65,6 +65,13 @@ api.interceptors.response.use(
     const originalRequest = error.config;
     const status = error.response?.status;
     const url = originalRequest?.url || '';
+
+    // Intercept guest mutations 403 Forbidden
+    if (status === 403 && error.response?.data?.message?.toLowerCase().includes('guest')) {
+      if (storeRef) {
+        storeRef.dispatch(setShowGuestWarning(true));
+      }
+    }
 
     if (status !== 401 || originalRequest._retry || isAuthEndpoint(url)) {
       return Promise.reject(error);

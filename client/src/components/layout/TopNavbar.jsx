@@ -6,7 +6,7 @@ import { ModeToggle } from '../theme/ModeToggle';
 
 export function TopNavbar({ onMenuClick, title }) {
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border/40 bg-background/40 px-4 backdrop-blur-xl sm:px-6 shadow-sm">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border/30 bg-card/65 px-4 backdrop-blur-xl sm:px-6 shadow-sm shadow-primary/5">
       {/* Mobile menu button */}
       <Button
         variant="ghost"

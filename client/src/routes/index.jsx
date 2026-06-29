@@ -1,31 +1,47 @@
+import { lazy, Suspense } from 'react';
 import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom';
 import { AuthInitializer } from '@/app/AuthInitializer';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { ROUTES } from '@/constants';
-import AddBookPage from '@/pages/AddBookPage';
-import AnalyticsPage from '@/pages/AnalyticsPage';
-import BookDetailsPage from '@/pages/BookDetailsPage';
-import DashboardPage from '@/pages/DashboardPage';
-import EditBookPage from '@/pages/EditBookPage';
-import FeedPage from '@/pages/FeedPage';
-import ImportBooksPage from '@/pages/ImportBooksPage';
-import LandingPage from '@/pages/LandingPage';
-import LibraryPage from '@/pages/LibraryPage';
-import LoginPage from '@/pages/LoginPage';
-import ProfilePage from '@/pages/ProfilePage';
-import PublicBookPage from '@/pages/PublicBookPage';
-import RegisterPage from '@/pages/RegisterPage';
-import SettingsPage from '@/pages/SettingsPage';
-import WishlistPage from '@/pages/WishlistPage';
-import NotFoundPage from '@/pages/NotFoundPage';
-import AdminDashboard from '@/pages/AdminDashboard';
+import { Loader2 } from 'lucide-react';
 import { ProtectedRoute, PublicRoute, AdminRoute } from '@/routes/ProtectedRoute';
+
+// Lazy load pages for chunk splitting and optimized performance
+const LandingPage = lazy(() => import('@/pages/LandingPage'));
+const LoginPage = lazy(() => import('@/pages/LoginPage'));
+const RegisterPage = lazy(() => import('@/pages/RegisterPage'));
+const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
+const FeedPage = lazy(() => import('@/pages/FeedPage'));
+const LibraryPage = lazy(() => import('@/pages/LibraryPage'));
+const AddBookPage = lazy(() => import('@/pages/AddBookPage'));
+const ImportBooksPage = lazy(() => import('@/pages/ImportBooksPage'));
+const BookDetailsPage = lazy(() => import('@/pages/BookDetailsPage'));
+const EditBookPage = lazy(() => import('@/pages/EditBookPage'));
+const PublicBookPage = lazy(() => import('@/pages/PublicBookPage'));
+const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage'));
+const WishlistPage = lazy(() => import('@/pages/WishlistPage'));
+const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
+const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
+const FeedbackPage = lazy(() => import('@/pages/FeedbackPage'));
+const AdminDashboard = lazy(() => import('@/pages/AdminDashboard'));
+const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
+
+// High-fidelity fallback spinner for lazy route load transitions
+function SuspenseLoader() {
+  return (
+    <div className="flex h-screen w-full items-center justify-center bg-background/50 backdrop-blur-sm">
+      <Loader2 className="h-8 w-8 text-primary animate-spin" />
+    </div>
+  );
+}
 
 function RootLayout() {
   return (
     <AuthInitializer>
-      <Outlet />
+      <Suspense fallback={<SuspenseLoader />}>
+        <Outlet />
+      </Suspense>
     </AuthInitializer>
   );
 }
@@ -76,6 +92,7 @@ export const router = createBrowserRouter([
           { path: ROUTES.PROFILE, element: <ProfilePage /> },
           { path: `${ROUTES.PROFILE}/:username`, element: <ProfilePage /> },
           { path: ROUTES.SETTINGS, element: <SettingsPage /> },
+          { path: ROUTES.FEEDBACK, element: <FeedbackPage /> },
           {
             path: ROUTES.ADMIN,
             element: (

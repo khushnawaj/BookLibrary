@@ -8,6 +8,9 @@ import {
   Star,
   Trash2,
   FolderOpen,
+  Check,
+  Bookmark,
+  XCircle,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -157,17 +160,21 @@ export function BookCard({ entry, onEdit, onDelete }) {
                 </DropdownMenuSubTrigger>
                 <DropdownMenuPortal>
                   <DropdownMenuSubContent className="w-44">
-                    <DropdownMenuItem onClick={() => handleShelfChange('READING')}>
-                      📖 Reading
+                    <DropdownMenuItem onClick={() => handleShelfChange('READING')} className="gap-2">
+                      <BookOpen className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                      <span>Reading</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleShelfChange('READ')}>
-                      ✅ Read
+                    <DropdownMenuItem onClick={() => handleShelfChange('READ')} className="gap-2">
+                      <Check className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                      <span>Read</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleShelfChange('WISHLIST')}>
-                      📋 Wishlist
+                    <DropdownMenuItem onClick={() => handleShelfChange('WISHLIST')} className="gap-2">
+                      <Bookmark className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                      <span>Wishlist</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleShelfChange('DROPPED')}>
-                      🚫 Dropped
+                    <DropdownMenuItem onClick={() => handleShelfChange('DROPPED')} className="gap-2 text-destructive focus:text-destructive">
+                      <XCircle className="w-3.5 h-3.5 shrink-0" />
+                      <span>Dropped</span>
                     </DropdownMenuItem>
                   </DropdownMenuSubContent>
                 </DropdownMenuPortal>
@@ -284,17 +291,21 @@ export function BookListItem({ entry, onEdit, onDelete }) {
               </DropdownMenuSubTrigger>
               <DropdownMenuPortal>
                 <DropdownMenuSubContent className="w-44">
-                  <DropdownMenuItem onClick={() => handleShelfChange('READING')}>
-                    📖 Reading
+                  <DropdownMenuItem onClick={() => handleShelfChange('READING')} className="gap-2">
+                    <BookOpen className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                    <span>Reading</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleShelfChange('READ')}>
-                    ✅ Read
+                  <DropdownMenuItem onClick={() => handleShelfChange('READ')} className="gap-2">
+                    <Check className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                    <span>Read</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleShelfChange('WISHLIST')}>
-                    📋 Wishlist
+                  <DropdownMenuItem onClick={() => handleShelfChange('WISHLIST')} className="gap-2">
+                    <Bookmark className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                    <span>Wishlist</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleShelfChange('DROPPED')}>
-                    🚫 Dropped
+                  <DropdownMenuItem onClick={() => handleShelfChange('DROPPED')} className="gap-2 text-destructive focus:text-destructive">
+                    <XCircle className="w-3.5 h-3.5 shrink-0" />
+                    <span>Dropped</span>
                   </DropdownMenuItem>
                 </DropdownMenuSubContent>
               </DropdownMenuPortal>
