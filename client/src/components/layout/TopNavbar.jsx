@@ -19,11 +19,11 @@ export function TopNavbar({ onMenuClick, title }) {
       </Button>
 
       {/* Page title with decorative accent */}
-      <div className="flex flex-1 items-center gap-3 min-w-0">
+      <div className="flex flex-1 items-center gap-2 min-w-0">
         {title && (
-          <div className="hidden sm:flex items-center gap-2.5">
-            <div className="h-4 w-0.5 rounded-full bg-primary/40" />
-            <h1 className="text-base font-semibold text-foreground tracking-tight truncate">
+          <div className="flex items-center gap-2">
+            <div className="h-4 w-0.5 rounded-full bg-primary/40 shrink-0" />
+            <h1 className="text-sm sm:text-base font-semibold text-foreground tracking-tight truncate">
               {title}
             </h1>
           </div>

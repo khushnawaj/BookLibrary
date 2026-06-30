@@ -120,7 +120,7 @@ export function PostCard({ post, onDelete, onUpdate }) {
       setLibraryStatus(shelfType);
       const option = SHELF_OPTIONS.find(o => o.value === shelfType);
       toast.success(`Added to your library as "${option?.label}"!`, {
-        icon: option?.emoji,
+        icon: option ? <option.icon className="w-5 h-5 text-primary" /> : undefined,
         style: {
           borderRadius: '12px',
           background: 'var(--color-card)',
@@ -133,7 +133,7 @@ export function PostCard({ post, onDelete, onUpdate }) {
       if (msg.toLowerCase().includes('already') || err.response?.status === 409) {
         setLibraryStatus('EXISTS');
         toast('This book is already in your library!', {
-          icon: '📚',
+          icon: <BookOpen className="w-5 h-5 text-primary" />,
           style: {
             borderRadius: '12px',
             background: 'var(--color-card)',
@@ -165,8 +165,8 @@ export function PostCard({ post, onDelete, onUpdate }) {
     if (post.isLiked) {
       dispatch(toggleLike(post._id));
     } else {
-      toast("ShelfForge is all about positive vibes! Downvoting is disabled. 🌟", {
-        icon: '✨',
+      toast("ShelfForge is all about positive vibes! Downvoting is disabled.", {
+        icon: <Sparkles className="w-5 h-5 text-amber-500" />,
         style: {
           borderRadius: '12px',
           background: 'var(--color-card)',

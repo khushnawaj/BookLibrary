@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Loader2, Plus, RefreshCw, Sparkles, Users, Globe } from 'lucide-react';
+import { Loader2, Plus, RefreshCw, Sparkles, Users, Globe, Brain, Feather, BookOpen, Star, Target } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   fetchFeed,
@@ -168,14 +168,19 @@ export default function FeedPage() {
 
               {/* Quick-action pills visible on hover */}
               <div className="hidden sm:flex items-center gap-1.5 shrink-0">
-                {['💭 Thought', '✍️ Poem', '📖 Book'].map((label) => (
+                {[
+                  { label: 'Thought', icon: Brain },
+                  { label: 'Poem', icon: Feather },
+                  { label: 'Book', icon: BookOpen }
+                ].map((item) => (
                   <span
-                    key={label}
-                    className="text-[10px] font-semibold px-2 py-1 rounded-full
+                    key={item.label}
+                    className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full
                                bg-secondary/50 text-primary border border-glass-border
                                opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                   >
-                    {label}
+                    <item.icon className="w-3 h-3 shrink-0" />
+                    <span>{item.label}</span>
                   </span>
                 ))}
               </div>
@@ -200,8 +205,8 @@ export default function FeedPage() {
                            bg-secondary/10"
               >
                 <div className="h-16 w-16 rounded-2xl bg-secondary/30
-                                flex items-center justify-center text-3xl mb-4 shadow-sm border border-glass-border">
-                  📚
+                                flex items-center justify-center mb-4 shadow-sm border border-glass-border">
+                  <BookOpen className="w-7 h-7 text-primary" />
                 </div>
                 <p className="font-bold text-foreground text-base mb-1.5">No posts yet</p>
                 <p className="text-xs text-muted-foreground mb-6 max-w-[260px] leading-relaxed">
@@ -268,13 +273,17 @@ export default function FeedPage() {
           <div className="rounded-2xl border border-glass-border bg-card/70 glass-card p-4 space-y-3 shadow-sm">
             <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground font-display">Discover</p>
             <div className="flex flex-col gap-2.5">
-              {['Join readers', 'Share reviews', 'Set goals'].map((tip, i) => (
-                <div key={tip} className="flex items-center gap-3">
+              {[
+                { tip: 'Join readers', icon: Users },
+                { tip: 'Share reviews', icon: Star },
+                { tip: 'Set goals', icon: Target }
+              ].map((item) => (
+                <div key={item.tip} className="flex items-center gap-3">
                   <div className="h-7 w-7 rounded-full bg-gradient-to-br from-secondary/40 to-secondary/20
-                                  flex items-center justify-center text-sm shrink-0 border border-glass-border">
-                    {['👥', '⭐', '🎯'][i]}
+                                  flex items-center justify-center shrink-0 border border-glass-border text-muted-foreground">
+                    <item.icon className="w-3.5 h-3.5" />
                   </div>
-                  <span className="text-xs text-foreground font-medium">{tip}</span>
+                  <span className="text-xs text-foreground font-medium">{item.tip}</span>
                 </div>
               ))}
             </div>

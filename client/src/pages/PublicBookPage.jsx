@@ -97,7 +97,7 @@ export default function PublicBookPage() {
         await libraryService.update(libraryEntryId, { shelfType });
         setLibStatus(shelfType);
         const opt = SHELF_OPTIONS.find(o => o.value === shelfType);
-        toast.success(`Moved to "${opt?.label}"!`, { icon: opt?.emoji });
+        toast.success(`Moved to "${opt?.label}"!`, { icon: opt ? <opt.icon className="w-5 h-5 text-primary" /> : undefined });
       } else {
         // Add new entry!
         const res = await libraryService.add({ bookId: id, shelfType });
@@ -107,13 +107,13 @@ export default function PublicBookPage() {
         }
         setLibStatus(shelfType);
         const opt = SHELF_OPTIONS.find(o => o.value === shelfType);
-        toast.success(`Added to library as "${opt?.label}"!`, { icon: opt?.emoji });
+        toast.success(`Added to library as "${opt?.label}"!`, { icon: opt ? <opt.icon className="w-5 h-5 text-primary" /> : undefined });
       }
     } catch (err) {
       const msg = err.response?.data?.message || '';
       if (msg.toLowerCase().includes('already') || err.response?.status === 409) {
         setLibStatus('EXISTS');
-        toast('This book is already in your library!', { icon: '📚' });
+        toast('This book is already in your library!', { icon: <BookOpen className="w-5 h-5 text-primary" /> });
       } else {
         setLibStatus(null);
         toast.error('Failed to update library');
@@ -160,7 +160,7 @@ export default function PublicBookPage() {
           className="space-y-4"
         >
           {/* Cover */}
-          <div className="aspect-[2/3] overflow-hidden rounded-2xl bg-gradient-to-br from-primary/20 to-accent/30 shadow-xl ring-1 ring-glass-border">
+          <div className="aspect-[2/3] max-w-[200px] mx-auto lg:max-w-none overflow-hidden rounded-2xl bg-gradient-to-br from-primary/20 to-accent/30 shadow-xl ring-1 ring-glass-border">
             {book.coverImage && !imgError ? (
               <img
                 src={book.coverImage}

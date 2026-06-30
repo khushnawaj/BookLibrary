@@ -393,8 +393,9 @@ export default function AdminDashboard() {
                             {act.type === 'BADGE_UNLOCKED' && 'unlocked a new Badge'}
                           </p>
                           {act.metadata?.bookTitle && (
-                            <p className="text-primary font-medium mt-0.5">
-                              📖 {act.metadata.bookTitle} by {act.metadata.bookAuthor}
+                            <p className="text-primary font-medium mt-0.5 flex items-center gap-1">
+                              <BookOpen className="w-3.5 h-3.5 shrink-0" />
+                              <span>{act.metadata.bookTitle} by {act.metadata.bookAuthor}</span>
                             </p>
                           )}
                           <p className="text-[10px] text-muted-foreground/50 mt-1">
@@ -658,10 +659,10 @@ export default function AdminDashboard() {
                         </div>
                         <p className="text-muted-foreground">
                           {act.type === 'BOOK_ADDED' && 'added a new book to their library collection.'}
-                          {act.type === 'BOOK_COMPLETED' && 'successfully completed reading a book! 🎉'}
+                          {act.type === 'BOOK_COMPLETED' && 'successfully completed reading a book!'}
                           {act.type === 'BOOK_RATED' && `rated a book ${act.metadata?.rating || ''} stars.`}
                           {act.type === 'BOOK_REVIEWED' && 'wrote a new review for a book.'}
-                          {act.type === 'BADGE_UNLOCKED' && 'unlocked a reader badge achievement! 🏆'}
+                          {act.type === 'BADGE_UNLOCKED' && 'unlocked a reader badge achievement!'}
                         </p>
                         {act.metadata?.bookTitle && (
                           <div className="p-2 rounded-lg bg-secondary/20 border border-glass-border mt-1.5 flex items-center gap-2">

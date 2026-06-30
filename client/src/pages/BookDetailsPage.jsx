@@ -180,7 +180,7 @@ export default function BookDetailsPage() {
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.35 }}
-            className="aspect-[2/3] overflow-hidden rounded-2xl bg-gradient-to-br from-primary/20 to-accent/30 shadow-xl ring-1 ring-border"
+            className="aspect-[2/3] max-w-[200px] mx-auto lg:max-w-none overflow-hidden rounded-2xl bg-gradient-to-br from-primary/20 to-accent/30 shadow-xl ring-1 ring-border"
           >
             {book?.coverImage && !imgError ? (
               <img

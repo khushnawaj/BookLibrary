@@ -181,12 +181,12 @@ export default function LibraryPage() {
         </div>
 
         {/* Filters */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full sm:w-auto">
           <Select
             value={filters.shelfType || 'all'}
             onValueChange={handleShelfChange}
           >
-            <SelectTrigger className="w-36" id="library-shelf-filter">
+            <SelectTrigger className="flex-1 sm:flex-initial sm:w-36" id="library-shelf-filter">
               <SlidersHorizontal className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
               <SelectValue />
             </SelectTrigger>
@@ -203,7 +203,7 @@ export default function LibraryPage() {
             value={filters.sort || 'default'}
             onValueChange={handleSortChange}
           >
-            <SelectTrigger className="w-36" id="library-sort">
+            <SelectTrigger className="flex-1 sm:flex-initial sm:w-36" id="library-sort">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -216,7 +216,7 @@ export default function LibraryPage() {
           </Select>
 
           {/* View toggle */}
-          <div className="flex items-center rounded-lg border border-border p-0.5 bg-secondary/5">
+          <div className="flex items-center rounded-lg border border-border p-0.5 bg-secondary/5 shrink-0 ml-auto sm:ml-0">
             <button
               onClick={() => setViewMode('grid')}
               id="view-grid"

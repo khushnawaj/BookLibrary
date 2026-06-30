@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Bookmark, BookOpen, Check, Ban, Library } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppStore';
 import {
   fetchLibraryEntryById,
@@ -35,10 +35,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 
 const SHELF_OPTIONS = [
-  { value: SHELF_TYPES.WISHLIST, label: '📋 Wishlist' },
-  { value: SHELF_TYPES.READING, label: '📖 Currently Reading' },
-  { value: SHELF_TYPES.READ, label: '✅ Already Read' },
-  { value: SHELF_TYPES.DROPPED, label: '🚫 Dropped' },
+  { value: SHELF_TYPES.WISHLIST, label: 'Wishlist', icon: Bookmark },
+  { value: SHELF_TYPES.READING, label: 'Currently Reading', icon: BookOpen },
+  { value: SHELF_TYPES.READ, label: 'Already Read', icon: Check },
+  { value: SHELF_TYPES.DROPPED, label: 'Dropped', icon: Ban },
 ];
 
 function LibraryDetailsForm({ entry, onSave, isSaving }) {
@@ -78,7 +78,10 @@ function LibraryDetailsForm({ entry, onSave, isSaving }) {
                 <SelectContent>
                   {SHELF_OPTIONS.map((o) => (
                     <SelectItem key={o.value} value={o.value}>
-                      {o.label}
+                      <span className="flex items-center gap-2">
+                        <o.icon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                        <span>{o.label}</span>
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -224,8 +227,9 @@ export default function EditBookPage() {
         transition={{ delay: 0.05 }}
         className="glass-card p-6 sm:p-8"
       >
-        <h2 className="mb-6 text-lg font-semibold border-b border-border pb-3">
-          📚 Book Information
+        <h2 className="mb-6 text-lg font-semibold border-b border-border pb-3 flex items-center gap-2">
+          <BookOpen className="w-5 h-5 text-primary shrink-0" />
+          <span>Book Information</span>
         </h2>
         <BookForm
           defaultValues={bookDefaults}
@@ -242,8 +246,9 @@ export default function EditBookPage() {
         transition={{ delay: 0.1 }}
         className="glass-card p-6 sm:p-8"
       >
-        <h2 className="mb-6 text-lg font-semibold border-b border-border pb-3">
-          🗂️ Library Details
+        <h2 className="mb-6 text-lg font-semibold border-b border-border pb-3 flex items-center gap-2">
+          <Library className="w-5 h-5 text-primary shrink-0" />
+          <span>Library Details</span>
         </h2>
         <LibraryDetailsForm
           entry={entry}

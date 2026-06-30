@@ -3,7 +3,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { setShowGuestWarning } from '@/features/auth/authSlice';
 import {
   X, Image as ImageIcon, Sparkles, Brain, BookOpen, Feather, Heart,
-  Trophy, Calendar, Book, Globe, Users, Lock, ChevronDown
+  Trophy, Calendar, Book, Globe, Users, Lock, ChevronDown,
+  Smile, Frown, Zap, Compass, Moon
 } from 'lucide-react';
 import { createPost } from '@/features/feed/feedSlice';
 import { Button } from '@/components/ui/button';
@@ -16,7 +17,6 @@ const POST_TYPES = [
   {
     id: 'journal',
     label: 'Journal',
-    emoji: '📔',
     Icon: Book,
     placeholder: "Dear Diary, write down your day here...",
     color: 'text-primary',
@@ -27,7 +27,6 @@ const POST_TYPES = [
   {
     id: 'thought',
     label: 'Thought',
-    emoji: '💭',
     Icon: Brain,
     placeholder: "What's on your mind right now? Share your ideas, opinions, or anything you're thinking about...",
     color: 'text-primary',
@@ -38,7 +37,6 @@ const POST_TYPES = [
   {
     id: 'poem',
     label: 'Poem',
-    emoji: '✍️',
     Icon: Feather,
     placeholder: "Pour your words onto the page...\n\nEvery line a brushstroke,\nevery stanza a world.",
     color: 'text-primary',
@@ -49,7 +47,6 @@ const POST_TYPES = [
   {
     id: 'emotion',
     label: 'Feeling',
-    emoji: '🌊',
     Icon: Heart,
     placeholder: "How are you feeling today? Don't hold back — this is your safe space to express yourself...",
     color: 'text-primary',
@@ -60,7 +57,6 @@ const POST_TYPES = [
   {
     id: 'book',
     label: 'Book',
-    emoji: '📖',
     Icon: BookOpen,
     placeholder: "Share a book recommendation, a review, a favourite quote, or what you're reading right now...",
     color: 'text-primary',
@@ -71,7 +67,6 @@ const POST_TYPES = [
   {
     id: 'milestone',
     label: 'Milestone',
-    emoji: '🏆',
     Icon: Trophy,
     placeholder: "Celebrate a reading milestone! Finished a tough book? Hit a reading goal? Share the win...",
     color: 'text-primary',
@@ -165,7 +160,7 @@ export function CreatePostModal({ isOpen, onClose }) {
           hour: '2-digit',
           minute: '2-digit',
         });
-        setContent(`📅 ${dateString}\n\n`);
+        setContent(`[${dateString}]\n\n`);
       }
     }
   }, [isOpen, postType]);
@@ -184,7 +179,7 @@ export function CreatePostModal({ isOpen, onClose }) {
     setPostType(typeId);
     
     if (typeId === 'journal') {
-      if (!content.trim() || (content.startsWith('📅 ') && content.split('\n').length <= 3)) {
+      if (!content.trim() || (content.startsWith('[') && content.split('\n').length <= 3)) {
         const now = new Date();
         const dateString = now.toLocaleString('en-US', {
           weekday: 'short',
@@ -194,10 +189,10 @@ export function CreatePostModal({ isOpen, onClose }) {
           hour: '2-digit',
           minute: '2-digit',
         });
-        setContent(`📅 ${dateString}\n\n`);
+        setContent(`[${dateString}]\n\n`);
       }
     } else {
-      if (content.startsWith('📅 ') && content.split('\n').length <= 3) {
+      if (content.startsWith('[') && content.split('\n').length <= 3) {
         setContent('');
       }
     }
@@ -232,7 +227,7 @@ export function CreatePostModal({ isOpen, onClose }) {
       hour: '2-digit',
       minute: '2-digit',
     });
-    const timestamp = `📅 ${dateString}`;
+    const timestamp = `[${dateString}]`;
 
     const textarea = document.getElementById('post-composer-textarea');
     if (textarea) {
@@ -300,10 +295,13 @@ export function CreatePostModal({ isOpen, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
-      <div className="bg-card/95 glass-card w-full max-w-[560px] rounded-t-2xl sm:rounded-2xl border border-glass-border shadow-2xl flex flex-col max-h-[92vh] animate-in slide-in-from-bottom-10 sm:slide-in-from-bottom-4 duration-300">
+      <div className="bg-card/95 glass-card w-full h-[100dvh] sm:h-auto max-w-[560px] rounded-t-3xl sm:rounded-2xl border-0 sm:border border-glass-border shadow-2xl flex flex-col max-h-[100dvh] sm:max-h-[92vh] animate-in slide-in-from-bottom-10 sm:slide-in-from-bottom-4 duration-300">
+        
+        {/* Mobile drag handle */}
+        <div className="mx-auto my-2 h-1 w-10 rounded-full bg-muted-foreground/30 sm:hidden shrink-0" />
 
         {/* ── Header ── */}
-        <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-glass-border">
+        <div className="flex items-center justify-between px-4 pt-2 sm:pt-4 pb-3 border-b border-glass-border">
           <h3 className="font-semibold text-base sm:text-lg flex items-center gap-2 font-display">
             <Sparkles className="w-4 h-4 text-primary" />
             Create Post
@@ -319,7 +317,7 @@ export function CreatePostModal({ isOpen, onClose }) {
         </div>
 
         {/* ── Post type selector ── */}
-        <div className="flex flex-wrap items-center gap-1.5 px-4 pt-3 pb-1">
+        <div className="flex items-center gap-1.5 px-4 pt-3 pb-1.5 overflow-x-auto scrollbar-none shrink-0">
           {POST_TYPES.map((type) => (
             <button
               key={type.id}
@@ -338,9 +336,9 @@ export function CreatePostModal({ isOpen, onClose }) {
         </div>
 
         {/* ── Body ── */}
-        <div className="p-4 flex-1 overflow-y-auto min-h-0">
+        <div className="p-4 flex-1 overflow-y-auto min-h-0 flex flex-col gap-3">
           {/* Active type hint bar */}
-          <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
             <div className={cn(
               'flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium border',
               activeType.bg, activeType.border, activeType.color
@@ -357,27 +355,27 @@ export function CreatePostModal({ isOpen, onClose }) {
             </div>
           </div>
 
-          <div className="flex flex-col mt-1">
-            {/* Mood Emojis Toolbar */}
-            <div className="flex items-center justify-between px-3 py-2 border border-glass-border bg-secondary/15 rounded-t-xl select-none">
+          <div className="flex flex-col mt-1 flex-1 min-h-0">
+            {/* Mood Toolbar */}
+            <div className="flex items-center justify-between px-3 py-2 border border-glass-border bg-secondary/15 rounded-t-xl select-none shrink-0">
               <span className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-wider">Mood:</span>
               <div className="flex items-center gap-1">
                 {[
-                  { emoji: '😊', label: 'Happy' },
-                  { emoji: '🧘', label: 'Calm' },
-                  { emoji: '😔', label: 'Sad' },
-                  { emoji: '⚡', label: 'Excited' },
-                  { emoji: '🍂', label: 'Reflective' },
+                  { Icon: Smile, label: 'Happy', emoji: '😊' },
+                  { Icon: Compass, label: 'Calm', emoji: '🧘' },
+                  { Icon: Frown, label: 'Sad', emoji: '😔' },
+                  { Icon: Zap, label: 'Excited', emoji: '⚡' },
+                  { Icon: Moon, label: 'Reflective', emoji: '🍂' },
                 ].map((m) => (
                   <button
                     key={m.label}
                     type="button"
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => insertEmoji(m.emoji)}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg text-base hover:bg-secondary/50 transition-colors cursor-pointer"
+                    className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
                     title={m.label}
                   >
-                    {m.emoji}
+                    <m.Icon className="w-4 h-4" />
                   </button>
                 ))}
               </div>
@@ -385,7 +383,7 @@ export function CreatePostModal({ isOpen, onClose }) {
 
             {/* Textarea container */}
             <div className={cn(
-              "rounded-b-xl border border-t-0 border-glass-border bg-secondary/10 px-4 py-3.5 transition-all duration-200",
+              "rounded-b-xl border border-t-0 border-glass-border bg-secondary/10 px-4 py-3.5 transition-all duration-200 flex-1 flex flex-col min-h-[140px]",
               postType === 'journal' && 'focus-within:border-teal-500/40 focus-within:ring-4 focus-within:ring-teal-500/10',
               postType === 'thought' && 'focus-within:border-violet-500/40 focus-within:ring-4 focus-within:ring-violet-500/10',
               postType === 'poem' && 'focus-within:border-pink-500/40 focus-within:ring-4 focus-within:ring-pink-500/10',
@@ -410,7 +408,7 @@ export function CreatePostModal({ isOpen, onClose }) {
                   })
                 }}
                 className={cn(
-                  'w-full min-h-[220px] resize-none border-none outline-none focus:outline-none focus:ring-0 p-0',
+                  'w-full flex-1 resize-none border-none outline-none focus:outline-none focus:ring-0 p-0',
                   'bg-transparent text-[15.5px] font-serif tracking-wide text-foreground/90',
                   'placeholder:text-muted-foreground/50',
                   postType === 'poem' ? 'italic leading-loose text-center' : 'text-left'
@@ -420,7 +418,7 @@ export function CreatePostModal({ isOpen, onClose }) {
           </div>
 
           {showImageUpload && (
-            <div className="mt-4 p-2 border border-glass-border rounded-xl bg-secondary/10 relative">
+            <div className="mt-2 p-2 border border-glass-border rounded-xl bg-secondary/10 relative shrink-0">
               <Button
                 variant="outline"
                 size="icon"
@@ -435,6 +433,7 @@ export function CreatePostModal({ isOpen, onClose }) {
               <ImageUpload
                 value={images[0]}
                 onChange={(url) => setImages(url ? [url] : [])}
+                compact
               />
             </div>
           )}
@@ -530,7 +529,7 @@ export function CreatePostModal({ isOpen, onClose }) {
               activeType.id !== 'thought' && !isSubmitting ? `shadow-sm` : ''
             )}
           >
-            {isSubmitting ? 'Posting...' : `Publish ${activeType.emoji}`}
+            {isSubmitting ? 'Posting...' : 'Publish Post'}
           </Button>
         </div>
       </div>

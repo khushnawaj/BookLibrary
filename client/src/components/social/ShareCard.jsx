@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Star, Trophy, Target, BookOpen, Download } from 'lucide-react';
+import { Star, Trophy, Target, BookOpen, Download, Twitter, Facebook, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 /**
@@ -64,16 +64,16 @@ export function ShareCard({ type, data, onClose }) {
           <p className="text-sm font-medium text-center text-muted-foreground">Share to</p>
           <div className="grid grid-cols-3 gap-2">
             {[
-              { id: 'twitter', label: 'X / Twitter', emoji: '𝕏' },
-              { id: 'whatsapp', label: 'WhatsApp', emoji: '💬' },
-              { id: 'facebook', label: 'Facebook', emoji: '📘' },
+              { id: 'twitter', label: 'X / Twitter', icon: Twitter },
+              { id: 'whatsapp', label: 'WhatsApp', icon: MessageCircle },
+              { id: 'facebook', label: 'Facebook', icon: Facebook },
             ].map((p) => (
               <button
                 key={p.id}
                 onClick={() => handleShare(p.id)}
-                className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-secondary/30 hover:bg-secondary/60 transition-colors"
+                className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-secondary/30 hover:bg-secondary/60 transition-colors cursor-pointer"
               >
-                <span className="text-xl">{p.emoji}</span>
+                <p.icon className="w-5 h-5 text-muted-foreground shrink-0" />
                 <span className="text-[11px] text-muted-foreground">{p.label}</span>
               </button>
             ))}
@@ -168,8 +168,14 @@ function AchievementCard({ data }) {
         Achievement Unlocked
       </div>
 
-      <div className="w-24 h-24 rounded-full border-4 border-amber-400/40 flex items-center justify-center text-5xl bg-amber-400/10 shadow-lg shadow-amber-400/20">
-        {data.icon || '🏆'}
+      <div className="w-24 h-24 rounded-full border-4 border-amber-400/40 flex items-center justify-center bg-amber-400/10 shadow-lg shadow-amber-400/20">
+        {data.icon && (typeof data.icon === 'function' || typeof data.icon === 'object') ? (
+          <data.icon className="w-12 h-12 text-amber-500" />
+        ) : typeof data.icon === 'string' ? (
+          <span className="text-5xl">{data.icon}</span>
+        ) : (
+          <Trophy className="w-12 h-12 text-amber-500" />
+        )}
       </div>
 
       <div className="text-center">

@@ -4,6 +4,7 @@ import { PageTransition } from '@/components/animations/PageTransition';
 import { Sidebar } from './Sidebar';
 import { TopNavbar } from './TopNavbar';
 import { MobileNav } from './MobileNav';
+import { BottomNav } from './BottomNav';
 import { SupportModal } from '@/components/common/SupportModal';
 import { GuestWarningModal } from '@/components/common/GuestWarningModal';
 import { BookOpen, Code2, Share2, Heart, Lock, ArrowRight, LogIn } from 'lucide-react';
@@ -160,11 +161,12 @@ export function MainLayout() {
       </div>
 
       <MobileNav open={mobileOpen} onClose={() => setMobileOpen(false)} />
+      <BottomNav />
 
       {/* Main content area — offset by sidebar width (w-64 = 256px) */}
       <div className="relative z-10 flex min-h-screen flex-1 flex-col lg:pl-64">
         <TopNavbar title={title} onMenuClick={() => setMobileOpen(true)} />
-         <main className="relative z-10 flex-1 p-5 sm:p-6 lg:p-8">
+         <main className="relative z-10 flex-1 p-5 sm:p-6 lg:p-8 pb-28 sm:pb-32 lg:pb-8">
           <PageTransition key={pathname} className="page-container mx-auto w-full max-w-7xl">
             {isLockedGuestPage ? (
               <GuestLockedPage pathname={pathname} pageTitle={title} />

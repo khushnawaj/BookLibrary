@@ -16,7 +16,7 @@ import { Modal } from '@/components/ui/modal';
 import {
   Camera, Edit2, Check, X, Loader2, Mail, Shield, AtSign,
   BookOpen, Users, UserCheck, Calendar, BookMarked, Bookmark,
-  Award
+  Award, Trophy
 } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
@@ -422,28 +422,28 @@ export default function ProfilePage() {
       id: 'quickdraw',
       name: 'Quickdraw',
       desc: 'Set a custom profile avatar',
-      icon: '🤠',
+      icon: Camera,
       unlocked: !!profile.avatar && !profile.avatar.includes('default-avatar'),
     },
     {
       id: 'first_milestone',
       name: 'First Milestone',
       desc: 'Completed reading your first book',
-      icon: '📚',
+      icon: Trophy,
       unlocked: profile.booksRead >= 1,
     },
     {
       id: 'avid_reader',
       name: 'Avid Reader',
       desc: 'Read 5 or more books',
-      icon: '📖',
+      icon: BookOpen,
       unlocked: profile.booksRead >= 5,
     },
     {
       id: 'rising_star',
       name: 'Rising Star',
       desc: 'Earned your first follower',
-      icon: '💫',
+      icon: Award,
       unlocked: profile.followersCount >= 1,
     },
   ];
@@ -723,7 +723,9 @@ export default function ProfilePage() {
                       : "bg-black/5 dark:bg-white/5 border-dashed border-glass-border opacity-50"
                   )}
                 >
-                  <span className="text-3xl shrink-0 filter drop-shadow-sm">{badge.icon}</span>
+                  <div className="w-11 h-11 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                    <badge.icon className="w-5 h-5 text-primary" />
+                  </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
                       <p className="font-semibold text-sm text-foreground leading-none">{badge.name}</p>

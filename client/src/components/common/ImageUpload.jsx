@@ -5,7 +5,7 @@ import { toast } from 'react-hot-toast';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
-export function ImageUpload({ value, onChange, className }) {
+export function ImageUpload({ value, onChange, className, compact }) {
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
@@ -77,9 +77,20 @@ export function ImageUpload({ value, onChange, className }) {
           <img 
             src={value} 
             alt="Uploaded cover" 
-            className="w-full h-48 object-contain bg-black/20"
+            className={cn("w-full object-contain bg-black/20", compact ? "h-32" : "h-48")}
           />
-          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+          <div className="absolute right-2 top-2 z-10">
+            <Button 
+              type="button" 
+              variant="destructive" 
+              size="icon"
+              className="h-8 w-8 rounded-full shadow-md opacity-90 hover:opacity-100 transition-opacity"
+              onClick={handleRemove}
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:flex items-center justify-center">
             <Button 
               type="button" 
               variant="destructive" 
@@ -90,6 +101,33 @@ export function ImageUpload({ value, onChange, className }) {
               Remove
             </Button>
           </div>
+        </div>
+      ) : compact ? (
+        <div
+          onClick={() => fileInputRef.current?.click()}
+          className={cn(
+            "flex items-center justify-center gap-2 w-full p-4 rounded-xl border-2 border-dashed transition-colors cursor-pointer",
+            isDragging ? "border-primary bg-primary/5" : "border-border hover:border-primary/50 hover:bg-card/50"
+          )}
+        >
+          <input 
+            type="file" 
+            ref={fileInputRef}
+            onChange={onFileChange}
+            accept="image/*"
+            className="hidden"
+          />
+          {isUploading ? (
+            <div className="flex items-center gap-2 text-muted-foreground text-sm font-medium">
+              <Loader2 className="w-4 h-4 animate-spin text-primary shrink-0" />
+              <span>Uploading image...</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 text-muted-foreground text-sm font-medium">
+              <UploadCloud className="w-5 h-5 text-primary shrink-0" />
+              <span>Tap to select or take photo</span>
+            </div>
+          )}
         </div>
       ) : (
         <div
