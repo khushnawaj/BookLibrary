@@ -36,6 +36,12 @@ export default function SettingsPage() {
             <ModeToggle showLabel />
           </div>
 
+          {/* Theme Palette Selection */}
+          <div className="space-y-3 pt-2">
+            <p className="font-medium">Theme Palette</p>
+            <PaletteSelector />
+          </div>
+
           <div className="flex gap-2">
             {[THEME_MODES.DARK, THEME_MODES.LIGHT].map((m) => (
               <Badge
