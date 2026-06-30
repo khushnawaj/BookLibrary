@@ -117,7 +117,7 @@ function LibraryDetailsForm({ entry, onSave, isSaving }) {
       </div>
 
       <div className="flex justify-end">
-        <Button type="submit" disabled={isSaving} id="save-library-details">
+        <Button type="submit" disabled={isSaving} className="w-full sm:w-auto" id="save-library-details">
           Save Library Details
         </Button>
       </div>
@@ -225,7 +225,7 @@ export default function EditBookPage() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.05 }}
-        className="glass-card p-6 sm:p-8"
+        className="glass-card p-4 sm:p-8"
       >
         <h2 className="mb-6 text-lg font-semibold border-b border-border pb-3 flex items-center gap-2">
           <BookOpen className="w-5 h-5 text-primary shrink-0" />
@@ -244,7 +244,7 @@ export default function EditBookPage() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="glass-card p-6 sm:p-8"
+        className="glass-card p-4 sm:p-8"
       >
         <h2 className="mb-6 text-lg font-semibold border-b border-border pb-3 flex items-center gap-2">
           <Library className="w-5 h-5 text-primary shrink-0" />

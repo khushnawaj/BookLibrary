@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { setShowGuestWarning } from '@/features/auth/authSlice';
 import {
@@ -87,6 +88,24 @@ export function CreatePostModal({ isOpen, onClose }) {
   const [postType, setPostType] = useState('journal');
   const [showImageUpload, setShowImageUpload] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  // Lock body scroll when open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
 
   const [showVisibilityDropdown, setShowVisibilityDropdown] = useState(false);
   const visibilityDropdownRef = useRef(null);
@@ -291,9 +310,9 @@ export function CreatePostModal({ isOpen, onClose }) {
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
       <div className="bg-card/95 glass-card w-full h-[100dvh] sm:h-auto max-w-[560px] rounded-t-3xl sm:rounded-2xl border-0 sm:border border-glass-border shadow-2xl flex flex-col max-h-[100dvh] sm:max-h-[92vh] animate-in slide-in-from-bottom-10 sm:slide-in-from-bottom-4 duration-300">
         
@@ -533,6 +552,7 @@ export function CreatePostModal({ isOpen, onClose }) {
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

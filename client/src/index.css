@@ -4,6 +4,7 @@
 @theme {
   --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Outfit", sans-serif;
+  --breakpoint-xs: 420px;
 
   --text-xs:   0.7rem;
   --text-sm:   0.8rem;
@@ -530,15 +531,17 @@
   }
   
   /* Dialogs / Alerts / Dropdowns compatibility */
-  /* Popover/Select content must be fully opaque — never inherit glass transparency */
+  /* Popover/Select/Dropdown content must be heavily blurred and highly opaque to prevent behind content bleed-through */
   [data-slot="dropdown-menu-content"],
   [data-slot="dropdown-menu-sub-content"],
-  [data-slot="select-content"] {
-    background-color: var(--color-card) !important;
+  [data-slot="select-content"],
+  .user-menu-dropdown {
+    background-color: color-mix(in srgb, var(--color-background) 97%, transparent) !important;
     color: var(--color-foreground) !important;
     border-color: var(--color-glass-border) !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
+    backdrop-filter: blur(32px) saturate(210%) !important;
+    -webkit-backdrop-filter: blur(32px) saturate(210%) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
   }
 
   /* bg-popover used in modals / alert dialogs — keep semi-solid */

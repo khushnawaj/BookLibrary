@@ -358,7 +358,7 @@ export function PostCard({ post, onDelete, onUpdate }) {
               {showMenu && (
                 <>
                   <div className="fixed inset-0 z-20" onClick={() => setShowMenu(false)} />
-                  <div className="absolute right-0 mt-1 w-36 rounded-xl border border-border bg-card shadow-xl p-1 z-30 animate-in fade-in slide-in-from-top-2 duration-150">
+                  <div className="absolute right-0 mt-1 w-36 rounded-xl border border-border bg-card shadow-xl p-1 z-30 animate-in fade-in slide-in-from-top-2 duration-150 user-menu-dropdown">
                     {isAuthor && !isEditing && (
                       <button
                         onClick={() => {
@@ -562,7 +562,7 @@ export function PostCard({ post, onDelete, onUpdate }) {
                       </button>
 
                       {showShelfPicker && (
-                        <div className="absolute right-0 bottom-full mb-1 w-44 rounded-xl border border-glass-border bg-card/95 backdrop-blur-md shadow-xl z-40 overflow-hidden">
+                        <div className="absolute right-0 bottom-full mb-1 w-44 rounded-xl border border-glass-border bg-card/95 backdrop-blur-md shadow-xl z-40 overflow-hidden user-menu-dropdown">
                           {SHELF_OPTIONS.map(opt => (
                             <button
                               key={opt.value}

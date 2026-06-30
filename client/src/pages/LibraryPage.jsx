@@ -149,7 +149,7 @@ export default function LibraryPage() {
               Import
             </Link>
           </Button>
-          <Button asChild size="sm" className="hidden sm:inline-flex">
+          <Button asChild size="sm" className="inline-flex">
             <Link to={ROUTES.LIBRARY_ADD}>
               <Plus className="h-4 w-4 shrink-0" />
               Add Book

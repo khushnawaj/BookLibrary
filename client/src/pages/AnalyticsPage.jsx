@@ -263,7 +263,7 @@ function GoalCard({ goal, onDelete }) {
 function CustomTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-xl border border-primary/20 bg-card/95 backdrop-blur p-3 shadow-xl text-sm">
+    <div className="rounded-xl border border-primary/20 bg-card/95 backdrop-blur p-3 shadow-xl text-sm user-menu-dropdown">
       <p className="font-medium mb-1">{label}</p>
       {payload.map((p, i) => (
         <p key={i} style={{ color: p.color }} className="tabular-nums">
@@ -352,21 +352,30 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 border-b border-border">
+        <div className="flex w-full gap-1 border-b border-border">
           {TABS.map((tab) => (
             <button
               key={tab.id}
               id={`tab-${tab.id}`}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                'flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-all relative',
+                'flex flex-1 items-center justify-center gap-1.5 px-1.5 sm:px-4 py-2.5 text-xs sm:text-sm font-medium transition-all relative',
                 activeTab === tab.id
                   ? 'text-primary'
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
-              <tab.icon className="h-4 w-4" />
-              {tab.label}
+              <tab.icon className="h-4 w-4 shrink-0 hidden xs:inline-block" />
+              <span>
+                {tab.id === 'achievements' ? (
+                  <>
+                    <span className="hidden xs:inline">Achievements</span>
+                    <span className="xs:hidden">Badges</span>
+                  </>
+                ) : (
+                  tab.label
+                )}
+              </span>
               {tab.id === 'goals' && goals.length > 0 && (
                 <span className="ml-1 rounded-full bg-primary/20 text-primary px-1.5 py-0.5 text-[10px] font-bold">
                   {goals.length}

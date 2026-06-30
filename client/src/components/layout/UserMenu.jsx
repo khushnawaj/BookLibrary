@@ -86,7 +86,7 @@ export function UserMenu() {
 
       {open && (
         <div
-          className="absolute right-0 top-full z-50 mt-2 w-60 rounded-2xl border border-glass-border bg-card/95 backdrop-blur-md shadow-2xl overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150"
+          className="absolute right-0 top-full z-50 mt-2 w-60 rounded-2xl border border-glass-border bg-card/95 backdrop-blur-md shadow-2xl overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150 user-menu-dropdown"
         >
           {/* User header */}
           <div className="relative px-4 py-3 bg-gradient-to-br from-primary to-primary/80">

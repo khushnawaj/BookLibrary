@@ -131,17 +131,17 @@ export default function ImportBooksPage() {
             
             {/* Selected File Action Bar */}
             {file && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between p-4 bg-[#F5F0E8] rounded-xl border border-[#DDD4C4]">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-white flex items-center justify-center border border-[#DDD4C4] shadow-sm">
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-[#F5F0E8] rounded-xl border border-[#DDD4C4]">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="h-10 w-10 rounded-lg bg-white flex items-center justify-center border border-[#DDD4C4] shadow-sm shrink-0">
                     <FileSpreadsheet className="w-5 h-5 text-[#8B4513]" />
                   </div>
-                  <div>
-                    <p className="font-medium text-sm text-[#1C1A17]">{file.name}</p>
+                  <div className="min-w-0">
+                    <p className="font-medium text-sm text-[#1C1A17] truncate max-w-[200px] sm:max-w-xs md:max-w-md" title={file.name}>{file.name}</p>
                     <p className="text-xs text-[#8A7F74]">{(file.size / 1024).toFixed(2)} KB</p>
                   </div>
                 </div>
-                <Button onClick={handleImport} disabled={isUploading} className="bg-[#8B4513] hover:bg-[#C0622F] text-white">
+                <Button onClick={handleImport} disabled={isUploading} className="bg-[#8B4513] hover:bg-[#C0622F] text-white w-full sm:w-auto shrink-0">
                   {isUploading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Importing...</> : 'Import Now'}
                 </Button>
               </motion.div>

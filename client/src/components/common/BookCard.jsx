@@ -135,7 +135,7 @@ export function BookCard({ entry, onEdit, onDelete }) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="h-7 w-7 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                 id={`book-menu-${entry._id}`}
               >
                 <MoreVertical className="h-4 w-4" />

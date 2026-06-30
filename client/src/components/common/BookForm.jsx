@@ -166,11 +166,12 @@ export function BookForm({ onSubmit, defaultValues, isLoading, submitLabel = 'Sa
   };
 
   return (
-    <form onSubmit={handleSubmit(processSubmit)} className="space-y-6" noValidate>
-      <div className="space-y-3 rounded-xl border border-glass-border bg-glass/40 backdrop-blur-sm p-4">
-        <Label htmlFor="google-books-search" className="text-sm font-medium">
-          Search Google Books
-        </Label>
+    <form onSubmit={handleSubmit(processSubmit)} className="space-y-5" noValidate>
+      {/* ── Google Books Search ── */}
+      <div className="space-y-3 rounded-xl border border-glass-border bg-glass/40 backdrop-blur-sm p-3 sm:p-4">
+        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+          Quick Fill from Google Books
+        </p>
         <div className="flex gap-2">
           <div className="relative flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -208,7 +209,7 @@ export function BookForm({ onSubmit, defaultValues, isLoading, submitLabel = 'Sa
             variant="outline"
             onClick={handleGoogleSearch}
             disabled={isGoogleLoading || !searchQuery.trim()}
-            className="min-w-24"
+            className="px-3 sm:min-w-24"
           >
             {isGoogleLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Search'}
           </Button>
@@ -217,7 +218,7 @@ export function BookForm({ onSubmit, defaultValues, isLoading, submitLabel = 'Sa
         {googleError && <p className="text-xs text-destructive">{googleError}</p>}
 
         {googleResults.length > 0 && (
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="grid gap-2 grid-cols-1 sm:grid-cols-2">
             {googleResults.slice(0, 6).map((book) => {
               return (
                 <button
@@ -256,8 +257,10 @@ export function BookForm({ onSubmit, defaultValues, isLoading, submitLabel = 'Sa
         )}
       </div>
 
-      {/* Core Info */}
-      <div className="grid gap-4 sm:grid-cols-2">
+      {/* ── Core Info ── */}
+      <div>
+        <p className="mb-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Book Details</p>
+        <div className="grid gap-4 sm:grid-cols-2">
         <FormGroup label="Title" required error={errors.title} className="sm:col-span-2">
           <Input
             {...register('title')}
@@ -337,6 +340,7 @@ export function BookForm({ onSubmit, defaultValues, isLoading, submitLabel = 'Sa
             id="book-isbn"
           />
         </FormGroup>
+        </div>
       </div>
 
       {/* Cover Image */}
@@ -363,10 +367,10 @@ export function BookForm({ onSubmit, defaultValues, isLoading, submitLabel = 'Sa
         />
       </FormGroup>
 
-      {/* Purchase Links */}
-      <div className="space-y-3">
+      {/* ── Purchase Links ── */}
+      <div className="space-y-3 pt-1">
         <div className="flex items-center justify-between">
-          <Label className="text-sm font-medium">Purchase Links</Label>
+          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Purchase Links</p>
           <Button
             type="button"
             variant="outline"
@@ -387,18 +391,20 @@ export function BookForm({ onSubmit, defaultValues, isLoading, submitLabel = 'Sa
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="flex gap-2 overflow-hidden"
+              className="flex flex-col sm:flex-row gap-2 sm:items-center py-1"
             >
-              <Input
-                {...register(`purchaseLinks.${index}.platform`)}
-                placeholder="Platform (e.g. Amazon)"
-                className="w-1/3"
-              />
-              <Input
-                {...register(`purchaseLinks.${index}.url`)}
-                placeholder="https://…"
-                className="flex-1"
-              />
+              <div className="flex gap-2 w-full sm:flex-1">
+                <Input
+                  {...register(`purchaseLinks.${index}.platform`)}
+                  placeholder="Platform"
+                  className="w-[38%] sm:w-auto sm:flex-none"
+                />
+                <Input
+                  {...register(`purchaseLinks.${index}.url`)}
+                  placeholder="https://…"
+                  className="flex-1"
+                />
+              </div>
               <Button
                 type="button"
                 variant="ghost"
@@ -414,11 +420,11 @@ export function BookForm({ onSubmit, defaultValues, isLoading, submitLabel = 'Sa
       </div>
 
       {/* Submit */}
-      <div className="flex justify-end pt-2">
+      <div className="flex justify-end pt-3 border-t border-glass-border">
         <Button
           type="submit"
           disabled={isLoading}
-          className="min-w-[140px]"
+          className="w-full sm:w-auto sm:min-w-[160px] h-10 text-sm font-semibold"
           id="book-form-submit"
         >
           {isLoading ? (

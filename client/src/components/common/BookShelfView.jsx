@@ -57,7 +57,7 @@ function ShelfBook({ entry, index, onEdit, onDelete }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="absolute bottom-full mb-3 w-48 p-3 rounded-xl border border-glass-border bg-card/95 glass-card shadow-xl z-50 pointer-events-auto"
+            className="absolute bottom-full mb-3 w-48 p-3 rounded-xl border border-glass-border bg-card/95 glass-card shadow-xl z-50 pointer-events-auto user-menu-dropdown"
             style={{ originX: 0.5, originY: 1 }}
           >
             {/* Invisible cursor bridge to prevent mouse-leave jitter */}

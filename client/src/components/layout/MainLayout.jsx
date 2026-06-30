@@ -166,116 +166,133 @@ export function MainLayout() {
       {/* Main content area — offset by sidebar width (w-64 = 256px) */}
       <div className="relative z-10 flex min-h-screen flex-1 flex-col lg:pl-64">
         <TopNavbar title={title} onMenuClick={() => setMobileOpen(true)} />
-         <main className="relative z-10 flex-1 p-5 sm:p-6 lg:p-8 pb-28 sm:pb-32 lg:pb-8">
-          <PageTransition key={pathname} className="page-container mx-auto w-full max-w-7xl">
-            {isLockedGuestPage ? (
-              <GuestLockedPage pathname={pathname} pageTitle={title} />
-            ) : (
-              <Outlet />
-            )}
-          </PageTransition>
-        </main>
-
+          <main className="relative z-10 flex-1 p-5 sm:p-6 lg:p-8 pb-28 sm:pb-32 lg:pb-8">
+            <PageTransition key={pathname} className="page-container mx-auto w-full max-w-7xl">
+              {isLockedGuestPage ? (
+                <GuestLockedPage pathname={pathname} pageTitle={title} />
+              ) : (
+                <Outlet />
+              )}
+            </PageTransition>
+          </main>
         {/* ── Rich Footer ── */}
-        <footer className="relative z-0 border-t border-border/40 bg-card/30 backdrop-blur-md mt-auto">
-          <div className="max-w-7xl mx-auto px-6 py-8">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+        <footer className="relative z-10 border-t border-glass-border/20 bg-card/25 backdrop-blur-xl mt-auto pb-24 lg:pb-0">
+          {/* Subtle top glow line */}
+          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+          
+          <div className="max-w-7xl mx-auto px-6 py-12">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-10 text-left">
 
-              {/* Branding */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-mint shadow-sm">
-                    <BookOpen className="w-4 h-4 text-primary-foreground" />
+              {/* Brand Section */}
+              <div className="md:col-span-5 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-tr from-primary to-accent shadow-md shadow-primary/10">
+                    <BookOpen className="w-5 h-5 text-white" />
                   </div>
-                  <span className="font-display text-lg font-bold text-foreground">ShelfForge</span>
+                  <span className="font-display text-xl font-extrabold tracking-tight bg-gradient-to-r from-foreground via-foreground/90 to-muted-foreground bg-clip-text text-transparent">
+                    ShelfForge
+                  </span>
                 </div>
-                <p className="text-xs text-muted-foreground leading-relaxed max-w-[200px]">
-                  Forge your personal library. Track, discover, and share your reading journey.
+                <p className="text-xs text-muted-foreground leading-relaxed max-w-sm">
+                  Forge your personal library. Track your streaks, analyze reading metrics, and share recommendations with a global community of readers.
                 </p>
-                <div className="flex items-center gap-3 pt-1">
+                
+                {/* Social Badges */}
+                <div className="flex items-center gap-2.5 pt-2">
                   <a
                     href="https://github.com"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-7 h-7 flex items-center justify-center rounded-md bg-secondary text-muted-foreground hover:text-primary hover:bg-accent transition-colors"
+                    className="w-8 h-8 flex items-center justify-center rounded-xl bg-secondary/50 border border-glass-border/40 text-muted-foreground hover:text-primary hover:bg-primary/10 hover:border-primary/30 transition-all duration-300 shadow-sm"
                   >
-                    <Code2 className="w-3.5 h-3.5" />
+                    <Code2 className="w-4 h-4" />
                   </a>
                   <a
                     href="https://twitter.com"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-7 h-7 flex items-center justify-center rounded-md bg-secondary text-muted-foreground hover:text-primary hover:bg-accent transition-colors"
+                    className="w-8 h-8 flex items-center justify-center rounded-xl bg-secondary/50 border border-glass-border/40 text-muted-foreground hover:text-primary hover:bg-primary/10 hover:border-primary/30 transition-all duration-300 shadow-sm"
                   >
-                    <Share2 className="w-3.5 h-3.5" />
+                    <Share2 className="w-4 h-4" />
                   </a>
                 </div>
               </div>
 
-              {/* Navigate */}
-              <div className="space-y-3">
-                <h4 className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Navigate</h4>
-                <ul className="space-y-2">
-                  {[
-                    { label: 'Dashboard',   to: '/dashboard' },
-                    { label: 'My Library',  to: '/library' },
-                    { label: 'Community Feed', to: '/feed' },
-                    { label: 'Analytics',   to: '/analytics' },
-                    { label: 'Wishlist',    to: '/wishlist' },
-                    { label: 'Feedback & Suggestions', to: '/feedback' },
-                  ].map((link) => (
-                    <li key={link.to}>
-                      <Link
-                        to={link.to}
-                        className="text-xs text-muted-foreground hover:text-primary transition-colors"
+              {/* Columns Section */}
+              <div className="md:col-span-7 grid grid-cols-2 gap-8">
+                {/* Navigation Column */}
+                <div className="space-y-4">
+                  <h4 className="text-[11px] font-bold uppercase tracking-widest text-primary/80">
+                    Navigate
+                  </h4>
+                  <ul className="space-y-2.5">
+                    {[
+                      { label: 'Dashboard',   to: '/dashboard' },
+                      { label: 'My Library',  to: '/library' },
+                      { label: 'Community Feed', to: '/feed' },
+                      { label: 'Analytics',   to: '/analytics' },
+                      { label: 'Wishlist',    to: '/wishlist' },
+                      { label: 'Feedback & Suggestions', to: '/feedback' },
+                    ].map((link) => (
+                      <li key={link.to} className="overflow-hidden">
+                        <Link
+                          to={link.to}
+                          className="inline-block text-xs text-muted-foreground hover:text-primary hover:translate-x-1.5 transition-all duration-300"
+                        >
+                          {link.label}
+                        </Link>
+                      </li>
+                    ))}
+                    <li>
+                      <button
+                        onClick={() => setSupportOpen(true)}
+                        className="text-xs text-muted-foreground hover:text-primary hover:translate-x-1.5 transition-all duration-300 text-left font-medium flex items-center gap-1 cursor-pointer"
                       >
-                        {link.label}
-                      </Link>
+                        Buy me a Tea 🍵
+                      </button>
                     </li>
-                  ))}
-                  <li>
-                    <button
-                      onClick={() => setSupportOpen(true)}
-                      className="text-xs text-muted-foreground hover:text-primary transition-colors text-left font-medium"
-                    >
-                      Buy me a Tea 🍵
-                    </button>
-                  </li>
-                </ul>
+                  </ul>
+                </div>
+
+                {/* Account Column */}
+                <div className="space-y-4">
+                  <h4 className="text-[11px] font-bold uppercase tracking-widest text-primary/80">
+                    Account & Tools
+                  </h4>
+                  <ul className="space-y-2.5">
+                    {[
+                      { label: 'Profile',  to: '/profile' },
+                      { label: 'Settings', to: '/settings' },
+                      { label: 'Import Books', to: '/library/import' },
+                    ].map((link) => (
+                      <li key={link.to} className="overflow-hidden">
+                        <Link
+                          to={link.to}
+                          className="inline-block text-xs text-muted-foreground hover:text-primary hover:translate-x-1.5 transition-all duration-300"
+                        >
+                          {link.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
 
-              {/* Account */}
-              <div className="space-y-3">
-                <h4 className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Account</h4>
-                <ul className="space-y-2">
-                  {[
-                    { label: 'Profile',  to: '/profile' },
-                    { label: 'Settings', to: '/settings' },
-                    { label: 'Import Books', to: '/library/import' },
-                  ].map((link) => (
-                    <li key={link.to}>
-                      <Link
-                        to={link.to}
-                        className="text-xs text-muted-foreground hover:text-primary transition-colors"
-                      >
-                        {link.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
             </div>
 
             {/* Bottom bar */}
-            <div className="mt-8 pt-5 border-t border-border/30 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <p className="text-[11px] text-muted-foreground/80">
+            <div className="mt-12 pt-6 border-t border-glass-border/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <p className="text-[11px] text-muted-foreground/60 font-medium">
                 © {new Date().getFullYear()} ShelfForge. All rights reserved.
               </p>
 
-              <p className="text-[11px] text-muted-foreground/80 flex items-center gap-1">
-                Made with <Heart className="w-3 h-3 text-red-400 fill-current" /> for readers everywhere
-              </p>
+              <div className="text-[11px] text-muted-foreground/60 font-medium flex items-center gap-1.5 bg-secondary/35 border border-glass-border/30 px-3 py-1 rounded-full shadow-inner">
+                <span>Made with</span>
+                <Heart className="w-3.5 h-3.5 text-red-500 fill-current animate-pulse" />
+                <span>for readers everywhere</span>
+              </div>
             </div>
+
           </div>
         </footer>
       </div>

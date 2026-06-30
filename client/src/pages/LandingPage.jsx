@@ -105,7 +105,7 @@ function BookSpine({ book, index, total }) {
         </span>
       </div>
       {/* Hover tooltip */}
-      <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-36 bg-card/95 backdrop-blur-md border border-glass-border rounded-xl p-2.5 shadow-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-30 pointer-events-none">
+      <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-36 bg-card/95 backdrop-blur-md border border-glass-border rounded-xl p-2.5 shadow-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-30 pointer-events-none user-menu-dropdown">
         <p className="text-[11px] font-bold text-foreground truncate">{book.title}</p>
         <p className="text-[10px] text-muted-foreground truncate">{book.author}</p>
         <span className="mt-1.5 inline-block rounded-full px-2 py-0.5 text-[9px] font-bold"

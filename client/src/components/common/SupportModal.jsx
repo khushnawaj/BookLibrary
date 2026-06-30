@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Copy, Heart } from 'lucide-react';
 import { toast } from 'react-hot-toast';
@@ -7,6 +8,13 @@ const UPI_ID = import.meta.env.VITE_UPI_ID || 'yourname@upi';
 const UPI_QR = import.meta.env.VITE_UPI_QR || '/upi-qr.png';
 
 export function SupportModal({ open, onClose }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
   // Close on Escape key
   useEffect(() => {
     if (!open) return;
@@ -26,7 +34,9 @@ export function SupportModal({ open, onClose }) {
     toast.success('UPI ID copied!');
   };
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       {open && (
         <>
@@ -126,6 +136,7 @@ export function SupportModal({ open, onClose }) {
           </motion.div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

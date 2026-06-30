@@ -205,7 +205,7 @@ export default function PublicBookPage() {
                   </Button>
 
                   {showPicker && (
-                    <div className="absolute left-0 right-0 top-full mt-1 rounded-xl border border-glass-border bg-card/95 backdrop-blur-md shadow-xl z-40 overflow-hidden">
+                    <div className="absolute left-0 right-0 top-full mt-1 rounded-xl border border-glass-border bg-card/95 backdrop-blur-md shadow-xl z-40 overflow-hidden user-menu-dropdown">
                       {SHELF_OPTIONS.map(opt => (
                         <button
                           key={opt.value}
@@ -236,7 +236,7 @@ export default function PublicBookPage() {
                   </Button>
 
                   {showPicker && (
-                    <div className="absolute left-0 right-0 top-full mt-1 rounded-xl border border-glass-border bg-card/95 backdrop-blur-md shadow-xl z-40 overflow-hidden">
+                    <div className="absolute left-0 right-0 top-full mt-1 rounded-xl border border-glass-border bg-card/95 backdrop-blur-md shadow-xl z-40 overflow-hidden user-menu-dropdown">
                       {SHELF_OPTIONS.map(opt => (
                         <button
                           key={opt.value}
