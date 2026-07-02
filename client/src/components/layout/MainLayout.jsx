@@ -7,7 +7,7 @@ import { MobileNav } from './MobileNav';
 import { BottomNav } from './BottomNav';
 import { SupportModal } from '@/components/common/SupportModal';
 import { GuestWarningModal } from '@/components/common/GuestWarningModal';
-import { BookOpen, Code2, Share2, Heart, Lock, ArrowRight, LogIn } from 'lucide-react';
+import { BookOpen, Code2, Share2, Heart, Lock, ArrowRight, LogIn, Coffee } from 'lucide-react';
 import { LiquidGlassBackground } from '@/components/common/LiquidGlassBackground';
 import { useAuth } from '@/features/auth/authHooks';
 import { useNavigate } from 'react-router-dom';
@@ -246,9 +246,9 @@ export function MainLayout() {
                     <li>
                       <button
                         onClick={() => setSupportOpen(true)}
-                        className="text-xs text-muted-foreground hover:text-primary hover:translate-x-1.5 transition-all duration-300 text-left font-medium flex items-center gap-1 cursor-pointer"
+                        className="text-xs text-muted-foreground hover:text-primary hover:translate-x-1.5 transition-all duration-300 text-left font-medium flex items-center gap-1.5 cursor-pointer"
                       >
-                        Buy me a Tea 🍵
+                        Buy me a Tea <Coffee className="w-3.5 h-3.5 text-primary shrink-0" />
                       </button>
                     </li>
                   </ul>

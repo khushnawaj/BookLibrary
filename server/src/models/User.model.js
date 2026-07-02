@@ -49,6 +49,12 @@ const userSchema = new mongoose.Schema(
       default: '',
       trim: true,
     },
+    penName: {
+      type: String,
+      maxlength: [100, 'Pen name cannot exceed 100 characters'],
+      default: '',
+      trim: true,
+    },
     role: {
       type: String,
       enum: {
@@ -118,6 +124,7 @@ userSchema.methods.toPublicProfile = function toPublicProfile() {
     avatar: this.avatar,
     bannerImage: this.bannerImage,
     bio: this.bio,
+    penName: this.penName,
     role: this.role,
     isVerified: this.isVerified,
     booksRead: this.booksRead,

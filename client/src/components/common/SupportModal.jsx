@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Copy, Heart } from 'lucide-react';
+import { X, Copy, Heart, Coffee } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 const UPI_ID = import.meta.env.VITE_UPI_ID || 'yourname@upi';
@@ -77,8 +77,12 @@ export function SupportModal({ open, onClose }) {
 
               <div className="px-6 pt-5 pb-7 space-y-5">
                 {/* Header */}
-                <div className="text-center space-y-1">
-                  <div className="text-3xl">🍵</div>
+                <div className="text-center space-y-2">
+                  <div className="flex justify-center mb-1">
+                    <div className="p-3 bg-amber-500/10 text-amber-600 rounded-full border border-amber-500/20 shadow-sm">
+                      <Coffee className="w-8 h-8 shrink-0" />
+                    </div>
+                  </div>
                   <h2 className="text-xl font-bold text-[#1C1A17]">Buy me a Tea</h2>
                   <p className="text-xs text-[#8A7F74] leading-relaxed">
                     If ShelfForge has been useful to you, a small contribution<br />

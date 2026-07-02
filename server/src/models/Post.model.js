@@ -46,6 +46,13 @@ const postSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Activity',
     },
+    // Poetry background customization fields
+    poetryBg: {
+      type: String,
+    },
+    poetryPosition: {
+      type: String,
+    },
   },
   {
     timestamps: true,

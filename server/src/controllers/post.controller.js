@@ -9,7 +9,7 @@ const { HTTP_STATUS } = require('../constants');
 // =====================================
 
 const createPost = asyncHandler(async (req, res) => {
-  const { content, images, visibility, hashtags, bookRef, activityRef } = req.body;
+  const { content, images, visibility, hashtags, bookRef, activityRef, poetryBg, poetryPosition } = req.body;
 
   const post = await Post.create({
     author: req.user._id,
@@ -19,9 +19,11 @@ const createPost = asyncHandler(async (req, res) => {
     hashtags: hashtags || [],
     bookRef: bookRef || undefined,
     activityRef: activityRef || undefined,
+    poetryBg: poetryBg || undefined,
+    poetryPosition: poetryPosition || undefined,
   });
 
-  const populatedPost = await Post.findById(post._id).populate('author', 'name username avatar');
+  const populatedPost = await Post.findById(post._id).populate('author', 'name username avatar penName');
 
   return ApiResponse.success(res, {
     message: 'Post created successfully',
@@ -32,7 +34,7 @@ const createPost = asyncHandler(async (req, res) => {
 const getPostById = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const post = await Post.findById(id)
-    .populate('author', 'name username avatar')
+    .populate('author', 'name username avatar penName')
     .populate('bookRef')
     .populate('activityRef');
 
@@ -103,7 +105,7 @@ const updatePost = asyncHandler(async (req, res) => {
   await post.save();
 
   const populatedPost = await Post.findById(post._id)
-    .populate('author', 'name username avatar')
+    .populate('author', 'name username avatar penName')
     .populate('bookRef', 'title author coverImage')
     .lean();
 

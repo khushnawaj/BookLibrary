@@ -16,7 +16,7 @@ import { Modal } from '@/components/ui/modal';
 import {
   Camera, Edit2, Check, X, Loader2, Mail, Shield, AtSign,
   BookOpen, Users, UserCheck, Calendar, BookMarked, Bookmark,
-  Award, Trophy
+  Award, Trophy, Feather, Star
 } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
@@ -59,6 +59,7 @@ export default function ProfilePage() {
   const [name, setName] = useState('');
   const [usernameInput, setUsernameInput] = useState('');
   const [bio, setBio] = useState('');
+  const [penName, setPenName] = useState('');
   const [avatar, setAvatar] = useState('');
   const [bannerImage, setBannerImage] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -135,6 +136,7 @@ export default function ProfilePage() {
         setName(fetchedProfile.name || '');
         setUsernameInput(fetchedProfile.username || '');
         setBio(fetchedProfile.bio || '');
+        setPenName(fetchedProfile.penName || '');
         setAvatar(fetchedProfile.avatar || '');
         setBannerImage(fetchedProfile.bannerImage || '');
       } catch (err) {
@@ -337,6 +339,7 @@ export default function ProfilePage() {
           name: name.trim(),
           username: usernameInput.trim().toLowerCase(),
           bio: bio.trim(),
+          penName: penName.trim(),
           avatar,
           bannerImage,
         })
@@ -348,6 +351,7 @@ export default function ProfilePage() {
         name: userData.name,
         username: userData.username,
         bio: userData.bio,
+        penName: userData.penName,
         avatar: userData.avatar,
         bannerImage: userData.bannerImage,
       }));
@@ -376,6 +380,7 @@ export default function ProfilePage() {
     setName(profile.name);
     setUsernameInput(profile.username);
     setBio(profile.bio);
+    setPenName(profile.penName || '');
     setAvatar(profile.avatar);
     setBannerImage(profile.bannerImage || '');
     setIsEditing(false);
@@ -524,6 +529,7 @@ export default function ProfilePage() {
                       setName(profile.name);
                       setUsernameInput(profile.username);
                       setBio(profile.bio || '');
+                      setPenName(profile.penName || '');
                       setAvatar(profile.avatar || '');
                       setBannerImage(profile.bannerImage || '');
                       if (profile.avatar && profile.avatar.includes('api.dicebear.com')) {
@@ -561,10 +567,18 @@ export default function ProfilePage() {
                   </Badge>
                 </div>
 
-                <p className="text-xs sm:text-sm font-medium text-muted-foreground flex items-center gap-1 justify-center sm:justify-start">
-                  <AtSign className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-muted-foreground/60" />
-                  {profile.username}
-                </p>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 justify-center sm:justify-start">
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground flex items-center gap-1">
+                    <AtSign className="w-3.5 h-3.5 text-muted-foreground/60" />
+                    {profile.username}
+                  </p>
+                  {profile.penName && (
+                    <span className="text-xs font-semibold text-primary/90 flex items-center gap-1 border-l border-glass-border pl-3">
+                      <Feather className="w-3.5 h-3.5 text-primary shrink-0" />
+                      Pen Name: {profile.penName}
+                    </span>
+                  )}
+                </div>
 
                 {profile.bio ? (
                   <p className="text-xs sm:text-sm text-foreground/80 max-w-sm sm:max-w-xl leading-relaxed italic mt-1 font-sans">
@@ -600,6 +614,7 @@ export default function ProfilePage() {
                     setName(profile.name);
                     setUsernameInput(profile.username);
                     setBio(profile.bio || '');
+                    setPenName(profile.penName || '');
                     setAvatar(profile.avatar || '');
                     setBannerImage(profile.bannerImage || '');
                     if (profile.avatar && profile.avatar.includes('api.dicebear.com')) {
@@ -879,7 +894,10 @@ export default function ProfilePage() {
                               {entry.shelfType}
                             </Badge>
                             {entry.rating > 0 && (
-                              <span className="text-xs text-amber-500 font-semibold">★ {entry.rating}</span>
+                              <span className="text-xs text-amber-500 font-semibold flex items-center gap-0.5">
+                                <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500 shrink-0" />
+                                {entry.rating}
+                              </span>
                             )}
                           </div>
                         </div>
@@ -947,6 +965,22 @@ export default function ProfilePage() {
               className="w-full min-h-[70px] sm:min-h-[90px] rounded-xl border border-glass-border bg-secondary/15 p-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary text-foreground resize-none"
               maxLength={500}
             />
+          </div>
+
+          {/* Pen Name */}
+          <div className="space-y-2">
+            <Label htmlFor="profile-penname" className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Poet / Writer Pen Name</Label>
+            <Input
+              id="profile-penname"
+              value={penName}
+              onChange={(e) => setPenName(e.target.value)}
+              placeholder="Your Pen Name / Pseudonym (e.g. Ghalib)"
+              className="border-glass-border focus:ring-primary bg-secondary/15 rounded-xl h-10"
+              maxLength={100}
+            />
+            <p className="text-[10px] text-muted-foreground mt-0.5 pl-0.5">
+              This pen name will be displayed as the signature on your published poems/quotes instead of your username.
+            </p>
           </div>
 
           {/* DiceBear Avatar Generator section */}

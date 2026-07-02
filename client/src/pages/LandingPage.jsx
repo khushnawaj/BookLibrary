@@ -4,7 +4,7 @@ import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion'
 import {
   ArrowRight, BarChart3, BookMarked, BookOpen,
   Library, Search, Star, Target, Sparkles, Users,
-  MessageCircle, Bookmark, Trophy, Zap, Globe,
+  MessageCircle, Bookmark, Trophy, Zap, Globe, Feather,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -29,9 +29,9 @@ const FEATURES = [
     border: 'border-violet-500/20',
   },
   {
-    icon: Search,
-    title: 'Google Books Import',
-    description: 'Search millions of titles. One click fills in cover, author, ISBN, and description.',
+    icon: Globe,
+    title: 'Hinglish to Hindi Input',
+    description: 'Type phonetically in English (Hinglish) and see your words convert to clean Hindi script instantly as you write.',
     color: 'from-blue-500 to-cyan-600',
     bg: 'bg-blue-500/10',
     border: 'border-blue-500/20',
@@ -53,9 +53,9 @@ const FEATURES = [
     border: 'border-rose-500/20',
   },
   {
-    icon: Star,
-    title: 'Notes & Ratings',
-    description: 'Private ratings, detailed reviews, and personal reflections stored alongside each book.',
+    icon: Feather,
+    title: 'Visual Poetry Designer',
+    description: 'Craft beautiful shareable cards for your quotes and poems. Choose custom fonts, backgrounds, alignment, and drag your text.',
     color: 'from-amber-500 to-orange-600',
     bg: 'bg-amber-500/10',
     border: 'border-amber-500/20',
@@ -198,7 +198,7 @@ export default function LandingPage() {
                 <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-primary" />
               </span>
               {isAuthenticated
-                ? `Welcome back, ${user?.name || user?.username}! 👋`
+                ? `Welcome back, ${user?.name || user?.username}!`
                 : 'Your personal reading companion'}
             </motion.div>
 
@@ -221,7 +221,7 @@ export default function LandingPage() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="mt-6 max-w-lg text-lg leading-relaxed text-muted-foreground"
             >
-              {APP_NAME} is where readers track every book, discover their habits, share thoughts with a community, and hit reading goals — all in one beautiful space.
+              {APP_NAME} is where readers track books, write stunning visual poetry, discover habits, and share thoughts with a community — all in one beautiful space.
             </motion.p>
 
             {/* CTAs */}
@@ -303,9 +303,9 @@ export default function LandingPage() {
             {/* Live-ish activity cards */}
             <div className="w-full max-w-xs space-y-2.5">
               <ActivityCard icon={BookOpen} text="Started reading Piranesi" sub="2 minutes ago" color="bg-violet-500" delay={0.6} />
-              <ActivityCard icon={Star} text="Rated Fourth Wing ★ 5" sub="15 minutes ago" color="bg-amber-500" delay={0.75} />
-              <ActivityCard icon={MessageCircle} text="Left a comment on Educated" sub="1 hour ago" color="bg-blue-500" delay={0.9} />
-              <ActivityCard icon={Trophy} text="Goal reached: 12 books 🎉" sub="Yesterday" color="bg-emerald-500" delay={1.05} />
+              <ActivityCard icon={Star} text="Rated Fourth Wing - 5/5" sub="15 minutes ago" color="bg-amber-500" delay={0.75} />
+              <ActivityCard icon={Feather} text="Designed a new Hindi poem card" sub="1 hour ago" color="bg-rose-500" delay={0.9} />
+              <ActivityCard icon={Trophy} text="Goal reached: 12 books" sub="Yesterday" color="bg-emerald-500" delay={1.05} />
             </div>
           </motion.div>
         </motion.div>

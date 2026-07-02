@@ -34,7 +34,7 @@ const getFeed = asyncHandler(async (req, res) => {
   const posts = await Post.find(query)
     .sort({ createdAt: -1 })
     .limit(parsedLimit + 1)
-    .populate('author', 'name username avatar')
+    .populate('author', 'name username avatar penName')
     .populate('bookRef', 'title author coverImage')
     .lean();
 

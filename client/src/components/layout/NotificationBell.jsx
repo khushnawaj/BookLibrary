@@ -77,7 +77,7 @@ export function NotificationBell() {
         visibility: 'PUBLIC'
       })).unwrap();
 
-      toast.success('Resolution shared to Community Feed! 🚀', {
+      toast.success('Resolution shared to Community Feed!', {
         style: {
           borderRadius: '12px',
           background: 'var(--color-card)',

@@ -106,7 +106,7 @@ const getActivities = asyncHandler(async (req, res) => {
 
 const updateProfile = asyncHandler(async (req, res) => {
   const currentUserId = req.user._id;
-  const { name, username, bio, avatar, bannerImage } = req.body;
+  const { name, username, bio, penName, avatar, bannerImage } = req.body;
 
   // Check username uniqueness first if it's being changed
   if (username) {
@@ -126,6 +126,7 @@ const updateProfile = asyncHandler(async (req, res) => {
   if (name !== undefined) updateFields.name = name.trim();
   if (username !== undefined) updateFields.username = username.toLowerCase().trim();
   if (bio !== undefined) updateFields.bio = bio.trim();
+  if (penName !== undefined) updateFields.penName = penName.trim();
   if (avatar !== undefined) updateFields.avatar = avatar;
   if (bannerImage !== undefined) updateFields.bannerImage = bannerImage;
 
@@ -193,7 +194,7 @@ const getUserPosts = asyncHandler(async (req, res) => {
   const posts = await Post.find(query)
     .sort({ createdAt: -1 })
     .limit(parsedLimit + 1)
-    .populate('author', 'name username avatar')
+    .populate('author', 'name username avatar penName')
     .populate('bookRef', 'title author coverImage')
     .lean();
 
