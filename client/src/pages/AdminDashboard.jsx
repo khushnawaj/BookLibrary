@@ -308,7 +308,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* ── Tabs Navigation ── */}
-      <div className="flex border-b border-glass-border gap-6">
+      <div className="flex bg-secondary/35 p-1 rounded-full gap-1 w-fit max-w-full overflow-x-auto scrollbar-none border border-glass-border/30">
         {[
           { id: 'overview', label: 'System Overview', icon: Activity },
           { id: 'users', label: 'User Directory', icon: Users },
@@ -318,13 +318,13 @@ export default function AdminDashboard() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`pb-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer`}
+            className={`px-5 py-2 text-xs font-bold rounded-full transition-all duration-150 flex items-center gap-1.5 whitespace-nowrap cursor-pointer active:scale-95`}
             style={{
-              borderColor: activeTab === tab.id ? 'var(--color-primary)' : 'transparent',
-              color: activeTab === tab.id ? 'var(--color-primary)' : 'var(--color-text-muted)'
+              backgroundColor: activeTab === tab.id ? 'var(--color-primary)' : 'transparent',
+              color: activeTab === tab.id ? 'var(--color-primary-foreground)' : 'var(--color-muted-foreground)'
             }}
           >
-            <tab.icon className="w-4 h-4 shrink-0" /> {tab.label}
+            <tab.icon className="w-3.5 h-3.5 shrink-0" /> {tab.label}
           </button>
         ))}
       </div>
@@ -764,15 +764,15 @@ export default function AdminDashboard() {
             </div>
 
             {/* Status Tabs Filter */}
-            <div className="flex gap-2 items-center border-b border-glass-border pb-4">
+            <div className="flex bg-secondary/35 p-1 rounded-full gap-1 w-fit max-w-full overflow-x-auto scrollbar-none border border-glass-border/30">
               {['ALL', 'PENDING', 'RESOLVED'].map((filter) => (
                 <button
                   key={filter}
                   onClick={() => { setFeedbackFilter(filter); setFeedbackCurrentPage(1); }}
-                  className={`px-4 py-2 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer border border-transparent ${
+                  className={`px-4 py-2 text-xs font-bold rounded-full transition-all duration-150 cursor-pointer active:scale-95 ${
                     feedbackFilter === filter
                       ? "bg-primary text-primary-foreground shadow"
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary/40 border-glass-border"
+                      : "text-muted-foreground hover:text-foreground hover:bg-secondary/40"
                   }`}
                 >
                   {filter}

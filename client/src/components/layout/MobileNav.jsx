@@ -29,7 +29,7 @@ export function MobileNav({ open, onClose }) {
             <Button
               variant="ghost"
               size="icon"
-              className="absolute right-3 top-4"
+              className="absolute right-3 top-4 text-foreground hover:bg-secondary/40 rounded-full"
               onClick={onClose}
               aria-label="Close menu"
             >

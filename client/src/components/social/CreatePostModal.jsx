@@ -121,37 +121,42 @@ export function CreatePostModal({ isOpen, onClose }) {
     setIsDragging(true);
   };
 
-  const handleTextareaKeyUp = async (e) => {
-    if (!transliterateHindi) return;
-    if (e.key !== ' ' && e.key !== 'Enter') return;
-
+  const handleTextareaChange = async (e) => {
     const textarea = e.target;
+    const val = textarea.value;
+    setContent(val);
+
+    if (!transliterateHindi) return;
+
     const pos = textarea.selectionStart;
-    const text = textarea.value;
+    if (pos === 0) return;
 
-    const textBefore = text.substring(0, pos - 1);
-    const lastSpaceIdx = Math.max(textBefore.lastIndexOf(' '), textBefore.lastIndexOf('\n'));
-    const startIdx = lastSpaceIdx === -1 ? 0 : lastSpaceIdx + 1;
-    const word = textBefore.substring(startIdx);
+    const lastChar = val.charAt(pos - 1);
+    if (lastChar === ' ' || lastChar === '\n' || lastChar === '\r') {
+      const textBefore = val.substring(0, pos - 1);
+      const lastSpaceIdx = Math.max(textBefore.lastIndexOf(' '), textBefore.lastIndexOf('\n'));
+      const startIdx = lastSpaceIdx === -1 ? 0 : lastSpaceIdx + 1;
+      const word = textBefore.substring(startIdx);
 
-    if (word && /^[a-zA-Z]+$/.test(word)) {
-      try {
-        const res = await fetch(`https://inputtools.google.com/request?text=${encodeURIComponent(word)}&itc=hi-t-i0-und&num=1&cp=0&cs=1&ie=utf-8&oe=utf-8&app=demopage`);
-        const data = await res.json();
-        if (data && data[0] === 'SUCCESS') {
-          const transliterated = data[1][0][1][0];
-          const newText = text.substring(0, startIdx) + transliterated + text.substring(pos - 1);
-          
-          setContent(newText);
-          
-          const diff = transliterated.length - word.length;
-          setTimeout(() => {
-            textarea.focus();
-            textarea.setSelectionRange(pos + diff, pos + diff);
-          }, 0);
+      if (word && /^[a-zA-Z]+$/.test(word)) {
+        try {
+          const res = await fetch(`https://inputtools.google.com/request?text=${encodeURIComponent(word)}&itc=hi-t-i0-und&num=1&cp=0&cs=1&ie=utf-8&oe=utf-8&app=demopage`);
+          const data = await res.json();
+          if (data && data[0] === 'SUCCESS') {
+            const transliterated = data[1][0][1][0];
+            const newText = val.substring(0, startIdx) + transliterated + val.substring(pos - 1);
+            
+            setContent(newText);
+            
+            const diff = transliterated.length - word.length;
+            setTimeout(() => {
+              textarea.focus();
+              textarea.setSelectionRange(pos + diff, pos + diff);
+            }, 0);
+          }
+        } catch (err) {
+          console.error("Hindi transliteration error:", err);
         }
-      } catch (err) {
-        console.error("Hindi transliteration error:", err);
       }
     }
   };
@@ -638,7 +643,7 @@ export function CreatePostModal({ isOpen, onClose }) {
 
           {postType === 'poem' && poemStep === 2 ? (
             /* ── Step 2: Poetry Background Designer & Controls ── */
-            <div className="flex-1 flex flex-col gap-4 min-h-0">
+            <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-muted-foreground/80 flex items-center gap-1.5">
@@ -890,7 +895,7 @@ export function CreatePostModal({ isOpen, onClose }) {
                 <div
                   ref={previewRef}
                   className={cn(
-                    "relative w-full flex-1 rounded-2xl overflow-hidden border border-glass-border shadow-md select-none flex items-center justify-center transition-all duration-300",
+                    "relative w-full aspect-[4/3] rounded-2xl overflow-hidden border border-glass-border shadow-md select-none flex items-center justify-center transition-all duration-300",
                     !poetryBg && "bg-secondary/10 border-dashed border-2 flex-col gap-2 p-6"
                   )}
                   style={poetryBg ? {
@@ -989,7 +994,7 @@ export function CreatePostModal({ isOpen, onClose }) {
             <>
               <div className="flex flex-col mt-1 flex-1 min-h-0">
                 {/* Mood Toolbar */}
-                <div className="flex items-center justify-between px-3 py-2 border border-glass-border bg-secondary/15 rounded-t-xl select-none shrink-0">
+                <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 border border-glass-border bg-secondary/15 rounded-t-xl select-none shrink-0">
                   <div className="flex items-center gap-3">
                     <span className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-wider">Mood:</span>
                     <button
@@ -1042,8 +1047,7 @@ export function CreatePostModal({ isOpen, onClose }) {
                   <textarea
                     id="post-composer-textarea"
                     value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    onKeyUp={handleTextareaKeyUp}
+                    onChange={handleTextareaChange}
                     placeholder={activeType.placeholder}
                     style={{
                       color: 'var(--color-foreground)',
@@ -1113,7 +1117,7 @@ export function CreatePostModal({ isOpen, onClose }) {
         </div>
 
         {/* ── Footer ── */}
-        <div className="px-4 py-3 border-t border-glass-border flex items-center justify-between bg-secondary/5 rounded-b-2xl gap-3">
+        <div className="px-4 py-3 border-t border-glass-border flex flex-wrap items-center justify-between bg-secondary/5 rounded-b-2xl gap-2">
           {postType === 'poem' && poemStep === 2 ? (
             <Button
               variant="ghost"
@@ -1123,7 +1127,7 @@ export function CreatePostModal({ isOpen, onClose }) {
               ← Back to Edit
             </Button>
           ) : (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 flex-wrap">
               {/* Image toggle */}
               <Button
                 variant="ghost"

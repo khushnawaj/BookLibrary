@@ -766,35 +766,41 @@ export default function ProfilePage() {
         {/* RIGHT COLUMN: Tab Content */}
         <div className="md:col-span-8 space-y-4 sm:space-y-6">
           {/* Tab Navigation header */}
-          <div className="flex border-b border-glass-border gap-6 overflow-x-auto scrollbar-none pb-2">
+          <div className="flex bg-secondary/35 p-1 rounded-full gap-1 w-fit max-w-full overflow-x-auto scrollbar-none border border-glass-border/30">
             <button
               onClick={() => setActiveTab('posts')}
               className={cn(
-                "pb-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer",
-                activeTab === 'posts' ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
+                "px-5 py-2 text-xs font-bold rounded-full transition-all duration-150 flex items-center gap-2 whitespace-nowrap cursor-pointer active:scale-95",
+                activeTab === 'posts'
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <BookMarked className="w-4 h-4" /> Activity Feed
+              <BookMarked className="w-3.5 h-3.5" /> Activity Feed
             </button>
             {isOwnProfile && (
               <button
                 onClick={() => setActiveTab('saved')}
                 className={cn(
-                  "pb-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer",
-                  activeTab === 'saved' ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
+                  "px-5 py-2 text-xs font-bold rounded-full transition-all duration-150 flex items-center gap-2 whitespace-nowrap cursor-pointer active:scale-95",
+                  activeTab === 'saved'
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                <Bookmark className="w-4 h-4" /> Bookmarks
+                <Bookmark className="w-3.5 h-3.5" /> Bookmarks
               </button>
             )}
             <button
               onClick={() => setActiveTab('library')}
               className={cn(
-                "pb-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer",
-                activeTab === 'library' ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
+                "px-5 py-2 text-xs font-bold rounded-full transition-all duration-150 flex items-center gap-2 whitespace-nowrap cursor-pointer active:scale-95",
+                activeTab === 'library'
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <BookOpen className="w-4 h-4" /> Library Collection
+              <BookOpen className="w-3.5 h-3.5" /> Library Collection
             </button>
           </div>
 

@@ -14,6 +14,7 @@ const FacebookIcon = (props) => (
   </svg>
 );
 import { Button } from '@/components/ui/button';
+import { toast } from 'react-hot-toast';
 
 /**
  * ShareCard — renders a beautiful, shareable card for:
@@ -28,21 +29,28 @@ export function ShareCard({ type, data, onClose }) {
   const cardRef = useRef(null);
 
   const handleDownload = async () => {
+    const toastId = toast.loading('Generating image...');
     try {
       const html2canvas = (await import('html2canvas')).default;
       const canvas = await html2canvas(cardRef.current, {
         scale: 2,
         backgroundColor: null,
         useCORS: true,
+        allowTaint: true,
       });
       const url = canvas.toDataURL('image/png');
       const link = document.createElement('a');
       link.download = `ShelfForge-${type}-card.png`;
       link.href = url;
+      document.body.appendChild(link);
       link.click();
-    } catch {
+      document.body.removeChild(link);
+      toast.success('Image saved to downloads!', { id: toastId });
+    } catch (err) {
+      console.error('Download error:', err);
       // fallback: just copy text
       navigator.clipboard.writeText(window.location.href);
+      toast.error('Could not download image. Link copied to clipboard instead.', { id: toastId });
     }
   };
 

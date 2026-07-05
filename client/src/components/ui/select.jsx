@@ -35,10 +35,10 @@ function SelectTrigger({
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "flex w-full items-center justify-between gap-2 rounded-xl border px-3.5 py-2 text-sm transition-all duration-200 outline-none",
+        "flex w-full items-center justify-between gap-2 rounded-full border px-5 py-2.5 text-sm transition-all duration-200 outline-none",
         "glass-input placeholder:text-muted-foreground/50 data-[placeholder]:text-muted-foreground/50",
         "disabled:cursor-not-allowed disabled:opacity-50",
-        "data-[size=default]:h-10 data-[size=sm]:h-8.5",
+        "data-[size=default]:h-11 data-[size=sm]:h-9",
         "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className
       )}

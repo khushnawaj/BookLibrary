@@ -99,7 +99,7 @@ export default function FeedPage() {
 
                 <Button
                   onClick={() => setIsModalOpen(true)}
-                  className="h-9 px-3.5 gap-1.5 rounded-xl shadow-sm text-xs sm:text-sm cursor-pointer"
+                  className="h-9 px-4 gap-1.5 rounded-full shadow-sm text-xs sm:text-sm cursor-pointer"
                 >
                   <Plus className="w-4 h-4 shrink-0" />
                   <span className="hidden xs:inline">New Post</span>
@@ -108,15 +108,15 @@ export default function FeedPage() {
               </div>
             </div>
 
-            {/* Reddit-style tabs filter bar */}
-            <div className="flex items-center gap-1.5 pt-1 border-t border-glass-border/30">
+            {/* Snapchat-style segmented pill filter bar */}
+            <div className="flex bg-secondary/35 p-1 rounded-full gap-1 w-fit border border-glass-border/30">
               <button
                 onClick={() => handleFeedTypeChange('global')}
                 className={cn(
-                  'px-3.5 py-1.5 rounded-full text-xs font-bold transition-all duration-150 border flex items-center gap-1.5 cursor-pointer',
+                  'px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-150 flex items-center gap-1.5 cursor-pointer active:scale-95',
                   feedType === 'global'
-                    ? 'bg-primary text-primary-foreground border-primary shadow-sm'
-                    : 'bg-secondary/20 hover:bg-secondary/40 text-muted-foreground border-glass-border/50'
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
                 )}
               >
                 <Globe className="w-3.5 h-3.5 shrink-0" /> Global Feed
@@ -125,10 +125,10 @@ export default function FeedPage() {
                 <button
                   onClick={() => handleFeedTypeChange('following')}
                   className={cn(
-                    'px-3.5 py-1.5 rounded-full text-xs font-bold transition-all duration-150 border flex items-center gap-1.5 cursor-pointer',
+                    'px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-150 flex items-center gap-1.5 cursor-pointer active:scale-95',
                     feedType === 'following'
-                      ? 'bg-primary text-primary-foreground border-primary shadow-sm'
-                      : 'bg-secondary/20 hover:bg-secondary/40 text-muted-foreground border-glass-border/50'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
                   )}
                 >
                   <Users className="w-3.5 h-3.5 shrink-0" /> Following

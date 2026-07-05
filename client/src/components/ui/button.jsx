@@ -4,30 +4,30 @@ import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:-translate-y-[1px] active:translate-y-[1px] active:scale-[0.98]',
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-bold tracking-wide transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-95 hover:brightness-[1.03] active:brightness-[0.97]',
   {
     variants: {
       variant: {
         default:
-          'bg-primary text-primary-foreground shadow-sm hover:opacity-90 hover:shadow-md active:opacity-85',
+          'bg-primary text-primary-foreground shadow-sm hover:opacity-95 active:opacity-90',
         secondary:
-          'bg-secondary text-secondary-foreground border border-border/40 hover:bg-accent hover:text-accent-foreground hover:shadow-sm',
+          'bg-secondary text-secondary-foreground border border-border/40 hover:bg-accent hover:text-accent-foreground',
         outline:
-          'border border-border bg-card/60 text-foreground hover:bg-accent hover:border-primary/40 hover:shadow-sm',
+          'border border-border bg-card/60 text-foreground hover:bg-accent hover:border-primary/40',
         ghost:
-          'text-foreground hover:bg-secondary hover:text-foreground hover:-translate-y-0 active:translate-y-0 active:scale-100',
+          'text-foreground hover:bg-secondary hover:text-foreground active:scale-100',
         destructive:
-          'bg-destructive text-destructive-foreground hover:opacity-90 hover:shadow-md',
+          'bg-destructive text-destructive-foreground hover:opacity-95',
         glass:
-          'border border-glass-border bg-glass/70 text-foreground backdrop-blur-md hover:bg-glass hover:shadow-md',
+          'border border-glass-border bg-glass/70 text-foreground backdrop-blur-md hover:bg-glass',
         link:
-          'text-primary underline-offset-4 hover:underline p-0 h-auto hover:-translate-y-0 active:translate-y-0 active:scale-100',
+          'text-primary underline-offset-4 hover:underline p-0 h-auto active:scale-100',
       },
       size: {
-        default: 'h-10 px-5 py-2',
-        sm:      'h-8.5 rounded-lg px-3.5 text-xs',
-        lg:      'h-12 rounded-xl px-7 text-base',
-        icon:    'h-10 w-10 rounded-xl',
+        default: 'h-11 px-6 py-2',
+        sm:      'h-9 px-4 text-xs',
+        lg:      'h-13 px-8 text-base',
+        icon:    'h-11 w-11 p-0',
       },
     },
     defaultVariants: {

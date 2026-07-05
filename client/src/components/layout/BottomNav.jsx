@@ -8,11 +8,11 @@ export function BottomNav() {
   const { user } = useAuth();
 
   const navItems = [
-    { to: ROUTES.FEED, label: 'Feed', icon: Users },
-    { to: ROUTES.LIBRARY, label: 'Library', icon: Library },
+    { to: ROUTES.FEED, label: 'Feed', icon: Users, badge: true, activeColor: 'text-indigo-500', dotColor: 'bg-indigo-500' },
+    { to: ROUTES.LIBRARY, label: 'Library', icon: Library, activeColor: 'text-violet-500', dotColor: 'bg-violet-500' },
     { to: ROUTES.LIBRARY_ADD, label: 'Add Book', icon: Plus, isMain: true },
-    { to: ROUTES.ANALYTICS, label: 'Insights', icon: BarChart3 },
-    { to: ROUTES.PROFILE, label: 'Profile', icon: UserCircle },
+    { to: ROUTES.ANALYTICS, label: 'Insights', icon: BarChart3, activeColor: 'text-emerald-500', dotColor: 'bg-emerald-500' },
+    { to: ROUTES.PROFILE, label: 'Profile', icon: UserCircle, activeColor: 'text-slate-600', dotColor: 'bg-slate-600' },
   ];
 
   return (
@@ -26,7 +26,7 @@ export function BottomNav() {
               cn(
                 "flex flex-col items-center justify-center py-1 flex-1 relative min-w-0 transition-all duration-200 rounded-xl",
                 isActive 
-                  ? "text-primary font-semibold" 
+                  ? cn(item.activeColor || "text-primary", "font-semibold") 
                   : "text-muted-foreground hover:text-foreground"
               )
             }
@@ -39,12 +39,17 @@ export function BottomNav() {
                   </div>
                 ) : (
                   <div className="flex flex-col items-center gap-0.5">
-                    <item.icon className="h-4.5 w-4.5 shrink-0 transition-transform duration-200 active:scale-90" />
+                    <div className="relative">
+                      <item.icon className="h-4.5 w-4.5 shrink-0 transition-transform duration-200 active:scale-90" />
+                      {item.badge && (
+                        <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                      )}
+                    </div>
                     <span className="text-[10px] tracking-tight">{item.label}</span>
                   </div>
                 )}
                 {isActive && !item.isMain && (
-                  <span className="absolute bottom-0 h-1 w-1 rounded-full bg-primary" />
+                  <span className={cn("absolute bottom-0 h-1 w-1 rounded-full", item.dotColor || "bg-primary")} />
                 )}
               </>
             )}

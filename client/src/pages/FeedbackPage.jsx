@@ -164,13 +164,13 @@ export default function FeedbackPage() {
 
         {/* Tab Selection (Admin Inbox Access) */}
         {isAdmin && (
-          <div className="flex bg-secondary/80 p-1 rounded-2xl border border-glass-border self-start shrink-0">
+          <div className="flex bg-secondary/80 p-1 rounded-full border border-glass-border self-start shrink-0">
             <button
               onClick={() => setActiveTab('submit')}
               className={cn(
-                "px-5 py-2.5 text-xs font-bold rounded-xl transition-all duration-300 cursor-pointer",
+                "px-5 py-2.5 text-xs font-bold rounded-full transition-all duration-150 cursor-pointer active:scale-95",
                 activeTab === 'submit'
-                  ? "bg-primary text-primary-foreground shadow-md scale-105"
+                  ? "bg-primary text-primary-foreground shadow-md"
                   : "text-muted-foreground hover:text-foreground hover:bg-secondary/40"
               )}
             >
@@ -179,9 +179,9 @@ export default function FeedbackPage() {
             <button
               onClick={() => setActiveTab('inbox')}
               className={cn(
-                "px-5 py-2.5 text-xs font-bold rounded-xl transition-all duration-300 cursor-pointer flex items-center gap-1.5",
+                "px-5 py-2.5 text-xs font-bold rounded-full transition-all duration-150 cursor-pointer flex items-center gap-1.5 active:scale-95",
                 activeTab === 'inbox'
-                  ? "bg-primary text-primary-foreground shadow-md scale-105"
+                  ? "bg-primary text-primary-foreground shadow-md"
                   : "text-muted-foreground hover:text-foreground hover:bg-secondary/40"
               )}
             >
@@ -421,7 +421,7 @@ export default function FeedbackPage() {
                   key={filter}
                   onClick={() => setStatusFilter(filter)}
                   className={cn(
-                    "px-4 py-2 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer border border-transparent",
+                    "px-4 py-2 text-xs font-bold rounded-full transition-all duration-150 cursor-pointer border border-transparent active:scale-95",
                     statusFilter === filter
                       ? "bg-primary text-primary-foreground shadow"
                       : "text-muted-foreground hover:text-foreground hover:bg-secondary/40 border-glass-border"

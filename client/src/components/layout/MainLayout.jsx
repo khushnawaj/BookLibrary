@@ -7,7 +7,8 @@ import { MobileNav } from './MobileNav';
 import { BottomNav } from './BottomNav';
 import { SupportModal } from '@/components/common/SupportModal';
 import { GuestWarningModal } from '@/components/common/GuestWarningModal';
-import { BookOpen, Code2, Share2, Heart, Lock, ArrowRight, LogIn, Coffee } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { BookOpen, Code2, Share2, Heart, Lock, ArrowRight, LogIn, Coffee, ChevronLeft, ChevronRight } from 'lucide-react';
 import { LiquidGlassBackground } from '@/components/common/LiquidGlassBackground';
 import { useAuth } from '@/features/auth/authHooks';
 import { useNavigate } from 'react-router-dom';
@@ -142,6 +143,7 @@ function GuestLockedPage({ pathname, pageTitle }) {
 export function MainLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const { pathname } = useLocation();
   const title = getPageTitle(pathname);
   const { user } = useAuth();
@@ -154,17 +156,35 @@ export function MainLayout() {
   const isLockedGuestPage = isGuest && !isPublicRoute;
 
   return (
-    <LiquidGlassBackground className="lg:flex">
-      {/* Sidebar — fixed on desktop, wider at w-64 */}
-      <div className="fixed inset-y-0 left-0 z-20 hidden lg:block">
+    <LiquidGlassBackground className="min-h-screen flex flex-col">
+      {/* Sidebar — fixed on desktop, floating on the left side */}
+      <div className={cn(
+        "fixed inset-y-0 left-0 z-20 hidden lg:block transition-all duration-300 ease-out",
+        sidebarOpen ? "translate-x-0 opacity-100" : "-translate-x-full opacity-0 pointer-events-none"
+      )}>
         <Sidebar />
       </div>
+
+      {/* Sidebar Edge Toggle Button */}
+      <button
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        className={cn(
+          "fixed top-1/2 -translate-y-1/2 z-30 hidden lg:flex h-8 w-8 items-center justify-center rounded-full border border-glass-border/40 bg-card/90 backdrop-blur-md shadow-md text-muted-foreground hover:text-foreground hover:bg-secondary cursor-pointer transition-all duration-300 active:scale-90 opacity-40 hover:opacity-100",
+          sidebarOpen ? "left-[256px]" : "left-2"
+        )}
+        aria-label={sidebarOpen ? "Hide Sidebar" : "Show Sidebar"}
+      >
+        {sidebarOpen ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+      </button>
 
       <MobileNav open={mobileOpen} onClose={() => setMobileOpen(false)} />
       <BottomNav />
 
-      {/* Main content area — offset by sidebar width (w-64 = 256px) */}
-      <div className="relative z-10 flex min-h-screen flex-1 flex-col lg:pl-64">
+      {/* Main content area — offset by sidebar width (w-64 = 256px) + margin gaps (32px) on the left */}
+      <div className={cn(
+        "relative z-10 flex min-h-screen flex-1 flex-col transition-all duration-300 ease-out",
+        sidebarOpen ? "lg:pl-[288px] lg:pr-0" : "lg:pl-0 lg:pr-0"
+      )}>
         <TopNavbar title={title} onMenuClick={() => setMobileOpen(true)} />
           <main className="relative z-10 flex-1 p-5 sm:p-6 lg:p-8 pb-28 sm:pb-32 lg:pb-8">
             <PageTransition key={pathname} className="page-container mx-auto w-full max-w-7xl">
@@ -176,7 +196,7 @@ export function MainLayout() {
             </PageTransition>
           </main>
         {/* ── Rich Footer ── */}
-        <footer className="relative z-10 border-t border-glass-border/20 bg-card/25 backdrop-blur-xl mt-auto pb-24 lg:pb-0">
+        <footer className="relative z-10 border-t border-glass-border/20 bg-card/25 backdrop-blur-xl mt-auto pb-28 lg:pb-8">
           {/* Subtle top glow line */}
           <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
           
