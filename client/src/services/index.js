@@ -56,7 +56,7 @@ export const analyticsService = {
   getAchievements: async () => api.get('/analytics/achievements'),
   getGoals: async () => api.get('/analytics/goals'),
   createGoal: async (data) => api.post('/analytics/goals', data),
-  updateGoal: async (id, data) => api.patch(`/analytics/goals/${id}`, data),
+  updateGoal: async (id, data) => api.put(`/analytics/goals/${id}`, data),
   deleteGoal: async (id) => api.delete(`/analytics/goals/${id}`),
 };
 

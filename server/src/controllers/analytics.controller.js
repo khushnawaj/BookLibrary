@@ -41,10 +41,19 @@ const deleteGoal = asyncHandler(async (req, res) => {
   });
 });
 
+const updateGoal = asyncHandler(async (req, res) => {
+  const goal = await analyticsService.updateGoal(req.user._id, req.params.id, req.body);
+  return ApiResponse.success(res, {
+    message: 'Goal updated successfully',
+    data: { goal }
+  });
+});
+
 module.exports = {
   getAnalytics,
   getAchievements,
   getGoals,
   createGoal,
-  deleteGoal
+  deleteGoal,
+  updateGoal
 };

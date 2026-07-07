@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -10,11 +10,13 @@ import {
   Heart,
   Library,
   Plus,
+  Send,
   Star,
   Target,
   TrendingUp,
   Upload,
   Users,
+  Zap,
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppStore';
 import {
@@ -26,6 +28,7 @@ import {
 import { fetchAnalytics, fetchGoals, selectAnalytics } from '@/features/analytics/analyticsSlice';
 import { useAuth } from '@/features/auth/authHooks';
 import { Button } from '@/components/ui/button';
+import { CreatePostModal } from '@/components/social/CreatePostModal';
 import { cn } from '@/lib/utils';
 import { ROUTES } from '@/constants';
 
@@ -217,7 +220,15 @@ export default function DashboardPage() {
   const stats = useAppSelector(selectDashboardStats);
   const recentBooks = useAppSelector(selectRecentBooks);
   const isLoading = useAppSelector(selectDashboardLoading);
-  const { overview, goals } = useAppSelector(selectAnalytics);
+  const { overview, goals, currentlyReadingList, recentlyCompletedList } = useAppSelector(selectAnalytics);
+
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [selectedBookToShare, setSelectedBookToShare] = useState(null);
+
+  const handleShareBook = (book) => {
+    setSelectedBookToShare(book);
+    setShareModalOpen(true);
+  };
 
   useEffect(() => {
     dispatch(fetchDashboardStats());
@@ -270,62 +281,105 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+        {/* Continue Reading Shelf */}
         <motion.div {...fade(0.08)} className="xl:col-span-2">
-          <SectionCard>
-            <SectionHeader title="Reading Progress" icon={TrendingUp} />
-            <div className="grid gap-6 p-5 lg:grid-cols-[1fr_220px]">
-              <div className="space-y-4">
-                <ProgressTrack label="Finished" value={stats.readBooks || 0} max={progressTotal} color="var(--color-success)" />
-                <ProgressTrack label="Currently Reading" value={stats.readingBooks || 0} max={progressTotal} color="var(--color-primary)" />
-                <ProgressTrack label="Wishlist" value={stats.wishlistCount || 0} max={progressTotal} color="var(--color-primary)" />
-              </div>
-              <div className="space-y-3 border-t border-border/40 pt-4 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
-                <StatLine label="Day streak" value={`${overview?.currentStreak ?? 0} days`} icon={Flame} />
-                <StatLine label="Average rating" value={overview?.averageRating ? overview.averageRating.toFixed(1) : 'Not rated'} icon={Star} />
-                <StatLine label="Favorite genre" value={overview?.favoriteGenre || 'No genre yet'} icon={BarChart3} />
-              </div>
+          <SectionCard className="h-full flex flex-col justify-between">
+            <SectionHeader 
+              title="Continue Reading" 
+              icon={BookOpen} 
+              action={
+                currentlyReadingList?.length > 0 && (
+                  <span className="rounded-full bg-primary/20 text-primary px-2.5 py-0.5 text-xs font-bold">
+                    {currentlyReadingList.length} reading
+                  </span>
+                )
+              }
+            />
+            <div className="p-5 flex-1 flex flex-col justify-center">
+              {!currentlyReadingList || currentlyReadingList.length === 0 ? (
+                <div className="py-8 text-center flex flex-col items-center justify-center gap-3">
+                  <BookOpen className="h-10 w-10 text-muted-foreground/30 animate-pulse" />
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">No active reads right now</p>
+                    <p className="text-xs text-muted-foreground mt-1 max-w-[280px]">
+                      Move a book to the <b>"Currently Reading"</b> shelf to track your reading progress here.
+                    </p>
+                  </div>
+                  <Button asChild size="sm" className="mt-2">
+                    <Link to={ROUTES.LIBRARY}>Browse Library</Link>
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {currentlyReadingList.slice(0, 4).map((book) => (
+                    <div key={book._id} className="flex gap-4 p-3 rounded-xl bg-card/30 border border-border/40 hover:border-primary/25 transition-all">
+                      <img
+                        src={book.coverImage || '/placeholder-cover.jpg'}
+                        alt={book.title}
+                        className="w-14 h-20 rounded-lg object-cover bg-muted shrink-0 shadow-sm"
+                        onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=150&auto=format&fit=crop&q=60'; }}
+                      />
+                      <div className="min-w-0 flex-1 flex flex-col justify-between py-1">
+                        <div>
+                          <h4 className="font-bold text-sm truncate text-foreground leading-tight">{book.title}</h4>
+                          <p className="text-xs text-muted-foreground truncate mt-0.5">by {book.author || 'Unknown'}</p>
+                        </div>
+                        <div className="flex flex-col gap-1.5 mt-2">
+                          <span className="text-[10px] text-muted-foreground">
+                            Started {new Date(book.startedAt || Date.now()).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                          </span>
+                          <Link 
+                            to={`/library/${book._id}`} 
+                            className="inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:text-primary/80 transition-colors"
+                          >
+                            Update Progress <ArrowRight className="h-3 w-3" />
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </SectionCard>
         </motion.div>
 
+        {/* Reading Streak & Stats Overview */}
         <motion.div {...fade(0.1)}>
-          <SectionCard>
-            <SectionHeader title="Next Up" icon={BookOpen} />
-            <div className="p-5">
-              {currentBook ? (
-                <Link to={`/library/${currentBook._id}`} className="flex gap-4 rounded-xl transition-colors hover:bg-secondary/40">
-                  <BookCover book={currentBook} className="h-28 w-20" />
-                  <div className="min-w-0 py-1">
-                    <p className="line-clamp-2 text-base font-bold text-foreground">
-                      {currentBook.title || currentBook?.book?.title || 'Untitled book'}
-                    </p>
-                    <p className="mt-1.5 truncate text-sm text-muted-foreground">
-                      {currentBook.author || currentBook?.book?.author || 'Unknown author'}
-                    </p>
-                    <span className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary/80 transition-colors">
-                      Open book <ArrowRight className="h-3.5 w-3.5" />
-                    </span>
-                  </div>
-                </Link>
-              ) : (
-                <div className="py-4 text-center">
-                  <BookOpen className="mx-auto mb-2.5 h-9 w-9 text-muted-foreground/40" />
-                  <p className="text-sm font-medium text-foreground">No books yet</p>
-                  <Link to={ROUTES.LIBRARY_ADD} className="mt-2 inline-flex text-sm font-semibold text-primary hover:underline">
-                    Add your first book
-                  </Link>
+          <SectionCard className="h-full flex flex-col">
+            <SectionHeader title="Your Streak & Stats" icon={Flame} />
+            <div className="p-5 flex-1 flex flex-col justify-between gap-6">
+              {/* Flame streak badge */}
+              <div className="flex items-center gap-4 bg-destructive/5 border border-destructive/10 rounded-2xl p-4">
+                <div className="h-12 w-12 rounded-xl bg-destructive/10 flex items-center justify-center text-destructive shrink-0">
+                  <Flame className="h-7 w-7 fill-destructive/20" />
                 </div>
-              )}
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Reading Streak</p>
+                  <p className="text-2xl font-black text-destructive leading-none mt-1">
+                    {overview?.currentStreak ?? 0} {overview?.currentStreak === 1 ? 'Day' : 'Days'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Progress metrics */}
+              <div className="space-y-3.5">
+                <StatLine label="Day streak" value={`${overview?.currentStreak ?? 0} days`} icon={Flame} />
+                <StatLine label="Longest streak" value={`${overview?.longestStreak ?? 0} days`} icon={Zap} />
+                <StatLine label="Average rating" value={overview?.averageRating ? `${overview.averageRating.toFixed(1)} ★` : 'Not rated'} icon={Star} />
+                <StatLine label="Pages finished" value={`${(overview?.totalPagesRead ?? 0).toLocaleString()} pages`} icon={TrendingUp} />
+              </div>
             </div>
           </SectionCard>
         </motion.div>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {/* Split Activity Card */}
         <motion.div {...fade(0.12)} className="lg:col-span-2">
           <SectionCard className="overflow-hidden">
             <SectionHeader
-              title="Recent Books"
+              title="Recent Activity"
               icon={BookMarked}
               action={
                 <Button asChild variant="link" size="sm" className="gap-1 text-xs font-semibold text-primary hover:text-primary/80 transition-colors">
@@ -335,31 +389,107 @@ export default function DashboardPage() {
                 </Button>
               }
             />
-            <div className="divide-y divide-border/40">
-              {isLoading ? (
-                Array.from({ length: 5 }).map((_, index) => (
-                  <div key={index} className="flex items-center gap-3 px-5 py-3">
-                    <div className="h-12 w-8 animate-pulse rounded-md bg-secondary/60" />
-                    <div className="flex-1 space-y-2">
-                      <div className="h-3 w-3/4 animate-pulse rounded bg-secondary/60" />
-                      <div className="h-2.5 w-1/2 animate-pulse rounded bg-secondary/60" />
-                    </div>
+            {/* Split layout: Recently Completed vs Recent Additions */}
+            <div className="grid gap-6 p-5 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-border/40">
+              {/* Left Column: Recently Completed */}
+              <div className="space-y-4">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <Star className="h-3.5 w-3.5 text-warning fill-warning" />
+                  Recently Finished
+                </h3>
+                {!recentlyCompletedList || recentlyCompletedList.length === 0 ? (
+                  <div className="h-48 flex flex-col items-center justify-center text-muted-foreground gap-2 border border-dashed border-border/30 rounded-xl bg-card/20">
+                    <Star className="h-6 w-6 opacity-30 text-warning" />
+                    <p className="text-xs">No completed books yet</p>
                   </div>
-                ))
-              ) : recentBooks?.length > 0 ? (
-                recentBooks.slice(0, 6).map((book) => <RecentBookRow key={book._id} book={book} />)
-              ) : (
-                <div className="px-5 py-10 text-center">
-                  <p className="text-sm text-muted-foreground">No books yet.</p>
-                  <Link to={ROUTES.LIBRARY_ADD} className="mt-2 inline-flex text-sm font-semibold text-primary hover:underline">
-                    Add your first book
-                  </Link>
-                </div>
-              )}
+                ) : (
+                  <div className="space-y-3">
+                    {recentlyCompletedList.slice(0, 3).map((book) => {
+                      const isCompletedToday = new Date(book.finishedAt).toDateString() === new Date().toDateString();
+                      return (
+                        <div key={book._id} className="flex items-center justify-between p-2 rounded-lg hover:bg-secondary/20 transition-all border border-transparent hover:border-border/40 group relative">
+                          <Link to={`/library/${book._id}`} className="flex gap-3 min-w-0 flex-1">
+                            <img
+                              src={book.coverImage || '/placeholder-cover.jpg'}
+                              alt={book.title}
+                              className="w-10 h-14 rounded object-cover bg-muted shrink-0 shadow-sm"
+                              onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=150&auto=format&fit=crop&q=60'; }}
+                            />
+                            <div className="min-w-0 flex-1 flex flex-col justify-between py-0.5">
+                              <div>
+                                <h4 className="font-semibold text-xs truncate text-foreground group-hover:text-primary transition-colors pr-10">{book.title}</h4>
+                                <p className="text-[10px] text-muted-foreground truncate mt-0.5">by {book.author || 'Unknown'}</p>
+                              </div>
+                              <div className="flex gap-0.5 text-warning">
+                                {Array.from({ length: book.rating || 5 }).map((_, i) => (
+                                  <Star key={i} className="h-2.5 w-2.5 fill-warning text-warning" />
+                                ))}
+                              </div>
+                            </div>
+                          </Link>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {isCompletedToday && (
+                              <span className="text-[8px] bg-mint/10 text-mint font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">
+                                Today!
+                              </span>
+                            )}
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                handleShareBook(book);
+                              }}
+                              className="h-8 w-8 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 cursor-pointer"
+                              title="Share to Feed"
+                            >
+                              <Send className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Right Column: Recent Additions */}
+              <div className="space-y-4 pt-4 md:pt-0 md:pl-5">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <BookMarked className="h-3.5 w-3.5 text-primary" />
+                  Recent Additions
+                </h3>
+                {isLoading ? (
+                  <div className="space-y-2">
+                    {Array.from({ length: 3 }).map((_, idx) => (
+                      <div key={idx} className="h-14 animate-pulse rounded bg-secondary/60" />
+                    ))}
+                  </div>
+                ) : !recentBooks || recentBooks.length === 0 ? (
+                  <div className="h-48 flex flex-col items-center justify-center text-muted-foreground gap-2 border border-dashed border-border/30 rounded-xl bg-card/20">
+                    <BookMarked className="h-6 w-6 opacity-30 text-primary" />
+                    <p className="text-xs">No additions yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {recentBooks.slice(0, 3).map((book) => (
+                      <Link key={book._id} to={`/library/${book._id}`} className="flex gap-3 p-2 rounded-lg hover:bg-secondary/40 transition-colors">
+                        <BookCover book={book} className="w-10 h-14" />
+                        <div className="min-w-0 flex-1 flex flex-col justify-center">
+                          <h4 className="font-semibold text-xs truncate text-foreground">{book.title || book?.book?.title}</h4>
+                          <p className="text-[10px] text-muted-foreground truncate mt-0.5">by {book.author || book?.book?.author || 'Unknown'}</p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </SectionCard>
         </motion.div>
 
+        {/* Quick Actions & Mini Goals */}
         <motion.div {...fade(0.14)} className="space-y-6">
           <SectionCard>
             <SectionHeader title="Quick Actions" icon={TrendingUp} />
@@ -399,6 +529,14 @@ export default function DashboardPage() {
           </SectionCard>
         </motion.div>
       </div>
+      <CreatePostModal 
+        isOpen={shareModalOpen} 
+        onClose={() => {
+          setShareModalOpen(false);
+          setSelectedBookToShare(null);
+        }} 
+        initialBook={selectedBookToShare} 
+      />
     </div>
   );
 }

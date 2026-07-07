@@ -89,7 +89,7 @@ const POST_TYPES = [
 ];
 
 // ── Component ──────────────────────────────────────────────────────────────────
-export function CreatePostModal({ isOpen, onClose }) {
+export function CreatePostModal({ isOpen, onClose, initialBook = null }) {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
   const isGuest = user?.role === 'GUEST';
@@ -100,6 +100,18 @@ export function CreatePostModal({ isOpen, onClose }) {
   const [showImageUpload, setShowImageUpload] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [bookRef, setBookRef] = useState(null);
+
+  useEffect(() => {
+    if (isOpen && initialBook) {
+      setBookRef(initialBook);
+      setPostType('book');
+      const defaultText = `I just finished reading ${initialBook.title} by ${initialBook.author}! Highly recommended! 📖✨`;
+      setContent(defaultText);
+    } else if (isOpen) {
+      setBookRef(null);
+    }
+  }, [isOpen, initialBook]);
 
   // Poetry custom design states
   const [poemStep, setPoemStep] = useState(1);
@@ -442,6 +454,7 @@ export function CreatePostModal({ isOpen, onClose }) {
     setPoetryOverlay(25);
     setPoetryCaption('');
     setTransliterateHindi(false);
+    setBookRef(null);
     localStorage.removeItem('sf_post_draft');
     onClose();
   };
@@ -552,6 +565,7 @@ export function CreatePostModal({ isOpen, onClose }) {
           images,
           hashtags,
           visibility,
+          bookRef: bookRef?.bookId || bookRef?._id || undefined,
           ...(postType === 'poem' ? {
             poetryBg: poetryBg || undefined,
             poetryPosition: poetryBg ? JSON.stringify({
@@ -1067,6 +1081,28 @@ export function CreatePostModal({ isOpen, onClose }) {
                       postType === 'poem' ? 'italic leading-loose text-center' : 'text-left'
                     )}
                   />
+                  {bookRef && (
+                    <div className="mt-3 flex items-center gap-3 p-2.5 rounded-xl bg-primary/5 border border-primary/20 relative">
+                      <img 
+                        src={bookRef.coverImage || '/placeholder-cover.jpg'} 
+                        alt={bookRef.title} 
+                        className="w-10 h-14 rounded object-cover bg-muted shrink-0 shadow-sm"
+                        onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=150&auto=format&fit=crop&q=60'; }}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-primary">Attached Book Reference</p>
+                        <h5 className="font-bold text-xs truncate text-foreground">{bookRef.title}</h5>
+                        <p className="text-[10px] text-muted-foreground truncate">by {bookRef.author || 'Unknown'}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setBookRef(null)}
+                        className="absolute top-1.5 right-1.5 h-5 w-5 rounded-full flex items-center justify-center bg-secondary hover:bg-muted text-muted-foreground transition-all cursor-pointer"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 

@@ -61,6 +61,19 @@ export const deleteGoal = createAsyncThunk(
   }
 );
 
+export const updateGoal = createAsyncThunk(
+  'analytics/updateGoal',
+  async ({ id, data }, { rejectWithValue }) => {
+    try {
+      const response = await analyticsService.updateGoal(id, data);
+      return response.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || 'Failed to update goal');
+    }
+  }
+);
+
+
 const initialState = {
   overview: {
     totalBooksRead: 0,
@@ -78,6 +91,9 @@ const initialState = {
   genreDistribution: [],
   booksPerMonth: [],
   topRatedBooks: [],
+  currentlyReadingList: [],
+  recentlyCompletedList: [],
+  booksPerYear: [],
   goals: [],
   achievements: [],
   isLoading: false,
@@ -100,6 +116,9 @@ const analyticsSlice = createSlice({
         state.genreDistribution = action.payload.data.genreDistribution;
         state.booksPerMonth = action.payload.data.booksPerMonth;
         state.topRatedBooks = action.payload.data.topRatedBooks || [];
+        state.currentlyReadingList = action.payload.data.currentlyReadingList || [];
+        state.recentlyCompletedList = action.payload.data.recentlyCompletedList || [];
+        state.booksPerYear = action.payload.data.booksPerYear || [];
       })
       .addCase(fetchAnalytics.rejected, (state, action) => {
         state.isLoading = false;
@@ -123,6 +142,13 @@ const analyticsSlice = createSlice({
       })
       .addCase(deleteGoal.fulfilled, (state, action) => {
         state.goals = state.goals.filter((g) => g._id !== action.payload);
+      })
+      .addCase(updateGoal.fulfilled, (state, action) => {
+        const updatedGoal = action.payload.data.goal;
+        const index = state.goals.findIndex((g) => g._id === updatedGoal._id);
+        if (index !== -1) {
+          state.goals[index] = updatedGoal;
+        }
       });
   },
 });

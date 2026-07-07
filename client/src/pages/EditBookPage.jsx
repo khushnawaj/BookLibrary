@@ -42,15 +42,34 @@ const SHELF_OPTIONS = [
 ];
 
 function LibraryDetailsForm({ entry, onSave, isSaving }) {
-  const { control, register, handleSubmit, formState: { errors } } = useForm({
+  const { control, register, handleSubmit, setValue, watch, formState: { errors } } = useForm({
     resolver: zodResolver(libraryEntrySchema),
     defaultValues: {
       shelfType: entry?.shelfType ?? SHELF_TYPES.WISHLIST,
       rating: entry?.rating ?? undefined,
       notes: entry?.notes ?? '',
       review: entry?.review ?? '',
+      startedAt: entry?.startedAt ? new Date(entry.startedAt).toISOString().split('T')[0] : '',
+      finishedAt: entry?.finishedAt ? new Date(entry.finishedAt).toISOString().split('T')[0] : '',
     },
   });
+
+  const watchedFinishedAt = watch('finishedAt');
+  const watchedShelfType = watch('shelfType');
+
+  // Auto-set Shelf to READ if Finished date is selected
+  useEffect(() => {
+    if (watchedFinishedAt && watchedShelfType !== SHELF_TYPES.READ) {
+      setValue('shelfType', SHELF_TYPES.READ);
+    }
+  }, [watchedFinishedAt, watchedShelfType, setValue]);
+
+  // Auto-set Finished date to today if Shelf is changed to READ and date is blank
+  useEffect(() => {
+    if (watchedShelfType === SHELF_TYPES.READ && !watchedFinishedAt) {
+      setValue('finishedAt', new Date().toISOString().split('T')[0]);
+    }
+  }, [watchedShelfType, watchedFinishedAt, setValue]);
 
   return (
     <form
@@ -60,6 +79,8 @@ function LibraryDetailsForm({ entry, onSave, isSaving }) {
           rating: data.rating ? Number(data.rating) : null,
           notes: data.notes,
           review: data.review,
+          startedAt: data.startedAt || null,
+          finishedAt: data.finishedAt || null,
         })
       )}
       className="space-y-4"
@@ -102,6 +123,33 @@ function LibraryDetailsForm({ entry, onSave, isSaving }) {
           />
           {errors.rating && (
             <p className="text-xs text-destructive">{errors.rating.message}</p>
+          )}
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label>Started Reading Date</Label>
+          <Input
+            type="date"
+            {...register('startedAt')}
+            id="edit-startedAt"
+            className="w-full text-foreground dark:[color-scheme:dark]"
+          />
+          {errors.startedAt && (
+            <p className="text-xs text-destructive">{errors.startedAt.message}</p>
+          )}
+        </div>
+        <div className="space-y-1.5">
+          <Label>Finished Reading Date</Label>
+          <Input
+            type="date"
+            {...register('finishedAt')}
+            id="edit-finishedAt"
+            className="w-full text-foreground dark:[color-scheme:dark]"
+          />
+          {errors.finishedAt && (
+            <p className="text-xs text-destructive">{errors.finishedAt.message}</p>
           )}
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { Suspense } from 'react';
 import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom';
 import { AuthInitializer } from '@/app/AuthInitializer';
 import { MainLayout } from '@/components/layout/MainLayout';
@@ -6,26 +6,28 @@ import { PublicLayout } from '@/components/layout/PublicLayout';
 import { ROUTES } from '@/constants';
 import { Loader2 } from 'lucide-react';
 import { ProtectedRoute, PublicRoute, AdminRoute } from '@/routes/ProtectedRoute';
+import { RouteErrorBoundary } from '@/components/common/RouteErrorBoundary';
+import { safeLazy } from '@/utils';
 
-// Lazy load pages for chunk splitting and optimized performance
-const LandingPage = lazy(() => import('@/pages/LandingPage'));
-const LoginPage = lazy(() => import('@/pages/LoginPage'));
-const RegisterPage = lazy(() => import('@/pages/RegisterPage'));
-const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
-const FeedPage = lazy(() => import('@/pages/FeedPage'));
-const LibraryPage = lazy(() => import('@/pages/LibraryPage'));
-const AddBookPage = lazy(() => import('@/pages/AddBookPage'));
-const ImportBooksPage = lazy(() => import('@/pages/ImportBooksPage'));
-const BookDetailsPage = lazy(() => import('@/pages/BookDetailsPage'));
-const EditBookPage = lazy(() => import('@/pages/EditBookPage'));
-const PublicBookPage = lazy(() => import('@/pages/PublicBookPage'));
-const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage'));
-const WishlistPage = lazy(() => import('@/pages/WishlistPage'));
-const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
-const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
-const FeedbackPage = lazy(() => import('@/pages/FeedbackPage'));
-const AdminDashboard = lazy(() => import('@/pages/AdminDashboard'));
-const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
+// Lazy load pages with chunk reload resilience for optimized performance
+const LandingPage = safeLazy(() => import('@/pages/LandingPage'));
+const LoginPage = safeLazy(() => import('@/pages/LoginPage'));
+const RegisterPage = safeLazy(() => import('@/pages/RegisterPage'));
+const DashboardPage = safeLazy(() => import('@/pages/DashboardPage'));
+const FeedPage = safeLazy(() => import('@/pages/FeedPage'));
+const LibraryPage = safeLazy(() => import('@/pages/LibraryPage'));
+const AddBookPage = safeLazy(() => import('@/pages/AddBookPage'));
+const ImportBooksPage = safeLazy(() => import('@/pages/ImportBooksPage'));
+const BookDetailsPage = safeLazy(() => import('@/pages/BookDetailsPage'));
+const EditBookPage = safeLazy(() => import('@/pages/EditBookPage'));
+const PublicBookPage = safeLazy(() => import('@/pages/PublicBookPage'));
+const AnalyticsPage = safeLazy(() => import('@/pages/AnalyticsPage'));
+const WishlistPage = safeLazy(() => import('@/pages/WishlistPage'));
+const ProfilePage = safeLazy(() => import('@/pages/ProfilePage'));
+const SettingsPage = safeLazy(() => import('@/pages/SettingsPage'));
+const FeedbackPage = safeLazy(() => import('@/pages/FeedbackPage'));
+const AdminDashboard = safeLazy(() => import('@/pages/AdminDashboard'));
+const NotFoundPage = safeLazy(() => import('@/pages/NotFoundPage'));
 
 // High-fidelity fallback spinner for lazy route load transitions
 function SuspenseLoader() {
@@ -49,6 +51,7 @@ function RootLayout() {
 export const router = createBrowserRouter([
   {
     element: <RootLayout />,
+    errorElement: <RouteErrorBoundary />,
     children: [
       {
         element: <PublicLayout />,

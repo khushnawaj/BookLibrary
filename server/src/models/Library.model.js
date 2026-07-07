@@ -98,6 +98,14 @@ librarySchema.pre('save', function syncReadingDates() {
   if (this.shelfType === SHELF_TYPES.READ && !this.finishedAt) {
     this.finishedAt = new Date();
   }
+
+  // Clear dates if shelf status changes
+  if (this.shelfType !== SHELF_TYPES.READ) {
+    this.finishedAt = null;
+  }
+  if (this.shelfType === SHELF_TYPES.WISHLIST) {
+    this.startedAt = null;
+  }
 });
 
 const Library = mongoose.model('Library', librarySchema);

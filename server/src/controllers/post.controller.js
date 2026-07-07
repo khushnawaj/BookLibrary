@@ -23,7 +23,9 @@ const createPost = asyncHandler(async (req, res) => {
     poetryPosition: poetryPosition || undefined,
   });
 
-  const populatedPost = await Post.findById(post._id).populate('author', 'name username avatar penName');
+  const populatedPost = await Post.findById(post._id)
+    .populate('author', 'name username avatar penName')
+    .populate('bookRef', 'title author coverImage');
 
   return ApiResponse.success(res, {
     message: 'Post created successfully',

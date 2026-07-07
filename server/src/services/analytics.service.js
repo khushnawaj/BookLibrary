@@ -4,14 +4,14 @@ const mongoose = require('mongoose');
 
 // Badge definitions
 const BADGES = [
-  { id: 'first_book', title: 'First Book', description: 'Read your first book', icon: '📚', criteria: (stats) => stats.totalRead >= 1 },
-  { id: '10_books', title: 'Avid Reader', description: 'Read 10 books', icon: '🥉', criteria: (stats) => stats.totalRead >= 10 },
-  { id: '25_books', title: 'Bookworm', description: 'Read 25 books', icon: '🥈', criteria: (stats) => stats.totalRead >= 25 },
-  { id: '50_books', title: 'Bibliophile', description: 'Read 50 books', icon: '🥇', criteria: (stats) => stats.totalRead >= 50 },
-  { id: '100_books', title: 'Library Master', description: 'Read 100 books', icon: '👑', criteria: (stats) => stats.totalRead >= 100 },
-  { id: '1000_pages', title: 'Page Turner', description: 'Read 1,000 pages', icon: '📄', criteria: (stats) => stats.totalPages >= 1000 },
-  { id: 'streak_7', title: 'Weekly Warrior', description: 'Read for 7 consecutive days', icon: '🔥', criteria: (stats) => stats.currentStreak >= 7 },
-  { id: 'streak_30', title: 'Monthly Master', description: 'Read for 30 consecutive days', icon: '⭐', criteria: (stats) => stats.currentStreak >= 30 },
+  { id: 'first_book', title: 'First Book', description: 'Read your first book', icon: 'BookOpen', criteria: (stats) => stats.totalRead >= 1 },
+  { id: '10_books', title: 'Avid Reader', description: 'Read 10 books', icon: 'Trophy', criteria: (stats) => stats.totalRead >= 10 },
+  { id: '25_books', title: 'Bookworm', description: 'Read 25 books', icon: 'Trophy', criteria: (stats) => stats.totalRead >= 25 },
+  { id: '50_books', title: 'Bibliophile', description: 'Read 50 books', icon: 'Trophy', criteria: (stats) => stats.totalRead >= 50 },
+  { id: '100_books', title: 'Library Master', description: 'Read 100 books', icon: 'Crown', criteria: (stats) => stats.totalRead >= 100 },
+  { id: '1000_pages', title: 'Page Turner', description: 'Read 1,000 pages', icon: 'FileText', criteria: (stats) => stats.totalPages >= 1000 },
+  { id: 'streak_7', title: 'Weekly Warrior', description: 'Read for 7 consecutive days', icon: 'Flame', criteria: (stats) => stats.currentStreak >= 7 },
+  { id: 'streak_30', title: 'Monthly Master', description: 'Read for 30 consecutive days', icon: 'Zap', criteria: (stats) => stats.currentStreak >= 30 },
 ];
 
 const calculateReadingStreak = async (userId) => {
@@ -61,7 +61,16 @@ const getReadingAnalytics = async (userId) => {
   const objectIdUser = new mongoose.Types.ObjectId(userId);
   const yearStart = new Date(new Date().getFullYear(), 0, 1);
 
-  const [basicStats, genreDist, monthlyData, topRated, shelfCounts] = await Promise.all([
+  const [
+    basicStats,
+    genreDist,
+    monthlyData,
+    topRated,
+    shelfCounts,
+    currentlyReadingList,
+    recentlyCompletedList,
+    yearlyData
+  ] = await Promise.all([
     // Basic stats: books read, pages, avg rating
     Library.aggregate([
       { $match: { user: objectIdUser, shelfType: SHELF_TYPES.READ } },
@@ -119,6 +128,7 @@ const getReadingAnalytics = async (userId) => {
         $project: {
           rating: 1,
           finishedAt: 1,
+          'bookDetails._id': 1,
           'bookDetails.title': 1,
           'bookDetails.author': 1,
           'bookDetails.coverImage': 1,
@@ -131,6 +141,26 @@ const getReadingAnalytics = async (userId) => {
       { $match: { user: objectIdUser } },
       { $group: { _id: '$shelfType', count: { $sum: 1 } } }
     ]),
+    // Currently reading list
+    Library.find({ user: objectIdUser, shelfType: SHELF_TYPES.READING })
+      .populate('book')
+      .sort({ updatedAt: -1 }),
+    // Recently completed list
+    Library.find({ user: objectIdUser, shelfType: SHELF_TYPES.READ, finishedAt: { $ne: null } })
+      .populate('book')
+      .sort({ finishedAt: -1 })
+      .limit(6),
+    // Books read per year breakdown
+    Library.aggregate([
+      { $match: { user: objectIdUser, shelfType: SHELF_TYPES.READ, finishedAt: { $ne: null } } },
+      {
+        $group: {
+          _id: { $year: '$finishedAt' },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: -1 } }
+    ])
   ]);
 
   const stats = basicStats[0] || { totalRead: 0, totalPages: 0, avgRating: 0, avgDays: null };
@@ -178,6 +208,7 @@ const getReadingAnalytics = async (userId) => {
     })),
     topRatedBooks: topRated.map(t => ({
       _id: t._id,
+      bookId: t.bookDetails?._id,
       rating: t.rating,
       finishedAt: t.finishedAt,
       title: t.bookDetails?.title,
@@ -185,6 +216,31 @@ const getReadingAnalytics = async (userId) => {
       coverImage: t.bookDetails?.coverImage,
       genre: t.bookDetails?.genre,
     })),
+    currentlyReadingList: currentlyReadingList.map(item => ({
+      _id: item._id,
+      bookId: item.book?._id,
+      startedAt: item.startedAt,
+      title: item.book?.title,
+      author: item.book?.author,
+      coverImage: item.book?.coverImage,
+      genre: item.book?.genre,
+      pages: item.book?.pages,
+    })),
+    recentlyCompletedList: recentlyCompletedList.map(item => ({
+      _id: item._id,
+      bookId: item.book?._id,
+      startedAt: item.startedAt,
+      finishedAt: item.finishedAt,
+      rating: item.rating,
+      title: item.book?.title,
+      author: item.book?.author,
+      coverImage: item.book?.coverImage,
+      genre: item.book?.genre,
+    })),
+    booksPerYear: yearlyData.map(y => ({
+      year: y._id,
+      count: y.count
+    }))
   };
 };
 
@@ -254,10 +310,50 @@ const deleteGoal = async (userId, goalId) => {
   return Goal.findOneAndDelete({ _id: goalId, user: userId });
 };
 
+const updateGoal = async (userId, goalId, updateData) => {
+  const goal = await Goal.findOne({ _id: goalId, user: userId });
+  if (!goal) throw new Error('Goal not found or unauthorized');
+
+  if (updateData.title !== undefined) goal.title = updateData.title;
+  if (updateData.targetType !== undefined) goal.targetType = updateData.targetType;
+  if (updateData.targetValue !== undefined) goal.targetValue = Number(updateData.targetValue);
+  if (updateData.startDate !== undefined) goal.startDate = new Date(updateData.startDate);
+  if (updateData.endDate !== undefined) goal.endDate = new Date(updateData.endDate);
+
+  // Recalculate currentValue and status
+  const objectIdUser = new mongoose.Types.ObjectId(userId);
+  let matchQuery = { user: objectIdUser, shelfType: SHELF_TYPES.READ, finishedAt: { $gte: goal.startDate, $lte: goal.endDate } };
+  let currentVal = 0;
+
+  if (goal.targetType === 'BOOKS') {
+    currentVal = await Library.countDocuments(matchQuery);
+  } else if (goal.targetType === 'PAGES') {
+    const pagesRes = await Library.aggregate([
+      { $match: matchQuery },
+      { $lookup: { from: 'books', localField: 'book', foreignField: '_id', as: 'b' } },
+      { $unwind: '$b' },
+      { $group: { _id: null, total: { $sum: '$b.pages' } } }
+    ]);
+    currentVal = pagesRes[0]?.total || 0;
+  }
+
+  goal.currentValue = currentVal;
+  if (currentVal >= goal.targetValue) {
+    goal.status = GOAL_STATUS.COMPLETED;
+  } else if (new Date() > goal.endDate) {
+    goal.status = GOAL_STATUS.FAILED;
+  } else {
+    goal.status = GOAL_STATUS.ACTIVE;
+  }
+
+  return goal.save();
+};
+
 module.exports = {
   getReadingAnalytics,
   getAchievements,
   createGoal,
   getGoals,
-  deleteGoal
+  deleteGoal,
+  updateGoal
 };

@@ -659,7 +659,7 @@ export function PostCard({ post, onDelete, onUpdate }) {
                 to={`/books/${post.bookRef._id}`}
                 className={cn(
                   "flex items-center gap-3 p-3 group/book",
-                  user ? "rounded-t-xl" : "rounded-xl"
+                  user && !isAuthor ? "rounded-t-xl" : "rounded-xl"
                 )}
               >
                 {/* Cover */}
@@ -686,8 +686,8 @@ export function PostCard({ post, onDelete, onUpdate }) {
                 </div>
               </Link>
 
-              {/* Add to Library strip — shown to all; guests see a sign-in prompt */}
-              {user && (
+              {/* Add to Library strip — shown to all except author; guests see a sign-in prompt */}
+              {user && !isAuthor && (
                 <div className="border-t border-glass-border/40 px-3 py-2 flex items-center justify-between bg-secondary/10 rounded-b-xl">
                   <span className="text-[10px] text-muted-foreground font-medium flex items-center gap-1">
                     <Library className="w-3 h-3" /> Add to your library
