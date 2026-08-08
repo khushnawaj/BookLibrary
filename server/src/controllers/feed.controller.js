@@ -4,7 +4,7 @@ const { Post, Follow, Like, SavedPost } = require('../models');
 
 const getFeed = asyncHandler(async (req, res) => {
   const userId = req.user._id;
-  const { cursor, limit = 10, type = 'global' } = req.query; // type: 'following' | 'global'
+  const { cursor, limit = 10, type = 'global', visibility } = req.query; // type: 'following' | 'global', visibility: 'ALL' | 'PUBLIC' | 'FOLLOWERS' | 'PRIVATE'
 
   const parsedLimit = parseInt(limit, 10);
   const query = {};
@@ -13,7 +13,6 @@ const getFeed = asyncHandler(async (req, res) => {
     query.createdAt = { $lt: new Date(cursor) };
   }
 
-  // Replace lines 16-29 with an OR clause:
   if (type === 'following') {
     const follows = await Follow.find({ follower: userId }).select('following');
     const followingIds = follows.map((f) => f.following);
@@ -28,6 +27,17 @@ const getFeed = asyncHandler(async (req, res) => {
       { visibility: { $in: ['PUBLIC', 'FOLLOWERS'] } },
       { author: userId, visibility: 'PRIVATE' }
     ];
+  }
+
+  // Refine query if visibility filter is explicitly set
+  if (visibility && visibility !== 'ALL') {
+    if (visibility === 'PRIVATE') {
+      delete query.$or;
+      query.author = userId;
+      query.visibility = 'PRIVATE';
+    } else {
+      query.visibility = visibility;
+    }
   }
 
 

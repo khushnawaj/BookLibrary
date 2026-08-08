@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Loader2, Plus, RefreshCw, Sparkles, Users, Globe, Brain, Feather, BookOpen, Star, Target } from 'lucide-react';
+import { Loader2, Plus, RefreshCw, Sparkles, Users, Globe, Brain, Feather, BookOpen, Star, Target, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   fetchFeed,
@@ -25,32 +25,39 @@ export default function FeedPage() {
   const { hasNextPage, nextCursor, isFetchingMore } = useSelector((state) => state.feed);
 
   const [feedType, setFeedType] = useState('global');
+  const [visibilityFilter, setVisibilityFilter] = useState('ALL');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { ref, inView } = useInView({ threshold: 0.1 });
 
   useEffect(() => {
     if (status === 'idle') {
-      dispatch(fetchFeed({ limit: 10, type: feedType }));
+      dispatch(fetchFeed({ limit: 10, type: feedType, visibility: visibilityFilter }));
     }
-  }, [status, feedType, dispatch]);
+  }, [status, feedType, visibilityFilter, dispatch]);
 
   useEffect(() => {
     if (inView && hasNextPage && !isFetchingMore && status === 'succeeded') {
-      dispatch(fetchFeed({ cursor: nextCursor, limit: 10, type: feedType }));
+      dispatch(fetchFeed({ cursor: nextCursor, limit: 10, type: feedType, visibility: visibilityFilter }));
     }
-  }, [inView, hasNextPage, isFetchingMore, nextCursor, status, feedType, dispatch]);
+  }, [inView, hasNextPage, isFetchingMore, nextCursor, status, feedType, visibilityFilter, dispatch]);
 
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     dispatch(resetFeed());
-    await dispatch(fetchFeed({ limit: 10, type: feedType }));
+    await dispatch(fetchFeed({ limit: 10, type: feedType, visibility: visibilityFilter }));
     setIsRefreshing(false);
-  }, [dispatch, feedType]);
+  }, [dispatch, feedType, visibilityFilter]);
 
   const handleFeedTypeChange = (newType) => {
     if (newType === feedType) return;
     setFeedType(newType);
+    dispatch(resetFeed());
+  };
+
+  const handleVisibilityChange = (newVis) => {
+    if (newVis === visibilityFilter) return;
+    setVisibilityFilter(newVis);
     dispatch(resetFeed());
   };
 
@@ -108,32 +115,59 @@ export default function FeedPage() {
               </div>
             </div>
 
-            {/* Snapchat-style segmented pill filter bar */}
-            <div className="flex bg-secondary/35 p-1 rounded-full gap-1 w-fit border border-glass-border/30">
-              <button
-                onClick={() => handleFeedTypeChange('global')}
-                className={cn(
-                  'px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-150 flex items-center gap-1.5 cursor-pointer active:scale-95',
-                  feedType === 'global'
-                    ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                <Globe className="w-3.5 h-3.5 shrink-0" /> Global Feed
-              </button>
-              {user && (
+            {/* Filter Row: Type Pills & Visibility Selector */}
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+              {/* Type Pills */}
+              <div className="flex bg-secondary/35 p-1 rounded-full gap-1 w-fit border border-glass-border/30">
                 <button
-                  onClick={() => handleFeedTypeChange('following')}
+                  onClick={() => handleFeedTypeChange('global')}
                   className={cn(
-                    'px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-150 flex items-center gap-1.5 cursor-pointer active:scale-95',
-                    feedType === 'following'
+                    'px-3.5 py-1.5 rounded-full text-xs font-bold transition-all duration-150 flex items-center gap-1.5 cursor-pointer active:scale-95',
+                    feedType === 'global'
                       ? 'bg-primary text-primary-foreground shadow-sm'
                       : 'text-muted-foreground hover:text-foreground'
                   )}
                 >
-                  <Users className="w-3.5 h-3.5 shrink-0" /> Following
+                  <Globe className="w-3.5 h-3.5 shrink-0" /> Global
                 </button>
-              )}
+                {user && (
+                  <button
+                    onClick={() => handleFeedTypeChange('following')}
+                    className={cn(
+                      'px-3.5 py-1.5 rounded-full text-xs font-bold transition-all duration-150 flex items-center gap-1.5 cursor-pointer active:scale-95',
+                      feedType === 'following'
+                        ? 'bg-primary text-primary-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    <Users className="w-3.5 h-3.5 shrink-0" /> Following
+                  </button>
+                )}
+              </div>
+
+              {/* Visibility Filter Selector */}
+              <div className="flex items-center bg-secondary/25 p-1 rounded-xl border border-glass-border/30 gap-1 text-xs">
+                {[
+                  { value: 'ALL', label: 'All' },
+                  { value: 'PUBLIC', label: 'Public', icon: Globe },
+                  { value: 'FOLLOWERS', label: 'Followers', icon: Users },
+                  { value: 'PRIVATE', label: 'Private', icon: Lock },
+                ].map((vOpt) => (
+                  <button
+                    key={vOpt.value}
+                    onClick={() => handleVisibilityChange(vOpt.value)}
+                    className={cn(
+                      "px-2.5 py-1 rounded-lg font-semibold transition-all flex items-center gap-1 text-[11px] cursor-pointer",
+                      visibilityFilter === vOpt.value
+                        ? "bg-card text-primary font-bold shadow-sm border border-glass-border"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {vOpt.icon && <vOpt.icon className="w-3 h-3 shrink-0" />}
+                    <span>{vOpt.label}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 

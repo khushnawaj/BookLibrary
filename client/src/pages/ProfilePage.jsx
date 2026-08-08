@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '@/features/auth/authHooks';
 import { useAppDispatch } from '@/hooks/useAppStore';
 import { updateUserProfile } from '@/features/auth/authApi';
-import { uploadService, userService, postService } from '@/services';
+import { uploadService, userService, postService, workService } from '@/services';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,7 +16,7 @@ import { Modal } from '@/components/ui/modal';
 import {
   Camera, Edit2, Check, X, Loader2, Mail, Shield, AtSign,
   BookOpen, Users, UserCheck, Calendar, BookMarked, Bookmark,
-  Award, Trophy, Feather, Star
+  Award, Trophy, Feather, Star, Globe, Lock, ChevronLeft, ChevronRight, Languages, Eye
 } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
@@ -50,9 +50,17 @@ export default function ProfilePage() {
   const [posts, setPosts] = useState([]);
   const [savedPosts, setSavedPosts] = useState([]);
   const [libraryEntries, setLibraryEntries] = useState([]);
+  const [userWorks, setUserWorks] = useState([]);
   const [isLoadingPosts, setIsLoadingPosts] = useState(false);
   const [isLoadingSavedPosts, setIsLoadingSavedPosts] = useState(false);
   const [isLoadingLibrary, setIsLoadingLibrary] = useState(false);
+  const [isLoadingWorks, setIsLoadingWorks] = useState(false);
+
+  // Posts Filtering & Pagination state
+  const [postsPage, setPostsPage] = useState(1);
+  const [totalPostsPages, setTotalPostsPages] = useState(1);
+  const [totalPostsCount, setTotalPostsCount] = useState(0);
+  const [postVisibilityFilter, setPostVisibilityFilter] = useState('ALL');
 
   // Editing state
   const [isEditing, setIsEditing] = useState(false);
@@ -157,8 +165,14 @@ export default function ProfilePage() {
     const fetchPosts = async () => {
       try {
         setIsLoadingPosts(true);
-        const res = await userService.getUserPosts(targetUsername);
-        setPosts(res.data.data.posts);
+        const res = await userService.getUserPosts(targetUsername, {
+          page: postsPage,
+          limit: 6,
+          visibility: postVisibilityFilter,
+        });
+        setPosts(res.data.data.posts || []);
+        setTotalPostsPages(res.data.data.totalPages || 1);
+        setTotalPostsCount(res.data.data.totalPosts || 0);
       } catch (err) {
         console.error(err);
         toast.error('Failed to load posts');
@@ -168,7 +182,7 @@ export default function ProfilePage() {
     };
 
     fetchPosts();
-  }, [targetUsername, activeTab]);
+  }, [targetUsername, activeTab, postsPage, postVisibilityFilter]);
 
   // Fetch saved posts when tab is active
   useEffect(() => {
@@ -208,6 +222,26 @@ export default function ProfilePage() {
     };
 
     fetchLibrary();
+  }, [targetUsername, activeTab]);
+
+  // Fetch published works when tab is active
+  useEffect(() => {
+    if (!targetUsername || activeTab !== 'works') return;
+
+    const fetchUserWorks = async () => {
+      try {
+        setIsLoadingWorks(true);
+        const res = await workService.getUserWorks(targetUsername);
+        setUserWorks(res.data.data || []);
+      } catch (err) {
+        console.error(err);
+        toast.error('Failed to load published works');
+      } finally {
+        setIsLoadingWorks(false);
+      }
+    };
+
+    fetchUserWorks();
   }, [targetUsername, activeTab]);
 
   if (isLoadingProfile) {
@@ -509,18 +543,18 @@ export default function ProfilePage() {
         )}
       </div>
 
-      {/* ── Profile Floating Header Overlay ── */}
+      {/* ── Profile Unified Header Card ── */}
       <div className="relative px-2 sm:px-4 md:px-6 -mt-14 sm:-mt-16 md:-mt-20 z-20">
-        <Card className="border-glass-border bg-card/75 glass-card shadow-lg rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 backdrop-blur-xl">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 sm:gap-6">
+        <Card className="border-glass-border bg-card/90 glass-card shadow-2xl rounded-2xl sm:rounded-3xl p-5 sm:p-7 md:p-8 backdrop-blur-2xl transition-all duration-300">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
             
-            {/* Avatar & Identifiers */}
-            <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4 sm:gap-5 text-center sm:text-left">
+            {/* 1. Left Column: Avatar & User Identity */}
+            <div className="lg:col-span-4 flex flex-col items-center lg:items-start text-center lg:text-left space-y-3.5">
               {/* Avatar Container with Ring */}
               <div className="relative group/avatar shrink-0">
-                <div className="rounded-full p-1 sm:p-1.5 bg-gradient-to-tr from-primary via-accent to-warning/50 shadow-lg transition-transform duration-500 group-hover/avatar:rotate-6">
-                  <div className="rounded-full border-2 sm:border-4 border-card overflow-hidden bg-background">
-                    <Avatar src={profile.avatar} name={profile.name} size="xl" className="h-20 w-20 sm:h-24 sm:w-24 md:h-28 md:w-28 text-2xl font-display" />
+                <div className="rounded-full p-1.5 bg-gradient-to-tr from-primary via-accent to-amber-500 shadow-xl transition-transform duration-500 group-hover/avatar:rotate-6">
+                  <div className="rounded-full border-4 border-card overflow-hidden bg-background">
+                    <Avatar src={profile.avatar} name={profile.name} size="xl" className="h-22 w-22 sm:h-26 sm:w-26 md:h-28 md:w-28 text-2xl font-display" />
                   </div>
                 </div>
                 {isOwnProfile && (
@@ -548,288 +582,321 @@ export default function ProfilePage() {
                       }
                       setIsEditing(true);
                     }}
-                    className="absolute bottom-1 right-1 bg-primary hover:bg-primary/95 text-white rounded-full p-2.5 shadow-md transition-all hover:scale-110 cursor-pointer border-2 border-card"
+                    className="absolute bottom-1 right-1 bg-primary hover:bg-primary/95 text-white rounded-full p-2.5 shadow-lg transition-all hover:scale-110 cursor-pointer border-2 border-card active:scale-95"
                     title="Change Avatar"
                   >
-                    <Camera className="w-3.5 h-3.5" />
+                    <Camera className="w-4 h-4" />
                   </button>
                 )}
               </div>
 
               {/* Text Information */}
-              <div className="space-y-1.5">
-                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                  <h1 className="text-xl sm:text-2xl md:text-3xl font-bold font-display text-foreground tracking-tight leading-none">
+              <div className="space-y-1.5 w-full">
+                <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2">
+                  <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold font-display text-foreground tracking-tight leading-none">
                     {profile.name}
                   </h1>
-                  <Badge className="bg-primary/10 text-primary border-none capitalize px-2.5 py-0.5 font-semibold text-[10px] tracking-wider rounded-full shadow-sm">
+                  <Badge className="bg-primary/15 text-primary border border-primary/25 capitalize px-2.5 py-0.5 font-bold text-[10px] tracking-wider rounded-full shadow-sm">
                     {profile.role || 'Member'}
                   </Badge>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 justify-center sm:justify-start">
-                  <p className="text-xs sm:text-sm font-medium text-muted-foreground flex items-center gap-1">
-                    <AtSign className="w-3.5 h-3.5 text-muted-foreground/60" />
+                <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-2.5 gap-y-1.5 text-xs text-muted-foreground font-medium pt-0.5">
+                  <p className="flex items-center gap-1 font-semibold text-foreground/80">
+                    <AtSign className="w-3.5 h-3.5 text-primary/70 shrink-0" />
                     {profile.username}
                   </p>
                   {profile.penName && (
-                    <span className="text-xs font-semibold text-primary/90 flex items-center gap-1 border-l border-glass-border pl-3">
-                      <Feather className="w-3.5 h-3.5 text-primary shrink-0" />
-                      Pen Name: {profile.penName}
+                    <span className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full font-bold text-[11px] flex items-center gap-1">
+                      <Feather className="w-3 h-3 shrink-0" />
+                      {profile.penName}
                     </span>
                   )}
                 </div>
+              </div>
 
-                {profile.bio ? (
-                  <p className="text-xs sm:text-sm text-foreground/80 max-w-sm sm:max-w-xl leading-relaxed italic mt-1 font-sans">
-                    "{profile.bio}"
-                  </p>
+              {/* Action buttons */}
+              <div className="w-full pt-1">
+                {!isOwnProfile ? (
+                  <Button
+                    onClick={handleFollowToggle}
+                    className={cn(
+                      "w-full flex items-center justify-center gap-2 transition-all shadow-md border rounded-xl py-2 text-xs sm:text-sm font-bold h-10 cursor-pointer active:scale-95",
+                      profile.isFollowing
+                        ? "bg-secondary text-primary border-glass-border hover:bg-secondary/80"
+                        : "bg-primary hover:bg-primary/95 text-primary-foreground border-transparent"
+                    )}
+                  >
+                    {profile.isFollowing ? (
+                      <><UserCheck className="w-4 h-4" /> Following</>
+                    ) : (
+                      <><Users className="w-4 h-4" /> Follow</>
+                    )}
+                  </Button>
                 ) : (
-                  <p className="text-xs text-muted-foreground italic mt-1">No bio added yet.</p>
+                  <Button
+                    onClick={() => {
+                      setName(profile.name);
+                      setUsernameInput(profile.username);
+                      setBio(profile.bio || '');
+                      setPenName(profile.penName || '');
+                      setAvatar(profile.avatar || '');
+                      setBannerImage(profile.bannerImage || '');
+                      if (profile.avatar && profile.avatar.includes('api.dicebear.com')) {
+                        try {
+                          const url = new URL(profile.avatar);
+                          const pathParts = url.pathname.split('/');
+                          const style = pathParts[2];
+                          const seedParam = url.searchParams.get('seed');
+                          if (style) setAvatarStyle(style);
+                          if (seedParam) setAvatarSeed(seedParam);
+                        } catch (e) {
+                          setAvatarSeed(profile.username);
+                        }
+                      } else {
+                        setAvatarSeed(profile.username);
+                      }
+                      setIsEditing(true);
+                    }}
+                    variant="outline"
+                    className="w-full border-glass-border text-foreground hover:bg-secondary/50 flex items-center justify-center gap-2 rounded-xl text-xs sm:text-sm font-bold h-10 cursor-pointer transition-all active:scale-95"
+                  >
+                    <Edit2 className="w-3.5 h-3.5" /> Edit Profile
+                  </Button>
                 )}
               </div>
             </div>
 
-            {/* Action buttons */}
-            <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto justify-center mt-1 sm:mt-0">
-              {!isOwnProfile ? (
-                <Button
-                  onClick={handleFollowToggle}
-                  className={cn(
-                    "flex items-center justify-center gap-2 transition-all shadow-md border rounded-xl sm:rounded-2xl px-4 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold h-9 sm:h-11 w-full sm:w-36 md:w-40 cursor-pointer",
-                    profile.isFollowing
-                      ? "bg-secondary text-primary border-glass-border hover:bg-secondary/80"
-                      : "bg-primary hover:bg-primary/95 text-primary-foreground border-transparent"
-                  )}
-                >
-                  {profile.isFollowing ? (
-                    <><UserCheck className="w-4 h-4" /> Following</>
-                  ) : (
-                    <><Users className="w-4 h-4" /> Follow</>
-                  )}
-                </Button>
-              ) : (
-                <Button
-                  onClick={() => {
-                    setName(profile.name);
-                    setUsernameInput(profile.username);
-                    setBio(profile.bio || '');
-                    setPenName(profile.penName || '');
-                    setAvatar(profile.avatar || '');
-                    setBannerImage(profile.bannerImage || '');
-                    if (profile.avatar && profile.avatar.includes('api.dicebear.com')) {
-                      try {
-                        const url = new URL(profile.avatar);
-                        const pathParts = url.pathname.split('/');
-                        const style = pathParts[2];
-                        const seedParam = url.searchParams.get('seed');
-                        if (style) setAvatarStyle(style);
-                        if (seedParam) setAvatarSeed(seedParam);
-                      } catch (e) {
-                        setAvatarSeed(profile.username);
-                      }
-                    } else {
-                      setAvatarSeed(profile.username);
-                    }
-                    setIsEditing(true);
-                  }}
-                  variant="outline"
-                  className="w-full sm:w-auto border-glass-border text-foreground hover:bg-secondary/45 flex items-center justify-center gap-2 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-semibold h-9 sm:h-11 px-4 sm:px-6 cursor-pointer transition-all"
-                >
-                  <Edit2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Edit Profile
-                </Button>
-              )}
-            </div>
-
-          </div>
-
-          {/* Quick Metrics Line */}
-          <div className="mt-5 sm:mt-8 pt-4 sm:pt-6 border-t border-glass-border grid grid-cols-3 sm:flex sm:flex-wrap justify-center sm:justify-start gap-4 sm:gap-8 md:gap-12">
-            <div className="flex flex-col sm:flex-row items-center sm:items-center gap-1.5 sm:gap-3 justify-center sm:justify-start">
-              <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl bg-success/10 flex items-center justify-center">
-                <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-success" />
+            {/* 2. Middle Column: About Info & Bio */}
+            <div className="lg:col-span-4 flex flex-col justify-between border-t lg:border-t-0 lg:border-x border-glass-border/60 pt-4 lg:pt-0 lg:px-6 space-y-4">
+              <div>
+                <h3 className="text-xs font-bold font-display uppercase tracking-wider text-muted-foreground/80 mb-2.5 flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5 text-primary" /> About & Bio
+                </h3>
+                
+                {profile.bio ? (
+                  <div className="relative bg-secondary/15 p-3.5 rounded-2xl border border-glass-border/40 font-sans italic text-xs sm:text-sm text-foreground/90 leading-relaxed shadow-inner">
+                    <span className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-l-2xl" />
+                    "{profile.bio}"
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground italic bg-secondary/10 p-3 rounded-2xl border border-glass-border/30">No bio added yet.</p>
+                )}
               </div>
-              <div className="text-center sm:text-left">
-                <span className="block text-base sm:text-lg font-bold text-foreground leading-none">{profile.booksRead || 0}</span>
-                <span className="text-[9px] sm:text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Books Read</span>
+
+              <div className="space-y-2.5 text-xs pt-1">
+                <div className="flex items-center gap-2 text-muted-foreground/80">
+                  <Calendar className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <span className="font-bold text-foreground">Member Since:</span>
+                  <span>{profile.createdAt ? format(new Date(profile.createdAt), 'MMMM dd, yyyy') : 'Recently'}</span>
+                </div>
+
+                {/* Follower Stats Chips */}
+                <div className="flex items-center gap-2.5 pt-1 flex-wrap">
+                  <div onClick={handleOpenFollowers} className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-primary/10 border border-primary/20 cursor-pointer hover:bg-primary/20 transition-all text-xs shadow-sm hover:scale-102">
+                    <Users className="w-4 h-4 text-primary shrink-0" />
+                    <span className="font-extrabold text-foreground text-sm leading-none">{profile.followersCount || 0}</span>
+                    <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Followers</span>
+                  </div>
+                  <div onClick={handleOpenFollowing} className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-accent/10 border border-accent/20 cursor-pointer hover:bg-accent/20 transition-all text-xs shadow-sm hover:scale-102">
+                    <Users className="w-4 h-4 text-accent shrink-0" />
+                    <span className="font-extrabold text-foreground text-sm leading-none">{profile.followingCount || 0}</span>
+                    <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Following</span>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div onClick={handleOpenFollowers} className="flex flex-col sm:flex-row items-center sm:items-center gap-1.5 sm:gap-3 cursor-pointer hover:opacity-80 transition-opacity justify-center sm:justify-start">
-              <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl bg-primary/10 flex items-center justify-center">
-                <Users className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+            {/* 3. Right Column: Achievements & Reading Badges */}
+            <div className="lg:col-span-4 flex flex-col space-y-3.5 border-t lg:border-t-0 border-glass-border/60 pt-4 lg:pt-0 lg:pl-2">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold font-display uppercase tracking-wider text-muted-foreground/80 flex items-center gap-1.5">
+                  <Trophy className="w-3.5 h-3.5 text-amber-500 animate-pulse" /> Achievements
+                </h3>
+                <div className="flex items-center gap-1.5 bg-success/15 border border-success/30 px-3 py-1 rounded-full text-xs shadow-sm">
+                  <BookOpen className="w-3.5 h-3.5 text-success shrink-0" />
+                  <span className="font-extrabold text-foreground">{profile.booksRead || 0}</span>
+                  <span className="text-[9.5px] font-bold text-muted-foreground uppercase tracking-wider">Books Read</span>
+                </div>
               </div>
-              <div className="text-center sm:text-left">
-                <span className="block text-base sm:text-lg font-bold text-foreground leading-none">{profile.followersCount || 0}</span>
-                <span className="text-[9px] sm:text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Followers</span>
+
+              {/* Achievements Badges Grid */}
+              <div className="grid grid-cols-2 gap-2.5">
+                {calculatedAchievements.map((badge) => (
+                  <div
+                    key={badge.id}
+                    className={cn(
+                      "p-2.5 rounded-2xl border flex items-center gap-2.5 transition-all duration-200",
+                      badge.unlocked
+                        ? "bg-secondary/35 border-glass-border/60 shadow-sm hover:scale-102 hover:border-primary/30"
+                        : "bg-black/5 dark:bg-white/5 border-dashed border-glass-border/40 opacity-45"
+                    )}
+                  >
+                    <div className={cn(
+                      "w-8.5 h-8.5 rounded-xl flex items-center justify-center shrink-0 shadow-inner",
+                      badge.unlocked ? "bg-amber-500/15 text-amber-500 border border-amber-500/25" : "bg-secondary/40 text-muted-foreground"
+                    )}>
+                      <badge.icon className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[11px] font-extrabold truncate text-foreground leading-none">{badge.name}</p>
+                      <span className={cn(
+                        "text-[9px] font-bold truncate block mt-1",
+                        badge.unlocked ? "text-success" : "text-muted-foreground"
+                      )}>
+                        {badge.unlocked ? '✓ Unlocked' : 'Locked'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
-            <div onClick={handleOpenFollowing} className="flex flex-col sm:flex-row items-center sm:items-center gap-1.5 sm:gap-3 cursor-pointer hover:opacity-80 transition-opacity justify-center sm:justify-start">
-              <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl bg-accent/10 flex items-center justify-center">
-                <Users className="w-4 h-4 sm:w-5 sm:h-5 text-accent" />
-              </div>
-              <div className="text-center sm:text-left">
-                <span className="block text-base sm:text-lg font-bold text-foreground leading-none">{profile.followingCount || 0}</span>
-                <span className="text-[9px] sm:text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Following</span>
-              </div>
-            </div>
           </div>
         </Card>
       </div>
 
-      {/* ── Two-Column Grid Content ── */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6 md:gap-8 items-start mt-4 sm:mt-6 px-0.5 sm:px-1">
-        
-        {/* LEFT COLUMN: Sidebar Details (About & Achievements) */}
-        <div className="md:col-span-4 space-y-4 sm:space-y-6">
-          
-          {/* About Card */}
-          <Card className="border-glass-border bg-card/60 glass-card shadow-sm rounded-2xl p-6">
-            <h3 className="text-xs font-bold font-display uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-2">
-              <Users className="w-4 h-4 text-primary" /> About
-            </h3>
-            
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <Calendar className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Member Since</p>
-                  <p className="text-sm font-medium text-foreground">
-                    {profile.createdAt ? format(new Date(profile.createdAt), 'MMMM dd, yyyy') : 'Recently joined'}
-                  </p>
-                </div>
-              </div>
-
-              {isOwnProfile && currentUser?.email && (
-                <div className="flex items-start gap-3 min-w-0">
-                  <Mail className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Email Address</p>
-                    <p className="text-sm font-medium text-foreground truncate">{currentUser.email}</p>
-                  </div>
-                </div>
+      {/* ── Main Tab Navigation & Content ── */}
+      <div className="space-y-4 sm:space-y-6 mt-4 sm:mt-6 px-1 max-w-5xl mx-auto">
+        {/* Tab Navigation header */}
+        <div className="flex bg-secondary/35 p-1 rounded-full gap-1 w-fit max-w-full overflow-x-auto scrollbar-none border border-glass-border/30">
+          <button
+            onClick={() => setActiveTab('posts')}
+            className={cn(
+              "px-5 py-2 text-xs font-bold rounded-full transition-all duration-150 flex items-center gap-2 whitespace-nowrap cursor-pointer active:scale-95",
+              activeTab === 'posts'
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <BookMarked className="w-3.5 h-3.5" /> Activity Feed ({totalPostsCount})
+          </button>
+          {isOwnProfile && (
+            <button
+              onClick={() => setActiveTab('saved')}
+              className={cn(
+                "px-5 py-2 text-xs font-bold rounded-full transition-all duration-150 flex items-center gap-2 whitespace-nowrap cursor-pointer active:scale-95",
+                activeTab === 'saved'
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
               )}
-
-              <div className="flex items-start gap-3">
-                <Shield className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Security Role</p>
-                  <p className="text-sm font-medium text-foreground capitalize">{profile.role || 'Member'}</p>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          {/* Gamified Achievements Card */}
-          <Card className="border-glass-border bg-card/60 glass-card shadow-sm rounded-2xl p-6">
-            <h3 className="text-xs font-bold font-display uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-2">
-              <Award className="w-4 h-4 text-primary" /> Achievements
-            </h3>
-            
-            <div className="space-y-3.5">
-              {calculatedAchievements.map(badge => (
-                <div
-                  key={badge.id}
-                  className={cn(
-                    "flex items-center gap-3.5 p-3 rounded-2xl border transition-all duration-300",
-                    badge.unlocked
-                      ? "bg-secondary/20 border-glass-border hover:bg-secondary/30 hover:scale-102 hover:shadow-sm"
-                      : "bg-black/5 dark:bg-white/5 border-dashed border-glass-border opacity-50"
-                  )}
-                >
-                  <div className="w-11 h-11 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-                    <badge.icon className="w-5 h-5 text-primary" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="font-semibold text-sm text-foreground leading-none">{badge.name}</p>
-                      {badge.unlocked ? (
-                        <Badge className="bg-success/15 text-success text-[8px] font-bold uppercase tracking-wider border-none px-1.5 py-0.5 rounded-md">
-                          Unlocked
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-muted-foreground text-[8px] font-bold uppercase tracking-wider border-glass-border px-1.5 py-0.5 rounded-md">
-                          Locked
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-[10px] text-muted-foreground mt-1 leading-normal">{badge.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-          
+            >
+              <Bookmark className="w-3.5 h-3.5" /> Bookmarks
+            </button>
+          )}
+          <button
+            onClick={() => setActiveTab('library')}
+            className={cn(
+              "px-5 py-2 text-xs font-bold rounded-full transition-all duration-150 flex items-center gap-2 whitespace-nowrap cursor-pointer active:scale-95",
+              activeTab === 'library'
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <BookOpen className="w-3.5 h-3.5" /> Library Collection
+          </button>
+          <button
+            onClick={() => setActiveTab('works')}
+            className={cn(
+              "px-5 py-2 text-xs font-bold rounded-full transition-all duration-150 flex items-center gap-2 whitespace-nowrap cursor-pointer active:scale-95",
+              activeTab === 'works'
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <Feather className="w-3.5 h-3.5" /> Published Writings ({userWorks.length})
+          </button>
         </div>
 
-        {/* RIGHT COLUMN: Tab Content */}
-        <div className="md:col-span-8 space-y-4 sm:space-y-6">
-          {/* Tab Navigation header */}
-          <div className="flex bg-secondary/35 p-1 rounded-full gap-1 w-fit max-w-full overflow-x-auto scrollbar-none border border-glass-border/30">
-            <button
-              onClick={() => setActiveTab('posts')}
-              className={cn(
-                "px-5 py-2 text-xs font-bold rounded-full transition-all duration-150 flex items-center gap-2 whitespace-nowrap cursor-pointer active:scale-95",
-                activeTab === 'posts'
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <BookMarked className="w-3.5 h-3.5" /> Activity Feed
-            </button>
-            {isOwnProfile && (
-              <button
-                onClick={() => setActiveTab('saved')}
-                className={cn(
-                  "px-5 py-2 text-xs font-bold rounded-full transition-all duration-150 flex items-center gap-2 whitespace-nowrap cursor-pointer active:scale-95",
-                  activeTab === 'saved'
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <Bookmark className="w-3.5 h-3.5" /> Bookmarks
-              </button>
-            )}
-            <button
-              onClick={() => setActiveTab('library')}
-              className={cn(
-                "px-5 py-2 text-xs font-bold rounded-full transition-all duration-150 flex items-center gap-2 whitespace-nowrap cursor-pointer active:scale-95",
-                activeTab === 'library'
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <BookOpen className="w-3.5 h-3.5" /> Library Collection
-            </button>
-          </div>
+        <div className="mt-4">
+          {/* ── Tab: Posts ── */}
+          {activeTab === 'posts' && (
+            <div className="space-y-4">
+              {/* Visibility Filter Selector */}
+              <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-secondary/15 rounded-2xl border border-glass-border/40">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <Globe className="w-3.5 h-3.5 text-primary" /> Filter Posts:
+                </span>
+                <div className="flex items-center bg-secondary/30 p-1 rounded-xl border border-glass-border/30 gap-1 text-xs">
+                  {[
+                    { value: 'ALL', label: 'All Visibilities' },
+                    { value: 'PUBLIC', label: 'Public', icon: Globe },
+                    { value: 'FOLLOWERS', label: 'Followers', icon: Users },
+                    { value: 'PRIVATE', label: 'Private', icon: Lock },
+                  ].map((vOpt) => (
+                    <button
+                      key={vOpt.value}
+                      onClick={() => {
+                        setPostVisibilityFilter(vOpt.value);
+                        setPostsPage(1);
+                      }}
+                      className={cn(
+                        "px-2.5 py-1 rounded-lg font-semibold transition-all flex items-center gap-1 text-[11px] cursor-pointer",
+                        postVisibilityFilter === vOpt.value
+                          ? "bg-card text-primary font-bold shadow-sm border border-glass-border"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      {vOpt.icon && <vOpt.icon className="w-3 h-3 shrink-0" />}
+                      <span>{vOpt.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-          <div className="mt-4">
-            {/* ── Tab: Posts ── */}
-            {activeTab === 'posts' && (
-              <div className="space-y-4">
-                {isLoadingPosts ? (
-                  <div className="flex justify-center py-12">
-                    <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                  </div>
-                ) : posts.length === 0 ? (
-                  <div className="text-center py-16 bg-secondary/10 rounded-2xl border border-dashed border-glass-border p-6 text-muted-foreground">
-                    <BookMarked className="w-8 h-8 mx-auto mb-2 text-muted-foreground/45" />
-                    <p className="font-semibold text-sm">No activity yet</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">This user hasn't posted anything to the feed.</p>
-                  </div>
-                ) : (
-                  posts.map((post) => (
+              {isLoadingPosts ? (
+                <div className="flex justify-center py-12">
+                  <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                </div>
+              ) : posts.length === 0 ? (
+                <div className="text-center py-16 bg-secondary/10 rounded-2xl border border-dashed border-glass-border p-6 text-muted-foreground">
+                  <BookMarked className="w-8 h-8 mx-auto mb-2 text-muted-foreground/45" />
+                  <p className="font-semibold text-sm">No activity found</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">No posts match the selected visibility filter.</p>
+                </div>
+              ) : (
+                <>
+                  {posts.map((post) => (
                     <PostCard
                       key={post._id}
                       post={post}
                       onDelete={handlePostDelete}
                       onUpdate={handlePostUpdate}
                     />
-                  ))
-                )}
-              </div>
-            )}
+                  ))}
+
+                  {/* Profile Posts Pagination Controls */}
+                  {totalPostsPages > 1 && (
+                    <div className="mt-6 flex items-center justify-between border-t border-glass-border pt-4 px-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={postsPage <= 1 || isLoadingPosts}
+                        onClick={() => setPostsPage((p) => Math.max(1, p - 1))}
+                        className="rounded-xl text-xs font-semibold gap-1 cursor-pointer"
+                      >
+                        <ChevronLeft className="w-4 h-4" /> Previous
+                      </Button>
+
+                      <span className="text-xs font-bold text-muted-foreground">
+                        Page {postsPage} of {totalPostsPages} ({totalPostsCount} posts)
+                      </span>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={postsPage >= totalPostsPages || isLoadingPosts}
+                        onClick={() => setPostsPage((p) => Math.min(totalPostsPages, p + 1))}
+                        className="rounded-xl text-xs font-semibold gap-1 cursor-pointer"
+                      >
+                        Next <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
 
             {/* ── Tab: Saved Posts (Bookmarks) ── */}
             {activeTab === 'saved' && isOwnProfile && (
@@ -913,9 +980,70 @@ export default function ProfilePage() {
                 )}
               </div>
             )}
+
+            {/* ── Tab: Published Works ── */}
+            {activeTab === 'works' && (
+              <div>
+                {isLoadingWorks ? (
+                  <div className="flex justify-center py-12">
+                    <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                  </div>
+                ) : userWorks.length === 0 ? (
+                  <div className="text-center py-16 bg-secondary/10 rounded-2xl border border-dashed border-glass-border p-6 text-muted-foreground">
+                    <Feather className="w-8 h-8 mx-auto mb-2 text-muted-foreground/45" />
+                    <p className="font-semibold text-sm">No writings published</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">This author hasn't published any stories, poems, or blogs yet.</p>
+                  </div>
+                ) : (
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {userWorks.map((work) => (
+                      <Card
+                        key={work._id}
+                        className="bg-card/85 glass-card rounded-2xl border border-glass-border p-4 flex flex-col justify-between hover:shadow-md transition-shadow"
+                      >
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1.5">
+                              <Badge className="text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary border-none px-2 py-0.5 rounded-md">
+                                {work.contentType}
+                              </Badge>
+                              {work.language && (
+                                <Badge variant="outline" className="text-[10px] font-semibold border-glass-border px-1.5 py-0.5 rounded-md flex items-center gap-1">
+                                  <Languages className="w-3 h-3 text-primary" /> {work.language}
+                                </Badge>
+                              )}
+                            </div>
+                            <span className="text-[10px] text-muted-foreground font-semibold">
+                              {work.stats?.totalWordCount || 0} words
+                            </span>
+                          </div>
+                          <h4 className="font-extrabold text-sm font-display text-foreground line-clamp-2 leading-snug">
+                            {work.title}
+                          </h4>
+                          <p className="text-xs text-muted-foreground line-clamp-2 font-sans">
+                            {work.summary || (work.chapters && work.chapters[0]?.content ? work.chapters[0].content.slice(0, 80) : '')}
+                          </p>
+                        </div>
+
+                        <div className="pt-3 border-t border-glass-border flex items-center justify-between mt-3">
+                          <span className="text-xs text-muted-foreground flex items-center gap-1 font-semibold">
+                            <Eye className="w-3.5 h-3.5 text-primary" /> {work.stats?.views || 0}
+                          </span>
+                          <Link
+                            to={`/read/${work._id}`}
+                            className="text-xs font-bold bg-primary text-primary-foreground px-3 py-1.5 rounded-xl hover:bg-primary/90 transition-colors"
+                          >
+                            Read Work →
+                          </Link>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
-      </div>
 
       {/* ── EDIT PROFILE OVERLAY MODAL ── */}
       <Modal

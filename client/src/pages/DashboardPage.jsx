@@ -17,6 +17,7 @@ import {
   Upload,
   Users,
   Zap,
+  Feather,
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppStore';
 import {
@@ -258,6 +259,12 @@ export default function DashboardPage() {
           </h1>
         </div>
         <div className="flex flex-wrap gap-2.5">
+          <Button asChild variant="outline" className="border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10">
+            <Link to="/studio/write">
+              <Feather className="h-4 w-4 text-amber-500" />
+              Write Story / Post
+            </Link>
+          </Button>
           <Button asChild variant="outline">
             <Link to={ROUTES.LIBRARY_IMPORT}>
               <Upload className="h-4 w-4" />
@@ -498,6 +505,25 @@ export default function DashboardPage() {
               <QuickAction to={ROUTES.FEED} icon={Users} label="Open Feed" color="var(--color-success)" />
               <QuickAction to={ROUTES.LIBRARY_IMPORT} icon={Upload} label="Import Books" color="var(--color-primary)" />
               <QuickAction to={ROUTES.LIBRARY} icon={Library} label="View Library" color="var(--color-primary)" />
+            </div>
+          </SectionCard>
+
+          <SectionCard className="p-5 bg-gradient-to-br from-amber-500/10 via-primary/5 to-transparent border-amber-500/20">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-amber-500/15 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
+                <Feather className="h-5 w-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-extrabold text-sm font-display text-foreground">Creative Author Studio</h3>
+                <p className="text-xs text-muted-foreground truncate">Write stories, poems & blogs</p>
+              </div>
+            </div>
+            <div className="mt-4 flex items-center justify-between gap-2">
+              <Button asChild size="sm" className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs gap-1.5 shadow-md">
+                <Link to="/studio/write">
+                  <Feather className="h-3.5 w-3.5" /> Start New Writing
+                </Link>
+              </Button>
             </div>
           </SectionCard>
 

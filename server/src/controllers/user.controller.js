@@ -169,9 +169,14 @@ const getUserPosts = asyncHandler(async (req, res) => {
 
   // Build query for posts
   const query = { author: targetUser._id };
+  const isOwner = currentUserId && currentUserId.toString() === targetUser._id.toString();
+
+  const { cursor, page, limit = 10, visibility } = req.query;
+  const parsedLimit = parseInt(limit, 10);
+  const parsedPage = parseInt(page, 10) || 1;
 
   // Adjust query based on relation
-  if (!currentUserId || currentUserId.toString() !== targetUser._id.toString()) {
+  if (!isOwner) {
     if (!isFollowing) {
       const follow = await Follow.findOne({ follower: currentUserId, following: targetUser._id });
       isFollowing = !!follow;
@@ -184,23 +189,41 @@ const getUserPosts = asyncHandler(async (req, res) => {
     }
   }
 
-  const { cursor, limit = 10 } = req.query;
-  const parsedLimit = parseInt(limit, 10);
-
-  if (cursor) {
-    query.createdAt = { $lt: new Date(cursor) };
+  // Refine query if specific visibility filter is requested
+  if (visibility && visibility !== 'ALL') {
+    if (visibility === 'PRIVATE' && isOwner) {
+      query.visibility = 'PRIVATE';
+    } else if (visibility === 'FOLLOWERS') {
+      if (isOwner || isFollowing) {
+        query.visibility = 'FOLLOWERS';
+      }
+    } else if (visibility === 'PUBLIC') {
+      query.visibility = 'PUBLIC';
+    }
   }
 
-  const posts = await Post.find(query)
-    .sort({ createdAt: -1 })
-    .limit(parsedLimit + 1)
+  const totalPosts = await Post.countDocuments(query);
+  const totalPages = Math.ceil(totalPosts / parsedLimit) || 1;
+
+  let postQuery = Post.find(query).sort({ createdAt: -1 });
+
+  if (page) {
+    postQuery = postQuery.skip((parsedPage - 1) * parsedLimit).limit(parsedLimit);
+  } else if (cursor) {
+    query.createdAt = { $lt: new Date(cursor) };
+    postQuery = Post.find(query).sort({ createdAt: -1 }).limit(parsedLimit + 1);
+  } else {
+    postQuery = postQuery.limit(parsedLimit);
+  }
+
+  const posts = await postQuery
     .populate('author', 'name username avatar penName')
     .populate('bookRef', 'title author coverImage')
     .lean();
 
-  const hasNextPage = posts.length > parsedLimit;
-  const userPosts = hasNextPage ? posts.slice(0, -1) : posts;
-  const nextCursor = hasNextPage ? userPosts[userPosts.length - 1].createdAt : null;
+  const userPosts = posts;
+  const hasNextPage = page ? parsedPage < totalPages : posts.length > parsedLimit;
+  const nextCursor = userPosts.length > 0 ? userPosts[userPosts.length - 1].createdAt : null;
 
   // Augment with user interaction state (liked, saved)
   let augmentedPosts = userPosts;
@@ -231,6 +254,9 @@ const getUserPosts = asyncHandler(async (req, res) => {
     message: 'User posts retrieved',
     data: {
       posts: augmentedPosts,
+      page: parsedPage,
+      totalPages,
+      totalPosts,
       nextCursor,
       hasNextPage
     }

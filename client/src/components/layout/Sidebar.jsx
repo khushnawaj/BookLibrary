@@ -11,6 +11,8 @@ import {
   HelpCircle,
   LogIn,
   UserPlus,
+  Feather,
+  Sparkles,
 } from 'lucide-react';
 import { Logo } from '@/components/common/Logo';
 import { cn } from '@/lib/utils';
@@ -36,6 +38,17 @@ const NAV_SECTIONS = [
         label: 'Dashboard', 
         icon: Home, 
         activeColor: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20'
+      },
+    ],
+  },
+  {
+    label: 'Writing Platform',
+    items: [
+      { 
+        to: ROUTES.WRITING_STUDIO, 
+        label: 'Writing Studio', 
+        icon: Feather, 
+        activeColor: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
       },
     ],
   },

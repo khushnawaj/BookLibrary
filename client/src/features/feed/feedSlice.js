@@ -3,9 +3,9 @@ import { feedService, postService } from '@/services';
 
 export const fetchFeed = createAsyncThunk(
   'feed/fetchFeed',
-  async ({ cursor, limit, type }, { rejectWithValue }) => {
+  async ({ cursor, limit, type, visibility }, { rejectWithValue }) => {
     try {
-      const response = await feedService.getFeed({ cursor, limit, type });
+      const response = await feedService.getFeed({ cursor, limit, type, visibility });
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch feed');

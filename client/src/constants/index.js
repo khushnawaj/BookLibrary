@@ -20,6 +20,11 @@ export const ROUTES = {
   SETTINGS: '/settings',
   ADMIN: '/admin',
   FEEDBACK: '/feedback',
+  WRITING_STUDIO: '/studio',
+  WRITE_NEW: '/studio/write',
+  WRITE_EDIT: '/studio/edit/:id',
+  EXPLORE_WRITING: '/explore-writing',
+  READ_WORK: '/read/:id',
 };
 
 export const SHELF_TYPES = {

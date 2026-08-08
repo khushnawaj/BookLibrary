@@ -9,7 +9,7 @@ const { HTTP_STATUS } = require('../constants');
 // =====================================
 
 const createPost = asyncHandler(async (req, res) => {
-  const { content, images, visibility, hashtags, bookRef, activityRef, poetryBg, poetryPosition } = req.body;
+  const { content, images, visibility, hashtags, bookRef, activityRef, poetryBg, poetryPosition, isSpoiler, readingProgress, quoteRef } = req.body;
 
   const post = await Post.create({
     author: req.user._id,
@@ -21,6 +21,9 @@ const createPost = asyncHandler(async (req, res) => {
     activityRef: activityRef || undefined,
     poetryBg: poetryBg || undefined,
     poetryPosition: poetryPosition || undefined,
+    isSpoiler: !!isSpoiler,
+    readingProgress: readingProgress || undefined,
+    quoteRef: quoteRef || undefined,
   });
 
   const populatedPost = await Post.findById(post._id)
@@ -88,7 +91,7 @@ const deletePost = asyncHandler(async (req, res) => {
 
 const updatePost = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { content, visibility, hashtags } = req.body;
+  const { content, visibility, hashtags, isSpoiler, readingProgress, quoteRef } = req.body;
 
   const post = await Post.findById(id);
   if (!post) {
@@ -103,6 +106,9 @@ const updatePost = asyncHandler(async (req, res) => {
   if (content !== undefined) post.content = content;
   if (visibility !== undefined) post.visibility = visibility;
   if (hashtags !== undefined) post.hashtags = hashtags;
+  if (isSpoiler !== undefined) post.isSpoiler = !!isSpoiler;
+  if (readingProgress !== undefined) post.readingProgress = readingProgress;
+  if (quoteRef !== undefined) post.quoteRef = quoteRef;
 
   await post.save();
 

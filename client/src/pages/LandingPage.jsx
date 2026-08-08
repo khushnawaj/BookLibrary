@@ -21,52 +21,52 @@ const BOOKS = [
 
 const FEATURES = [
   {
-    icon: Library,
-    title: 'Smart Shelves',
-    description: 'Organize into Reading, Read, Wishlist, or Dropped. Never lose track of where you left off.',
-    color: 'from-violet-500 to-purple-600',
-    bg: 'bg-violet-500/10',
-    border: 'border-violet-500/20',
+    icon: Feather,
+    title: 'Creative Writing Studio',
+    description: 'Publish your original stories, poetry stanzas, personal diaries, and blogs. Zen distraction-free editor with live word counters.',
+    color: 'from-amber-500 to-orange-600',
+    bg: 'bg-amber-500/10',
+    border: 'border-amber-500/20',
   },
   {
     icon: Globe,
-    title: 'Hinglish to Hindi Input',
-    description: 'Type phonetically in English (Hinglish) and see your words convert to clean Hindi script instantly as you write.',
+    title: 'Multi-Language Community',
+    description: 'Write & read across languages — English, Hindi (हिंदी), Hinglish, Marathi (मराठी), Gujarati, Spanish, and more.',
     color: 'from-blue-500 to-cyan-600',
     bg: 'bg-blue-500/10',
     border: 'border-blue-500/20',
   },
   {
+    icon: BookOpen,
+    title: 'Pratilipi / Medium Reader View',
+    description: 'Custom reader controls — toggle Serif/Sans typography, adjust text size, bookmark chapters, and like works.',
+    color: 'from-purple-500 to-violet-600',
+    bg: 'bg-purple-500/10',
+    border: 'border-purple-500/20',
+  },
+  {
+    icon: Library,
+    title: 'Smart Book Library',
+    description: 'Organize your physical & digital books into Reading, Read, Wishlist, or Dropped. Never lose your reading spot.',
+    color: 'from-violet-500 to-purple-600',
+    bg: 'bg-violet-500/10',
+    border: 'border-violet-500/20',
+  },
+  {
     icon: BarChart3,
-    title: 'Reading Analytics',
-    description: 'Track pages per day, yearly targets, streaks, and genre distributions with rich charts.',
+    title: 'Reading & Writing Analytics',
+    description: 'Track daily word count targets, yearly book targets, reading streaks, and genre distributions.',
     color: 'from-emerald-500 to-teal-600',
     bg: 'bg-emerald-500/10',
     border: 'border-emerald-500/20',
   },
   {
     icon: Users,
-    title: 'Community Feed',
-    description: 'Share reviews, book quotes, and updates with fellow readers. Like and comment on posts.',
+    title: 'Community Social Feed',
+    description: 'Share book reviews, literary quotes, and author updates with fellow readers. Connect with community writers.',
     color: 'from-rose-500 to-pink-600',
     bg: 'bg-rose-500/10',
     border: 'border-rose-500/20',
-  },
-  {
-    icon: Feather,
-    title: 'Visual Poetry Designer',
-    description: 'Craft beautiful shareable cards for your quotes and poems. Choose custom fonts, backgrounds, alignment, and drag your text.',
-    color: 'from-amber-500 to-orange-600',
-    bg: 'bg-amber-500/10',
-    border: 'border-amber-500/20',
-  },
-  {
-    icon: Trophy,
-    title: 'Achievements',
-    description: 'Earn badges, unlock streaks, and hit milestones that keep your reading habit alive.',
-    color: 'from-indigo-500 to-blue-600',
-    bg: 'bg-indigo-500/10',
-    border: 'border-indigo-500/20',
   },
 ];
 
@@ -211,7 +211,7 @@ export default function LandingPage() {
             >
               Forge Your
               <span className="block mt-1 bg-gradient-to-r from-primary via-accent to-emerald-400 bg-clip-text text-transparent">
-                Reading Legacy
+                Reading & Writing Legacy
               </span>
             </motion.h1>
 
@@ -221,7 +221,7 @@ export default function LandingPage() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="mt-6 max-w-lg text-lg leading-relaxed text-muted-foreground"
             >
-              {APP_NAME} is where readers track books, write stunning visual poetry, discover habits, and share thoughts with a community — all in one beautiful space.
+              {APP_NAME} is the ultimate platform for book lovers & creative authors. Build your personal library, publish stories, poems, blogs, and diaries across languages, and connect with community readers.
             </motion.p>
 
             {/* CTAs */}
@@ -237,7 +237,7 @@ export default function LandingPage() {
                     <Link to={ROUTES.DASHBOARD}>Go to Dashboard <ArrowRight className="ml-1 h-4 w-4" /></Link>
                   </Button>
                   <Button asChild variant="outline" size="lg" className="border-glass-border hover:border-primary/50 px-7">
-                    <Link to={ROUTES.LIBRARY}>My Library</Link>
+                    <Link to="/studio">Writing Studio <Feather className="ml-1.5 h-4 w-4 text-amber-500" /></Link>
                   </Button>
                 </>
               ) : (

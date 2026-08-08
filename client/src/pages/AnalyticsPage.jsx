@@ -10,7 +10,7 @@ import {
   BookOpen, TrendingUp, Star, Flame, Target, Plus, Trash2,
   Loader2, Trophy, X, BookMarked, Zap, FileText,
   Settings, Eye, EyeOff, ArrowUp, ArrowDown, RotateCcw, Edit2, Sparkles, Quote, BarChart3,
-  Award, Crown, Medal, Calendar, Send
+  Award, Crown, Medal, Calendar, Send, Feather
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppStore';
 import {
@@ -197,10 +197,11 @@ function CreateGoalModal({ open, onClose, onSave, isLoading, goal }) {
           {/* Type */}
           <div className="space-y-1.5">
             <Label>Goal Type *</Label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               {[
-                { value: 'BOOKS', label: 'Books', icon: BookOpen, desc: 'Number of books' },
-                { value: 'PAGES', label: 'Pages', icon: FileText, desc: 'Number of pages' },
+                { value: 'BOOKS', label: 'Books', icon: BookOpen, desc: 'Total books' },
+                { value: 'PAGES', label: 'Pages', icon: FileText, desc: 'Total pages' },
+                { value: 'WORDS', label: 'Words', icon: Feather, desc: 'Words written' },
               ].map((t) => (
                 <button
                   key={t.value}

@@ -113,3 +113,15 @@ export const feedbackService = {
   getAllFeedback: () => api.get('/feedback'),
   updateFeedbackStatus: (id, status, extraData = {}) => api.put(`/feedback/${id}`, { status, ...extraData }),
 };
+
+export const workService = {
+  createWork: (data) => api.post('/works', data),
+  getExploreWorks: (params) => api.get('/works/explore', { params }),
+  getWorkById: (id) => api.get(`/works/${id}`),
+  getUserWorks: (username) => api.get(`/works/user/${username}`),
+  updateWork: (id, data) => api.put(`/works/${id}`, data),
+  deleteWork: (id) => api.delete(`/works/${id}`),
+  addChapter: (id, data) => api.post(`/works/${id}/chapters`, data),
+  updateChapter: (id, chapterId, data) => api.put(`/works/${id}/chapters/${chapterId}`, data),
+  toggleLikeWork: (id) => api.post(`/works/${id}/like`),
+};

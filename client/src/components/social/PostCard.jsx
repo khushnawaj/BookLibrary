@@ -9,7 +9,7 @@ import {
   ArrowUp, ArrowDown, Edit2, Loader2,
   MoreVertical, Plus, Check, ChevronDown, Library,
   Sparkles, Feather, MessageSquare,
-  Download, Copy
+  Download, Copy, Quote, AlertTriangle, Eye, EyeOff
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toggleLike, removePostFromFeed, updatePostInFeed } from '@/features/feed/feedSlice';
@@ -74,6 +74,53 @@ const parsePostContent = (content) => {
   };
 };
 
+const parseInlineFormatting = (text) => {
+  if (!text) return null;
+  const regex = /(\*\*[^*]+\*\*|\*[^*]+\*|~~[^~]+~~|`[^`]+`)/g;
+  const parts = text.split(regex);
+
+  return parts.map((part, index) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={index} className="font-bold text-foreground">{part.slice(2, -2)}</strong>;
+    }
+    if (part.startsWith('*') && part.endsWith('*')) {
+      return <em key={index} className="italic text-foreground/90">{part.slice(1, -1)}</em>;
+    }
+    if (part.startsWith('~~') && part.endsWith('~~')) {
+      return <del key={index} className="line-through text-muted-foreground">{part.slice(2, -2)}</del>;
+    }
+    if (part.startsWith('`') && part.endsWith('`')) {
+      return <code key={index} className="px-1.5 py-0.5 rounded bg-secondary text-primary text-xs font-mono">{part.slice(1, -1)}</code>;
+    }
+    return part;
+  });
+};
+
+const renderRichText = (text) => {
+  if (!text) return null;
+  const lines = text.split('\n');
+
+  return lines.map((line, lineIdx) => {
+    const isQuote = line.trim().startsWith('>');
+    const lineText = isQuote ? line.trim().replace(/^>\s*/, '') : line;
+    const parts = parseInlineFormatting(lineText);
+
+    if (isQuote) {
+      return (
+        <blockquote key={lineIdx} className="my-2 pl-3 py-1.5 border-l-4 border-primary bg-primary/10 rounded-r-xl italic text-foreground font-serif text-sm">
+          {parts}
+        </blockquote>
+      );
+    }
+
+    return (
+      <span key={lineIdx} className="block min-h-[1.25em]">
+        {parts}
+      </span>
+    );
+  });
+};
+
 export function PostCard({ post, onDelete, onUpdate }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -82,6 +129,7 @@ export function PostCard({ post, onDelete, onUpdate }) {
   const [showComments, setShowComments] = useState(false);
   const [imgError, setImgError]         = useState({});
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showSpoiler, setShowSpoiler]   = useState(false);
   const quoteCardRef = useRef(null);
 
   // Inline editing states
@@ -578,17 +626,91 @@ export function PostCard({ post, onDelete, onUpdate }) {
                 })()
               ) : (
                 <>
-                  {/* Post Title (parsed from first line) */}
-                  {title && (
-                    <h2 className="text-base sm:text-[17px] font-bold text-foreground mb-1.5 leading-snug tracking-tight">
-                      {title}
-                    </h2>
+                  {/* Reading Progress Badge Attachment */}
+                  {post.readingProgress && (
+                    <div className="mb-3 p-3 rounded-2xl bg-primary/10 border border-primary/20 flex flex-col gap-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-primary flex items-center gap-1.5">
+                          <BookOpen className="w-4 h-4 text-primary shrink-0" />
+                          <span>Reading Progress Update</span>
+                        </span>
+                        {post.readingProgress.page && post.readingProgress.totalPages && (
+                          <span className="text-[10px] font-extrabold text-primary bg-primary/20 px-2 py-0.5 rounded-full">
+                            {Math.min(100, Math.round((post.readingProgress.page / post.readingProgress.totalPages) * 100))}%
+                          </span>
+                        )}
+                      </div>
+                      {post.readingProgress.chapter && (
+                        <p className="text-xs font-semibold text-foreground/90">
+                          {post.readingProgress.chapter}
+                        </p>
+                      )}
+                      {post.readingProgress.page && post.readingProgress.totalPages && (
+                        <div className="w-full bg-secondary/50 h-2 rounded-full overflow-hidden">
+                          <div
+                            className="bg-primary h-full rounded-full transition-all duration-500"
+                            style={{
+                              width: `${Math.min(100, Math.round((post.readingProgress.page / post.readingProgress.totalPages) * 100))}%`
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
                   )}
 
-                  {/* Post Text Body */}
-                  <p className="text-sm sm:text-[14.5px] leading-relaxed text-foreground/90 whitespace-pre-wrap">
-                    {body}
-                  </p>
+                  {/* Book Quote Card Block */}
+                  {post.quoteRef && post.quoteRef.quoteText && (
+                    <div className="mb-3 p-4 rounded-2xl bg-secondary/20 border border-glass-border relative overflow-hidden font-serif italic text-foreground/90">
+                      <Quote className="w-8 h-8 text-primary/20 absolute -top-1 -left-1" />
+                      <p className="relative z-10 text-sm leading-relaxed">
+                        "{post.quoteRef.quoteText}"
+                      </p>
+                      {(post.quoteRef.quoteAuthor || post.quoteRef.bookTitle) && (
+                        <p className="mt-2 text-xs font-sans not-italic font-bold text-right text-muted-foreground">
+                          — {post.quoteRef.quoteAuthor || 'Unknown'}{post.quoteRef.bookTitle ? `, ${post.quoteRef.bookTitle}` : ''}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Spoiler Shield Overlay */}
+                  {post.isSpoiler && !showSpoiler ? (
+                    <div className="my-2 p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col items-center justify-center text-center gap-2 cursor-pointer transition-all hover:bg-amber-500/15" onClick={() => setShowSpoiler(true)}>
+                      <AlertTriangle className="w-6 h-6 text-amber-500 animate-pulse" />
+                      <p className="text-xs font-bold text-amber-600 dark:text-amber-400">
+                        This post contains spoilers!
+                      </p>
+                      <button
+                        type="button"
+                        className="px-3 py-1 rounded-full bg-amber-500 text-amber-950 font-extrabold text-[11px] hover:bg-amber-400 transition-colors flex items-center gap-1 cursor-pointer"
+                      >
+                        <Eye className="w-3.5 h-3.5" /> Tap to Reveal Content
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      {post.isSpoiler && showSpoiler && (
+                        <div className="mb-2 flex items-center justify-between text-[10px] font-bold text-amber-500 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
+                          <span className="flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Spoiler Revealed</span>
+                          <button onClick={() => setShowSpoiler(false)} className="hover:underline cursor-pointer flex items-center gap-1">
+                            <EyeOff className="w-3 h-3" /> Hide again
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Post Title (parsed from first line) */}
+                      {title && (
+                        <h2 className="text-base sm:text-[17px] font-bold text-foreground mb-1.5 leading-snug tracking-tight">
+                          {title}
+                        </h2>
+                      )}
+
+                      {/* Post Text Body with Rich Formatting */}
+                      <div className="text-sm sm:text-[14.5px] leading-relaxed text-foreground/90 whitespace-pre-wrap">
+                        {renderRichText(body)}
+                      </div>
+                    </>
+                  )}
                 </>
               )}
             </>

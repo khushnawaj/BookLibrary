@@ -53,6 +53,21 @@ const postSchema = new mongoose.Schema(
     poetryPosition: {
       type: String,
     },
+    // Writing Studio & Post Creator enhancements
+    isSpoiler: {
+      type: Boolean,
+      default: false,
+    },
+    readingProgress: {
+      page: { type: Number },
+      totalPages: { type: Number },
+      chapter: { type: String },
+    },
+    quoteRef: {
+      quoteText: { type: String },
+      quoteAuthor: { type: String },
+      bookTitle: { type: String },
+    },
   },
   {
     timestamps: true,

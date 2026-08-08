@@ -6,7 +6,9 @@ import {
   X, Image as ImageIcon, Sparkles, Brain, BookOpen, Feather, Heart,
   Trophy, Calendar, Book, Globe, Users, Lock, ChevronDown, Check,
   Smile, Frown, Zap, Compass, Moon, Mic, UploadCloud, Loader2,
-  AlignLeft, AlignCenter, AlignRight, Type
+  AlignLeft, AlignCenter, AlignRight, Type,
+  Bold, Italic, Strikethrough, Code, Quote, List, Heading3,
+  AlertTriangle, ShieldAlert, Wand2, Tag
 } from 'lucide-react';
 import { createPost } from '@/features/feed/feedSlice';
 import { Button } from '@/components/ui/button';
@@ -101,6 +103,43 @@ export function CreatePostModal({ isOpen, onClose, initialBook = null }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [bookRef, setBookRef] = useState(null);
+
+  // Writing Studio & Post Enhancements State
+  const [isSpoiler, setIsSpoiler] = useState(false);
+  const [showReadingProgress, setShowReadingProgress] = useState(false);
+  const [readingProgress, setReadingProgress] = useState({ page: '', totalPages: '', chapter: '' });
+  const [showQuoteModal, setShowQuoteModal] = useState(false);
+  const [quoteData, setQuoteData] = useState({ quoteText: '', quoteAuthor: '', bookTitle: '' });
+
+  const insertFormatting = (prefix, suffix = '', defaultText = '') => {
+    const textarea = document.getElementById('post-composer-textarea');
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    const selected = text.substring(start, end) || defaultText;
+
+    const replacement = `${prefix}${selected}${suffix}`;
+    const newText = text.substring(0, start) + replacement + text.substring(end);
+
+    setContent(newText);
+
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(
+        start + prefix.length,
+        start + prefix.length + selected.length
+      );
+    }, 0);
+  };
+
+  const addHashtag = (tag) => {
+    const cleanTag = tag.replace(/^#/, '');
+    if (!content.includes(`#${cleanTag}`)) {
+      setContent((prev) => `${prev.trim()} #${cleanTag} `);
+    }
+  };
 
   useEffect(() => {
     if (isOpen && initialBook) {
@@ -455,6 +494,11 @@ export function CreatePostModal({ isOpen, onClose, initialBook = null }) {
     setPoetryCaption('');
     setTransliterateHindi(false);
     setBookRef(null);
+    setIsSpoiler(false);
+    setShowReadingProgress(false);
+    setReadingProgress({ page: '', totalPages: '', chapter: '' });
+    setShowQuoteModal(false);
+    setQuoteData({ quoteText: '', quoteAuthor: '', bookTitle: '' });
     localStorage.removeItem('sf_post_draft');
     onClose();
   };
@@ -559,28 +603,37 @@ export function CreatePostModal({ isOpen, onClose, initialBook = null }) {
       const captionHashtags = poetryCaption.match(/#[a-zA-Z0-9_]+/g)?.map((tag) => tag.slice(1)) || [];
       const hashtags = Array.from(new Set([...contentHashtags, ...captionHashtags]));
 
-      await dispatch(
-        createPost({
-          content,
-          images,
-          hashtags,
-          visibility,
-          bookRef: bookRef?.bookId || bookRef?._id || undefined,
-          ...(postType === 'poem' ? {
-            poetryBg: poetryBg || undefined,
-            poetryPosition: poetryBg ? JSON.stringify({
-              x: poetryPosition.x,
-              y: poetryPosition.y,
-              fontSize: poetryFontSize,
-              color: poetryColor,
-              fontFamily: poetryFontFamily,
-              align: poetryAlign,
-              overlay: poetryOverlay,
-              caption: poetryCaption
-            }) : undefined,
-          } : {})
-        })
-      ).unwrap();
+      const payload = {
+        content,
+        images,
+        hashtags,
+        visibility,
+        bookRef: bookRef?.bookId || bookRef?._id || undefined,
+        isSpoiler,
+        ...(showReadingProgress && (readingProgress.page || readingProgress.chapter) ? {
+          readingProgress: {
+            page: readingProgress.page ? Number(readingProgress.page) : undefined,
+            totalPages: readingProgress.totalPages ? Number(readingProgress.totalPages) : undefined,
+            chapter: readingProgress.chapter || undefined,
+          }
+        } : {}),
+        ...(quoteData.quoteText ? { quoteRef: quoteData } : {}),
+        ...(postType === 'poem' ? {
+          poetryBg: poetryBg || undefined,
+          poetryPosition: poetryBg ? JSON.stringify({
+            x: poetryPosition.x,
+            y: poetryPosition.y,
+            fontSize: poetryFontSize,
+            color: poetryColor,
+            fontFamily: poetryFontFamily,
+            align: poetryAlign,
+            overlay: poetryOverlay,
+            caption: poetryCaption
+          }) : undefined,
+        } : {})
+      };
+
+      await dispatch(createPost(payload)).unwrap();
 
       toast.success('Post published!');
       handleClose();
@@ -1047,6 +1100,254 @@ export function CreatePostModal({ isOpen, onClose, initialBook = null }) {
                     ))}
                   </div>
                 </div>
+
+                {/* Writing Studio Quick Formatting & Tools Toolbar */}
+                <div className="flex flex-wrap items-center justify-between gap-1.5 px-3 py-1.5 border-x border-glass-border bg-secondary/10 border-t border-t-glass-border/30 text-xs">
+                  <div className="flex items-center gap-1 flex-wrap">
+                    <button
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => insertFormatting('**', '**', 'bold text')}
+                      className="p-1.5 rounded-lg hover:bg-secondary/40 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                      title="Bold text (**text**)"
+                    >
+                      <Bold className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => insertFormatting('*', '*', 'italic text')}
+                      className="p-1.5 rounded-lg hover:bg-secondary/40 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                      title="Italic text (*text*)"
+                    >
+                      <Italic className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => insertFormatting('~~', '~~', 'strikethrough')}
+                      className="p-1.5 rounded-lg hover:bg-secondary/40 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                      title="Strikethrough (~~text~~)"
+                    >
+                      <Strikethrough className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => insertFormatting('`', '`', 'code snippet')}
+                      className="p-1.5 rounded-lg hover:bg-secondary/40 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                      title="Code snippet (`code`)"
+                    >
+                      <Code className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => insertFormatting('\n> ', '', 'Insert favorite quote here...')}
+                      className="p-1.5 rounded-lg hover:bg-secondary/40 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                      title="Blockquote (> quote)"
+                    >
+                      <Quote className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => insertFormatting('### ', '', 'Heading title')}
+                      className="p-1.5 rounded-lg hover:bg-secondary/40 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                      title="Heading 3 (### title)"
+                    >
+                      <Heading3 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    {/* Book Quote Card Tool */}
+                    <button
+                      type="button"
+                      onClick={() => setShowQuoteModal((v) => !v)}
+                      className={cn(
+                        "flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold border transition-all cursor-pointer",
+                        quoteData.quoteText
+                          ? "bg-primary/15 text-primary border-primary/30"
+                          : "bg-secondary/20 text-muted-foreground border-glass-border/30 hover:text-foreground"
+                      )}
+                      title="Add Book Quote Card"
+                    >
+                      <Quote className="w-3 h-3 text-primary shrink-0" />
+                      <span>Quote Card</span>
+                    </button>
+
+                    {/* Reading Progress Tool */}
+                    <button
+                      type="button"
+                      onClick={() => setShowReadingProgress((v) => !v)}
+                      className={cn(
+                        "flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold border transition-all cursor-pointer",
+                        showReadingProgress
+                          ? "bg-primary/15 text-primary border-primary/30"
+                          : "bg-secondary/20 text-muted-foreground border-glass-border/30 hover:text-foreground"
+                      )}
+                      title="Attach Reading Progress"
+                    >
+                      <BookOpen className="w-3 h-3 text-primary shrink-0" />
+                      <span>Progress</span>
+                    </button>
+
+                    {/* Spoiler Shield Toggle */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsSpoiler((v) => !v);
+                        if (!isSpoiler) {
+                          toast("Post marked as Spoiler ⚠️", {
+                            icon: "⚠️",
+                            style: {
+                              borderRadius: '12px',
+                              background: 'var(--color-card)',
+                              color: 'var(--color-foreground)',
+                              border: '1px solid var(--color-glass-border)',
+                              fontSize: '12px',
+                            }
+                          });
+                        }
+                      }}
+                      className={cn(
+                        "flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold border transition-all cursor-pointer",
+                        isSpoiler
+                          ? "bg-amber-500/15 text-amber-500 border-amber-500/30"
+                          : "bg-secondary/20 text-muted-foreground border-glass-border/30 hover:text-foreground"
+                      )}
+                      title="Spoiler Alert Toggle"
+                    >
+                      <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />
+                      <span>Spoiler</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Popular Hashtags Quick Bar */}
+                <div className="flex items-center gap-1.5 px-3 py-1 border-x border-glass-border bg-secondary/5 overflow-x-auto scrollbar-none text-[10px]">
+                  <span className="text-[9.5px] font-bold text-muted-foreground/60 shrink-0 uppercase tracking-wider flex items-center gap-1">
+                    <Tag className="w-2.5 h-2.5 text-primary" /> Tags:
+                  </span>
+                  {['#BookTok', '#BookReview', '#ReadingGoals', '#CurrentRead', '#PoetryCorner', '#SciFi', '#Fantasy', '#BookQuote'].map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => addHashtag(tag)}
+                      className="px-2 py-0.5 rounded-full bg-secondary/30 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors shrink-0 font-semibold cursor-pointer"
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Reading Progress Attachment Box */}
+                {showReadingProgress && (
+                  <div className="px-3 py-2.5 border-x border-glass-border bg-primary/5 border-t border-t-primary/20 animate-in slide-in-from-top-2 duration-150">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[11px] font-bold text-primary flex items-center gap-1">
+                        <BookOpen className="w-3.5 h-3.5" /> Attach Reading Progress
+                      </span>
+                      {readingProgress.page && readingProgress.totalPages && (
+                        <span className="text-[10px] font-extrabold text-primary bg-primary/15 px-2 py-0.5 rounded-full">
+                          {Math.min(100, Math.round((Number(readingProgress.page) / Number(readingProgress.totalPages)) * 100))}% Completed
+                        </span>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                      <div>
+                        <label className="text-[9.5px] font-bold text-muted-foreground uppercase">Current Page</label>
+                        <input
+                          type="number"
+                          placeholder="e.g. 145"
+                          value={readingProgress.page}
+                          onChange={(e) => setReadingProgress((p) => ({ ...p, page: e.target.value }))}
+                          className="w-full mt-0.5 rounded-lg border border-glass-border/40 bg-secondary/20 px-2.5 py-1 text-xs text-foreground outline-none focus:border-primary/40"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[9.5px] font-bold text-muted-foreground uppercase">Total Pages</label>
+                        <input
+                          type="number"
+                          placeholder="e.g. 320"
+                          value={readingProgress.totalPages}
+                          onChange={(e) => setReadingProgress((p) => ({ ...p, totalPages: e.target.value }))}
+                          className="w-full mt-0.5 rounded-lg border border-glass-border/40 bg-secondary/20 px-2.5 py-1 text-xs text-foreground outline-none focus:border-primary/40"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[9.5px] font-bold text-muted-foreground uppercase">Chapter Name</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Chapter 12: Dune"
+                          value={readingProgress.chapter}
+                          onChange={(e) => setReadingProgress((p) => ({ ...p, chapter: e.target.value }))}
+                          className="w-full mt-0.5 rounded-lg border border-glass-border/40 bg-secondary/20 px-2.5 py-1 text-xs text-foreground outline-none focus:border-primary/40"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Book Quote Builder Drawer */}
+                {showQuoteModal && (
+                  <div className="px-3 py-2.5 border-x border-glass-border bg-primary/5 border-t border-t-primary/20 animate-in slide-in-from-top-2 duration-150">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[11px] font-bold text-primary flex items-center gap-1">
+                        <Quote className="w-3.5 h-3.5" /> Book Quote Details
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowQuoteModal(false)}
+                        className="text-muted-foreground hover:text-foreground text-xs"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    <div className="space-y-2 text-xs">
+                      <div>
+                        <label className="text-[9.5px] font-bold text-muted-foreground uppercase">Quote Text</label>
+                        <textarea
+                          placeholder="Enter favorite line or quote..."
+                          value={quoteData.quoteText}
+                          onChange={(e) => setQuoteData((q) => ({ ...q, quoteText: e.target.value }))}
+                          className="w-full mt-0.5 rounded-lg border border-glass-border/40 bg-secondary/20 px-2.5 py-1.5 text-xs text-foreground outline-none focus:border-primary/40 min-h-[45px]"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[9.5px] font-bold text-muted-foreground uppercase">Author</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Frank Herbert"
+                            value={quoteData.quoteAuthor}
+                            onChange={(e) => setQuoteData((q) => ({ ...q, quoteAuthor: e.target.value }))}
+                            className="w-full mt-0.5 rounded-lg border border-glass-border/40 bg-secondary/20 px-2.5 py-1 text-xs text-foreground outline-none focus:border-primary/40"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[9.5px] font-bold text-muted-foreground uppercase">Book Title</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Dune"
+                            value={quoteData.bookTitle}
+                            onChange={(e) => setQuoteData((q) => ({ ...q, bookTitle: e.target.value }))}
+                            className="w-full mt-0.5 rounded-lg border border-glass-border/40 bg-secondary/20 px-2.5 py-1 text-xs text-foreground outline-none focus:border-primary/40"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Spoiler Banner Indicator */}
+                {isSpoiler && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 border-x border-glass-border bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-semibold">
+                    <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-amber-500" />
+                    <span>Post is marked as a Spoiler (content will be blurred in feed).</span>
+                  </div>
+                )}
 
                 {/* Textarea container */}
                 <div className={cn(
