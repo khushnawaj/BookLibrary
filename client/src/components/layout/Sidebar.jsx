@@ -163,7 +163,7 @@ export function Sidebar({ className, onNavigate }) {
       <nav className="flex flex-1 flex-col gap-6 overflow-y-auto px-3 py-5 scrollbar-none">
         {activeSections.map((section) => (
           <div key={section.label}>
-            <p className="mb-2 px-3 text-[9px] font-bold uppercase tracking-[0.14em] text-muted-foreground/50">
+            <p className="mb-2 px-3 text-[9px] font-medium uppercase tracking-[0.14em] text-muted-foreground/60">
               {section.label}
             </p>
             <div className="space-y-1">
@@ -174,7 +174,7 @@ export function Sidebar({ className, onNavigate }) {
                   onClick={onNavigate}
                   className={({ isActive }) =>
                     cn(
-                      'flex items-center gap-3 rounded-full px-4 py-2.5 text-[13px] font-bold tracking-wide transition-all duration-150 active:scale-[0.97]',
+                      'flex items-center gap-3 rounded-full px-4 py-2.5 text-[13px] font-medium tracking-wide transition-all duration-150 active:scale-[0.97]',
                       isActive
                         ? item.activeColor
                         : 'text-muted-foreground hover:bg-secondary/40 hover:text-foreground border border-transparent'
@@ -196,10 +196,10 @@ export function Sidebar({ className, onNavigate }) {
       {/* Bottom section — guest: sign-in/register, otherwise version tag */}
       {isGuest ? (
         <div className="px-3 py-4 border-t border-glass-border/30 space-y-2">
-          <p className="px-3 mb-1 text-[9px] font-bold uppercase tracking-[0.14em] text-muted-foreground/50">Get Started</p>
+          <p className="px-3 mb-1 text-[9px] font-medium uppercase tracking-[0.14em] text-muted-foreground/60">Get Started</p>
           <button
             onClick={handleRegister}
-            className="w-full flex items-center gap-3 rounded-full px-4 py-2.5 text-[13px] font-bold tracking-wide transition-all duration-150 active:scale-[0.97]
+            className="w-full flex items-center gap-3 rounded-full px-4 py-2.5 text-[13px] font-medium tracking-wide transition-all duration-150 active:scale-[0.97]
                        bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-md shadow-primary/15 hover:opacity-90 cursor-pointer"
           >
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-foreground/15 shrink-0">
@@ -209,7 +209,7 @@ export function Sidebar({ className, onNavigate }) {
           </button>
           <button
             onClick={handleSignIn}
-            className="w-full flex items-center gap-3 rounded-full px-4 py-2.5 text-[13px] font-bold tracking-wide transition-all duration-150 active:scale-[0.97]
+            className="w-full flex items-center gap-3 rounded-full px-4 py-2.5 text-[13px] font-medium tracking-wide transition-all duration-150 active:scale-[0.97]
                        text-muted-foreground hover:bg-secondary/50 hover:text-foreground cursor-pointer"
           >
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary/40 shrink-0">

@@ -144,9 +144,8 @@ exports.getWorkById = async (req, res) => {
       });
     }
 
-    // Increment view count
-    work.stats.views += 1;
-    await work.save({ validateBeforeSave: false });
+    // Increment view count atomically
+    Work.findByIdAndUpdate(req.params.id, { $inc: { 'stats.views': 1 } }).exec();
 
     const isLiked = req.user ? work.likes.includes(req.user.id) : false;
 
@@ -176,7 +175,7 @@ exports.getUserWorks = async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found.' });
     }
 
-    const isOwner = req.user && req.user.id === targetUser._id.toString();
+    const isOwner = req.user && req.user._id.toString() === targetUser._id.toString();
 
     const query = { author: targetUser._id };
     if (!isOwner) {

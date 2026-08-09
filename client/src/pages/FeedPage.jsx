@@ -122,7 +122,7 @@ export default function FeedPage() {
                 <button
                   onClick={() => handleFeedTypeChange('global')}
                   className={cn(
-                    'px-3.5 py-1.5 rounded-full text-xs font-bold transition-all duration-150 flex items-center gap-1.5 cursor-pointer active:scale-95',
+                    'px-3.5 py-1.5 rounded-full text-xs font-medium transition-all duration-150 flex items-center gap-1.5 cursor-pointer active:scale-95',
                     feedType === 'global'
                       ? 'bg-primary text-primary-foreground shadow-sm'
                       : 'text-muted-foreground hover:text-foreground'
@@ -134,7 +134,7 @@ export default function FeedPage() {
                   <button
                     onClick={() => handleFeedTypeChange('following')}
                     className={cn(
-                      'px-3.5 py-1.5 rounded-full text-xs font-bold transition-all duration-150 flex items-center gap-1.5 cursor-pointer active:scale-95',
+                      'px-3.5 py-1.5 rounded-full text-xs font-medium transition-all duration-150 flex items-center gap-1.5 cursor-pointer active:scale-95',
                       feedType === 'following'
                         ? 'bg-primary text-primary-foreground shadow-sm'
                         : 'text-muted-foreground hover:text-foreground'
@@ -146,7 +146,7 @@ export default function FeedPage() {
               </div>
 
               {/* Visibility Filter Selector */}
-              <div className="flex items-center bg-secondary/25 p-1 rounded-xl border border-glass-border/30 gap-1 text-xs">
+              <div className="flex items-center bg-secondary/25 p-1 rounded-xl border border-glass-border/30 gap-1 text-xs max-w-full overflow-x-auto scrollbar-none">
                 {[
                   { value: 'ALL', label: 'All' },
                   { value: 'PUBLIC', label: 'Public', icon: Globe },
@@ -157,9 +157,9 @@ export default function FeedPage() {
                     key={vOpt.value}
                     onClick={() => handleVisibilityChange(vOpt.value)}
                     className={cn(
-                      "px-2.5 py-1 rounded-lg font-semibold transition-all flex items-center gap-1 text-[11px] cursor-pointer",
+                      "px-2.5 py-1 rounded-lg font-medium transition-all flex items-center gap-1 text-[11px] cursor-pointer shrink-0",
                       visibilityFilter === vOpt.value
-                        ? "bg-card text-primary font-bold shadow-sm border border-glass-border"
+                        ? "bg-card text-primary shadow-sm border border-glass-border font-medium"
                         : "text-muted-foreground hover:text-foreground"
                     )}
                   >

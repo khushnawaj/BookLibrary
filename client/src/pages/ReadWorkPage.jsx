@@ -42,8 +42,9 @@ export default function ReadWorkPage() {
         setWork(data);
         setLikesCount(data.stats?.likesCount || 0);
 
-        if (user && data.likes) {
-          setIsLiked(data.likes.includes(user.id || user._id));
+        if (user && data.likes && Array.isArray(data.likes)) {
+          const currentId = (user.id || user._id || '').toString();
+          setIsLiked(data.likes.some((l) => (l._id || l).toString() === currentId));
         }
       } catch (err) {
         console.error(err);
@@ -156,17 +157,23 @@ export default function ReadWorkPage() {
       {/* ── PRATILIPI EXACT HERO WORK LANDING CARD (SCREENSHOT 1) ── */}
       <Card className="border-glass-border bg-card/90 shadow-xl rounded-3xl p-6 sm:p-10 overflow-hidden backdrop-blur-xl">
         <div className="flex flex-col sm:flex-row gap-6 sm:gap-10 items-center sm:items-start">
-          {/* Vertical 3:4 Book Cover (Clickable for Image Preview) */}
-          <div className="relative group shrink-0 w-40 sm:w-52 aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl border border-glass-border">
+          {/* Vertical 2:3 Book Cover (Clickable for Image Preview) */}
+          <div className="relative group shrink-0 w-40 sm:w-52 aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl border border-glass-border bg-secondary/40 flex items-center justify-center">
+            <img
+              src={work.coverImage || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=400&auto=format&fit=crop&q=80'}
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 w-full h-full object-cover blur-md opacity-30 scale-110 pointer-events-none select-none"
+            />
             <img
               src={work.coverImage || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=400&auto=format&fit=crop&q=80'}
               alt={work.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              className="relative z-10 w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
             />
             {/* Click Image Preview Trigger */}
             <div
               onClick={() => setIsCoverPreviewOpen(true)}
-              className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white cursor-pointer gap-1"
+              className="absolute inset-0 z-20 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white cursor-pointer gap-1"
             >
               <Eye className="w-5 h-5" />
               <span className="text-[10px] font-bold">Preview Cover</span>

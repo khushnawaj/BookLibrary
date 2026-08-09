@@ -100,8 +100,13 @@ export function WritingEditorModal({ open, onClose, workToEdit = null, onSuccess
     try {
       setIsUploadingCover(true);
       const res = await uploadService.uploadBookCover(file);
-      setCoverImage(res.data.data.url || res.data.data.path || res.data.url);
-      toast.success('Cover image uploaded!');
+      const uploadedUrl = res.data?.data?.secureUrl || res.data?.data?.url || res.data?.secureUrl || res.data?.url;
+      if (uploadedUrl) {
+        setCoverImage(uploadedUrl);
+        toast.success('Cover image uploaded!');
+      } else {
+        toast.error('Could not parse uploaded cover URL');
+      }
     } catch (err) {
       console.error(err);
       toast.error('Failed to upload cover image');
@@ -316,8 +321,11 @@ export function WritingEditorModal({ open, onClose, workToEdit = null, onSuccess
             </div>
             {coverImage && (
               <div className="mt-1.5 flex items-center gap-2">
-                <img src={coverImage} alt="Cover preview" className="w-12 h-12 object-cover rounded-lg border border-glass-border" />
-                <span className="text-[10px] text-muted-foreground">Cover preview loaded</span>
+                <div className="relative w-12 h-16 rounded-lg overflow-hidden border border-glass-border bg-secondary/40 shrink-0 flex items-center justify-center">
+                  <img src={coverImage} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover blur-sm opacity-30 scale-110 pointer-events-none select-none" />
+                  <img src={coverImage} alt="Cover preview" className="relative z-10 w-full h-full object-contain" />
+                </div>
+                <span className="text-[10px] text-muted-foreground font-semibold">Cover preview loaded</span>
               </div>
             )}
           </div>

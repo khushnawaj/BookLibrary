@@ -42,12 +42,16 @@ function SuspenseLoader() {
   );
 }
 
+import { ConfirmDialogProvider } from '@/components/common/ConfirmDialog';
+
 function RootLayout() {
   return (
     <AuthInitializer>
-      <Suspense fallback={<SuspenseLoader />}>
-        <Outlet />
-      </Suspense>
+      <ConfirmDialogProvider>
+        <Suspense fallback={<SuspenseLoader />}>
+          <Outlet />
+        </Suspense>
+      </ConfirmDialogProvider>
     </AuthInitializer>
   );
 }

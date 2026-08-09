@@ -19,6 +19,7 @@ import toast from 'react-hot-toast';
 import { workService, uploadService } from '@/services';
 import { cn } from '@/lib/utils';
 import { format as formatDate } from 'date-fns';
+import { useConfirm } from '@/components/common/ConfirmDialog';
 
 // Languages restricted strictly to English, Hindi, and Hinglish
 const LANGUAGES = [
@@ -37,6 +38,7 @@ export default function WritingEditorPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const confirm = useConfirm();
   const fileInputRef = useRef(null);
 
   // Storage key for localStorage auto-save draft
@@ -161,13 +163,19 @@ export default function WritingEditorPage() {
   };
 
   // Remove chapter from manuscript
-  const handleDeleteChapter = (indexToDelete, e) => {
+  const handleDeleteChapter = async (indexToDelete, e) => {
     e.stopPropagation();
     if (chaptersList.length <= 1) {
       toast.error('Manuscript must have at least 1 chapter');
       return;
     }
-    if (!window.confirm(`Delete "${chaptersList[indexToDelete]?.title}"?`)) return;
+    const isConfirmed = await confirm({
+      title: 'Delete Chapter',
+      message: `Are you sure you want to delete "${chaptersList[indexToDelete]?.title}"?`,
+      confirmText: 'Delete Chapter',
+      variant: 'destructive',
+    });
+    if (!isConfirmed) return;
 
     const updated = chaptersList.filter((_, idx) => idx !== indexToDelete);
     setChaptersList(updated);
@@ -496,7 +504,13 @@ export default function WritingEditorPage() {
 
   const handleDeleteWork = async () => {
     if (!id) {
-      if (window.confirm('Discard this local draft manuscript?')) {
+      const isConfirmed = await confirm({
+        title: 'Discard Draft',
+        message: 'Are you sure you want to discard this local draft manuscript?',
+        confirmText: 'Discard Draft',
+        variant: 'destructive',
+      });
+      if (isConfirmed) {
         localStorage.removeItem(draftStorageKey);
         toast.success('Local draft discarded');
         navigate('/studio');
@@ -504,7 +518,14 @@ export default function WritingEditorPage() {
       return;
     }
 
-    if (window.confirm('Are you sure you want to delete this manuscript permanently? This action cannot be undone.')) {
+    const isConfirmed = await confirm({
+      title: 'Delete Manuscript',
+      message: 'Are you sure you want to delete this manuscript permanently? This action cannot be undone.',
+      confirmText: 'Delete Manuscript',
+      variant: 'destructive',
+    });
+
+    if (isConfirmed) {
       try {
         setIsSubmitting(true);
         await workService.deleteWork(id);
@@ -1058,7 +1079,7 @@ export default function WritingEditorPage() {
             {!coverImage ? (
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full aspect-[3/4] border-2 border-dashed border-glass-border hover:border-primary/60 bg-secondary/20 hover:bg-secondary/30 rounded-lg p-4 flex flex-col items-center justify-center gap-3 cursor-pointer transition-all text-center group"
+                className="w-full aspect-[2/3] border-2 border-dashed border-glass-border hover:border-primary/60 bg-secondary/20 hover:bg-secondary/30 rounded-lg p-4 flex flex-col items-center justify-center gap-3 cursor-pointer transition-all text-center group"
                 title="Click to select cover file from your device"
               >
                 {isUploadingCover ? (
@@ -1072,23 +1093,29 @@ export default function WritingEditorPage() {
                 )}
               </div>
             ) : (
-              <div className="relative group rounded-lg overflow-hidden aspect-[3/4] border border-glass-border shadow-md">
+              <div className="relative group rounded-lg overflow-hidden aspect-[2/3] border border-glass-border shadow-md bg-secondary/40 flex items-center justify-center">
+                <img
+                  src={coverImage}
+                  alt=""
+                  aria-hidden="true"
+                  className="absolute inset-0 w-full h-full object-cover blur-md opacity-30 scale-110 pointer-events-none select-none"
+                />
                 <img
                   src={coverImage}
                   alt="Book cover preview"
-                  className="w-full h-full object-cover"
+                  className="relative z-10 w-full h-full object-contain"
                 />
 
                 {/* Click to Full Preview Lightbox Button */}
                 <div
                   onClick={() => setIsImagePreviewModalOpen(true)}
-                  className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white cursor-pointer gap-1"
+                  className="absolute inset-0 z-20 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white cursor-pointer gap-1"
                 >
                   <Eye className="w-6 h-6" />
                   <span className="text-xs font-bold">Preview Cover</span>
                 </div>
 
-                <div className="absolute top-2 right-2 flex items-center gap-1 z-10">
+                <div className="absolute top-2 right-2 flex items-center gap-1 z-30">
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}

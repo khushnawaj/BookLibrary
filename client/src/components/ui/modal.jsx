@@ -46,7 +46,7 @@ export function Modal({ open, onClose, title, description, children, className }
             exit={{ opacity: 0, scale: 0.96, y: 8 }}
             transition={{ duration: 0.2 }}
             className={cn(
-              'relative z-10 w-full max-w-lg glass-card p-4 sm:p-6 shadow-2xl my-4 sm:my-auto',
+              'relative z-10 w-full max-w-lg glass-card p-4 sm:p-6 shadow-2xl max-h-[90vh] overflow-y-auto my-auto rounded-2xl sm:rounded-3xl scrollbar-none',
               className
             )}
             onClick={(e) => e.stopPropagation()}

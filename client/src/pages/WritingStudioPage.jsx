@@ -14,6 +14,7 @@ import {
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { cn } from '@/lib/utils';
+import { useConfirm } from '@/components/common/ConfirmDialog';
 
 // Languages restricted strictly to English, Hindi, and Hinglish
 const LANGUAGES = [
@@ -25,6 +26,7 @@ const LANGUAGES = [
 
 export default function WritingStudioPage() {
   const { user } = useAuth();
+  const confirm = useConfirm();
   
   // Studio Tab Mode: 'EXPLORE' | 'MY_STUDIO'
   const [activeStudioTab, setActiveStudioTab] = useState('EXPLORE');
@@ -43,6 +45,11 @@ export default function WritingStudioPage() {
   const [myWorks, setMyWorks] = useState([]);
   const [isMyWorksLoading, setIsMyWorksLoading] = useState(true);
   const [myFilterType, setMyFilterType] = useState('ALL');
+  const [failedImages, setFailedImages] = useState({});
+
+  const handleImageError = (id) => {
+    setFailedImages((prev) => ({ ...prev, [id]: true }));
+  };
 
   // Fetch Community Explore Works
   const fetchExploreWorks = async () => {
@@ -97,7 +104,13 @@ export default function WritingStudioPage() {
   };
 
   const handleDeleteWork = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this work?')) return;
+    const isConfirmed = await confirm({
+      title: 'Delete Writing',
+      message: 'Are you sure you want to delete this work? This action cannot be undone.',
+      confirmText: 'Delete Work',
+      variant: 'destructive',
+    });
+    if (!isConfirmed) return;
     try {
       await workService.deleteWork(id);
       toast.success('Work deleted successfully');
@@ -140,7 +153,7 @@ export default function WritingStudioPage() {
       <div className="rounded-2xl bg-card/80 border border-glass-border p-5 sm:p-7 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
-            <h1 className="text-xl sm:text-2xl font-bold font-display tracking-tight text-foreground">
+            <h1 className="text-xl sm:text-2xl font-medium font-display tracking-tight text-foreground">
               Community Writings & Author Studio
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed font-sans max-w-xl">
@@ -150,40 +163,46 @@ export default function WritingStudioPage() {
 
           <Link
             to="/studio/write"
-            className="inline-flex items-center justify-center bg-primary hover:bg-primary/95 text-primary-foreground font-bold rounded-xl h-9 px-4 gap-1.5 shadow-sm cursor-pointer shrink-0 text-xs transition-all border-none"
+            className="inline-flex items-center justify-center bg-primary hover:bg-primary/95 text-primary-foreground font-medium rounded-xl h-9 px-3.5 sm:px-4 gap-1.5 shadow-sm cursor-pointer shrink-0 text-xs transition-all border-none"
             title="Start writing a new manuscript"
           >
-            <Plus className="w-4 h-4" /> Start New Writing
+            <Plus className="w-4 h-4" />
+            <span className="hidden sm:inline">Start New Writing</span>
+            <span className="sm:hidden font-medium">Write</span>
           </Link>
         </div>
       </div>
 
       {/* Sleek Sub-Tab Switcher: Explore Community vs My Dashboard */}
-      <div className="flex items-center gap-1.5 border-b border-glass-border/40 pb-2.5">
+      <div className="flex items-center gap-1.5 border-b border-glass-border/40 pb-2.5 overflow-x-auto scrollbar-none">
         <button
           onClick={() => setActiveStudioTab('EXPLORE')}
           className={cn(
-            'px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border',
+            'px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 border shrink-0',
             activeStudioTab === 'EXPLORE'
-              ? 'bg-secondary text-foreground border-glass-border shadow-sm font-extrabold'
+              ? 'bg-secondary text-foreground border-glass-border shadow-sm'
               : 'border-transparent text-muted-foreground hover:text-foreground'
           )}
           title="Browse community published works"
         >
-          <Sparkles className="w-3.5 h-3.5 text-primary" /> Explore Community
+          <Sparkles className="w-3.5 h-3.5 text-primary" />
+          <span className="hidden sm:inline">Explore Community</span>
+          <span className="sm:hidden">Explore</span>
         </button>
 
         <button
           onClick={() => setActiveStudioTab('MY_STUDIO')}
           className={cn(
-            'px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border',
+            'px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 border shrink-0',
             activeStudioTab === 'MY_STUDIO'
-              ? 'bg-secondary text-foreground border-glass-border shadow-sm font-extrabold'
+              ? 'bg-secondary text-foreground border-glass-border shadow-sm'
               : 'border-transparent text-muted-foreground hover:text-foreground'
           )}
           title="View my author statistics and manuscripts"
         >
-          <Feather className="w-3.5 h-3.5" /> My Dashboard ({myWorks.length})
+          <Feather className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">My Dashboard ({myWorks.length})</span>
+          <span className="sm:hidden">Dashboard ({myWorks.length})</span>
         </button>
       </div>
 
@@ -209,14 +228,14 @@ export default function WritingStudioPage() {
                       setExplorePage(1);
                     }}
                     className={cn(
-                      'px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 shrink-0',
+                      'px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 shrink-0',
                       exploreContentType === tab.id
-                        ? 'bg-primary text-primary-foreground font-bold shadow-sm'
+                        ? 'bg-primary text-primary-foreground shadow-sm'
                         : 'text-muted-foreground hover:text-foreground'
                     )}
                     title={`Filter writings by ${tab.label}`}
                   >
-                    <tab.icon className="w-3.5 h-3.5" />
+                    <tab.icon className="w-3.5 h-3.5 shrink-0" />
                     <span>{tab.label}</span>
                   </button>
                 ))}
@@ -236,7 +255,7 @@ export default function WritingStudioPage() {
 
             {/* Language Filter Pills */}
             <div className="flex items-center gap-2 pt-1 overflow-x-auto scrollbar-none">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1 shrink-0">
+              <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1 shrink-0">
                 <Languages className="w-3.5 h-3.5 text-primary" /> Language:
               </span>
               <div className="flex items-center gap-1.5">
@@ -248,9 +267,9 @@ export default function WritingStudioPage() {
                       setExplorePage(1);
                     }}
                     className={cn(
-                      'px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap border',
+                      'px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer whitespace-nowrap border',
                       exploreLanguage === lang.id
-                        ? 'bg-primary/10 text-primary font-bold border-primary/30 shadow-sm'
+                        ? 'bg-primary/10 text-primary border-primary/30 shadow-sm'
                         : 'border-glass-border/30 text-muted-foreground hover:text-foreground'
                     )}
                     title={`Show works written in ${lang.label}`}
@@ -270,48 +289,67 @@ export default function WritingStudioPage() {
           ) : exploreWorks.length === 0 ? (
             <div className="text-center py-20 bg-secondary/10 rounded-2xl border border-dashed border-glass-border p-8 text-muted-foreground space-y-2">
               <Feather className="w-10 h-10 mx-auto opacity-50" />
-              <p className="font-bold text-base text-foreground">No published writings found</p>
+              <p className="font-medium text-base text-foreground">No published writings found</p>
               <p className="text-xs text-muted-foreground">Be the first author to publish a work in this language!</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-2.5 sm:gap-3">
               {exploreWorks.map((work) => (
                 <div key={work._id} className="flex flex-col gap-2 group cursor-pointer">
                   {/* Book Cover */}
-                  <Link to={`/read/${work._id}`} className="relative w-full aspect-[3/4] rounded-lg overflow-hidden shadow-md bg-secondary/30">
-                    {work.coverImage ? (
-                      <img
-                        src={work.coverImage}
-                        alt={work.title}
-                        className="w-full h-full object-cover group-hover:brightness-75 transition-all duration-300"
-                      />
+                  <Link to={`/read/${work._id}`} className="relative w-full aspect-[2/3] rounded-lg overflow-hidden shadow-md bg-secondary/40 flex items-center justify-center">
+                    {work.coverImage && !failedImages[work._id] ? (
+                      <>
+                        <img
+                          src={work.coverImage}
+                          alt=""
+                          aria-hidden="true"
+                          className="absolute inset-0 w-full h-full object-cover blur-md opacity-30 scale-110 pointer-events-none select-none"
+                        />
+                        <img
+                          src={work.coverImage}
+                          alt={work.title}
+                          onError={() => handleImageError(work._id)}
+                          className="relative z-10 w-full h-full object-contain group-hover:scale-105 transition-all duration-300"
+                        />
+                      </>
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-indigo-950 via-slate-900 to-zinc-950 flex flex-col items-center justify-between p-3 text-center group-hover:brightness-75 transition-all duration-300">
-                        <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary mt-3">
-                          <BookOpen className="w-4 h-4" />
+                      <div className="w-full h-full bg-gradient-to-br from-indigo-950 via-slate-900 to-zinc-950 flex flex-col items-center justify-between p-3.5 text-center group-hover:brightness-90 transition-all duration-300 select-none">
+                        <div className="w-9 h-9 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center text-primary mt-2 shadow-sm">
+                          {work.contentType === 'POEM' ? (
+                            <Feather className="w-4.5 h-4.5" />
+                          ) : work.contentType === 'BLOG' ? (
+                            <PenTool className="w-4.5 h-4.5" />
+                          ) : work.contentType === 'DIARY' ? (
+                            <Book className="w-4.5 h-4.5" />
+                          ) : (
+                            <BookOpen className="w-4.5 h-4.5" />
+                          )}
                         </div>
-                        <span className="text-[10px] font-extrabold font-display text-white/90 leading-tight line-clamp-4 px-1 my-auto">
+                        <span className="text-xs font-medium font-display text-white/95 leading-snug line-clamp-4 px-1 my-auto">
                           {work.title}
                         </span>
-                        <span className="text-[9px] font-bold text-primary/70 uppercase tracking-wider mb-2">
-                          {work.contentType || 'STORY'}
-                        </span>
+                        <div className="flex items-center gap-1 mb-1">
+                          <span className="text-[9px] font-medium text-primary/80 uppercase tracking-widest bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full">
+                            {work.contentType || 'STORY'}
+                          </span>
+                        </div>
                       </div>
                     )}
                     {/* Hover overlay */}
-                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-3">
-                      <span className="text-xs font-bold text-white bg-black/60 rounded-md px-3 py-1">Read</span>
+                    <div className="absolute inset-0 z-20 opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-3 bg-black/40">
+                      <span className="text-xs font-medium text-white bg-black/60 rounded-md px-3 py-1 backdrop-blur-sm">Read</span>
                     </div>
                   </Link>
 
                   {/* Title & Author */}
                   <div className="space-y-0.5 px-0.5">
                     <Link to={`/read/${work._id}`}>
-                      <p className="text-xs font-bold text-foreground leading-tight line-clamp-2 group-hover:text-primary transition-colors">
+                      <p className="text-xs font-medium text-foreground leading-tight line-clamp-2 group-hover:text-primary transition-colors">
                         {work.title}
                       </p>
                     </Link>
-                    <p className="text-[11px] text-muted-foreground truncate">
+                    <p className="text-[11px] text-muted-foreground truncate font-normal">
                       {work.author?.penName || work.author?.name}
                     </p>
                   </div>
@@ -328,13 +366,13 @@ export default function WritingStudioPage() {
                 size="sm"
                 disabled={explorePage <= 1 || isExploreLoading}
                 onClick={() => setExplorePage((p) => Math.max(1, p - 1))}
-                className="rounded-xl text-xs font-semibold gap-1"
+                className="rounded-xl text-xs font-medium gap-1"
                 title="Previous page"
               >
                 <ChevronLeft className="w-4 h-4" /> Previous
               </Button>
 
-              <span className="text-xs font-bold text-muted-foreground">
+              <span className="text-xs font-medium text-muted-foreground">
                 Page {explorePage} of {exploreTotalPages} ({exploreTotalWorks} writings)
               </span>
 
@@ -343,7 +381,7 @@ export default function WritingStudioPage() {
                 size="sm"
                 disabled={explorePage >= exploreTotalPages || isExploreLoading}
                 onClick={() => setExplorePage((p) => Math.min(exploreTotalPages, p + 1))}
-                className="rounded-xl text-xs font-semibold gap-1"
+                className="rounded-xl text-xs font-medium gap-1"
                 title="Next page"
               >
                 Next <ChevronRight className="w-4 h-4" />
@@ -363,8 +401,8 @@ export default function WritingStudioPage() {
                 <BookOpen className="w-5 h-5" />
               </div>
               <div>
-                <span className="block text-lg font-bold text-foreground leading-none">{myWorks.length}</span>
-                <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Total Works</span>
+                <span className="block text-lg font-medium text-foreground leading-none">{myWorks.length}</span>
+                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Total Works</span>
               </div>
             </Card>
 
@@ -373,8 +411,8 @@ export default function WritingStudioPage() {
                 <Feather className="w-5 h-5" />
               </div>
               <div>
-                <span className="block text-lg font-bold text-foreground leading-none">{totalWords.toLocaleString()}</span>
-                <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Words Written</span>
+                <span className="block text-lg font-medium text-foreground leading-none">{totalWords.toLocaleString()}</span>
+                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Words Written</span>
               </div>
             </Card>
 
@@ -383,8 +421,8 @@ export default function WritingStudioPage() {
                 <Eye className="w-5 h-5" />
               </div>
               <div>
-                <span className="block text-lg font-bold text-foreground leading-none">{totalReads}</span>
-                <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Total Reads</span>
+                <span className="block text-lg font-medium text-foreground leading-none">{totalReads}</span>
+                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Total Reads</span>
               </div>
             </Card>
 
@@ -393,8 +431,8 @@ export default function WritingStudioPage() {
                 <Heart className="w-5 h-5" />
               </div>
               <div>
-                <span className="block text-lg font-bold text-foreground leading-none">{totalLikes}</span>
-                <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Total Likes</span>
+                <span className="block text-lg font-medium text-foreground leading-none">{totalLikes}</span>
+                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Total Likes</span>
               </div>
             </Card>
           </div>
@@ -412,7 +450,7 @@ export default function WritingStudioPage() {
                 key={tab.id}
                 onClick={() => setMyFilterType(tab.id)}
                 className={cn(
-                  'px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 shrink-0',
+                  'px-4 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 shrink-0',
                   myFilterType === tab.id
                     ? 'bg-primary text-primary-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
@@ -433,51 +471,70 @@ export default function WritingStudioPage() {
           ) : filteredMyWorks.length === 0 ? (
             <div className="text-center py-20 bg-secondary/10 rounded-2xl border border-dashed border-glass-border p-8 text-muted-foreground space-y-3">
               <Feather className="w-10 h-10 mx-auto text-muted-foreground/50" />
-              <p className="font-bold text-base text-foreground">No writings found</p>
+              <p className="font-medium text-base text-foreground">No writings found</p>
               <p className="text-xs text-muted-foreground max-w-sm mx-auto">
                 You haven't written any {myFilterType === 'ALL' ? 'works' : myFilterType.toLowerCase() + 's'} yet.
               </p>
               <Link
                 to="/studio/write"
-                className="inline-flex items-center gap-1 bg-primary text-primary-foreground text-xs font-bold px-4 py-2 rounded-xl cursor-pointer mt-2"
+                className="inline-flex items-center gap-1 bg-primary text-primary-foreground text-xs font-medium px-4 py-2 rounded-xl cursor-pointer mt-2"
                 title="Start writing a new story or poem"
               >
                 <Plus className="w-4 h-4" /> Start New Writing
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-2.5 sm:gap-3">
               {filteredMyWorks.map((work) => (
                 <div key={work._id} className="flex flex-col gap-2 group">
                   {/* Book Cover */}
-                  <div className="relative w-full aspect-[3/4] rounded-lg overflow-hidden shadow-md bg-secondary/30">
-                    <Link to={`/read/${work._id}`} className="block w-full h-full">
-                      {work.coverImage ? (
-                        <img
-                          src={work.coverImage}
-                          alt={work.title}
-                          className="w-full h-full object-cover group-hover:brightness-75 transition-all duration-300"
-                        />
+                  <div className="relative w-full aspect-[2/3] rounded-lg overflow-hidden shadow-md bg-secondary/40 flex items-center justify-center">
+                    <Link to={`/read/${work._id}`} className="block w-full h-full relative">
+                      {work.coverImage && !failedImages[work._id] ? (
+                        <>
+                          <img
+                            src={work.coverImage}
+                            alt=""
+                            aria-hidden="true"
+                            className="absolute inset-0 w-full h-full object-cover blur-md opacity-30 scale-110 pointer-events-none select-none"
+                          />
+                          <img
+                            src={work.coverImage}
+                            alt={work.title}
+                            onError={() => handleImageError(work._id)}
+                            className="relative z-10 w-full h-full object-contain group-hover:scale-105 transition-all duration-300"
+                          />
+                        </>
                       ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-indigo-950 via-slate-900 to-zinc-950 flex flex-col items-center justify-between p-3 text-center group-hover:brightness-75 transition-all duration-300">
-                          <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary mt-3">
-                            <BookOpen className="w-4 h-4" />
+                        <div className="w-full h-full bg-gradient-to-br from-indigo-950 via-slate-900 to-zinc-950 flex flex-col items-center justify-between p-3.5 text-center group-hover:brightness-90 transition-all duration-300 select-none">
+                          <div className="w-9 h-9 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center text-primary mt-2 shadow-sm">
+                            {work.contentType === 'POEM' ? (
+                              <Feather className="w-4.5 h-4.5" />
+                            ) : work.contentType === 'BLOG' ? (
+                              <PenTool className="w-4.5 h-4.5" />
+                            ) : work.contentType === 'DIARY' ? (
+                              <Book className="w-4.5 h-4.5" />
+                            ) : (
+                              <BookOpen className="w-4.5 h-4.5" />
+                            )}
                           </div>
-                          <span className="text-[10px] font-extrabold font-display text-white/90 leading-tight line-clamp-4 px-1 my-auto">
+                          <span className="text-xs font-medium font-display text-white/95 leading-snug line-clamp-4 px-1 my-auto">
                             {work.title}
                           </span>
-                          <span className="text-[9px] font-bold text-primary/70 uppercase tracking-wider mb-2">
-                            {work.contentType || 'STORY'}
-                          </span>
+                          <div className="flex items-center gap-1 mb-1">
+                            <span className="text-[9px] font-medium text-primary/80 uppercase tracking-widest bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full">
+                              {work.contentType || 'STORY'}
+                            </span>
+                          </div>
                         </div>
                       )}
                     </Link>
                     {/* Status badge on cover */}
-                    <div className="absolute top-2 left-2">
+                    <div className="absolute top-2 left-2 z-20 pointer-events-none">
                       {work.status === 'PUBLISHED' ? (
-                        <span className="text-[9px] font-bold text-white bg-emerald-600/80 rounded px-1.5 py-0.5">Live</span>
+                        <span className="text-[9px] font-medium text-white bg-emerald-600/80 rounded px-1.5 py-0.5 backdrop-blur-sm">Live</span>
                       ) : (
-                        <span className="text-[9px] font-bold text-white bg-amber-600/80 rounded px-1.5 py-0.5">Draft</span>
+                        <span className="text-[9px] font-medium text-white bg-amber-600/80 rounded px-1.5 py-0.5 backdrop-blur-sm">Draft</span>
                       )}
                     </div>
                   </div>
@@ -485,11 +542,11 @@ export default function WritingStudioPage() {
                   {/* Title only — Edit/Delete from Profile */}
                   <div className="space-y-0.5 px-0.5">
                     <Link to={`/read/${work._id}`}>
-                      <p className="text-xs font-bold text-foreground leading-tight line-clamp-2 group-hover:text-primary transition-colors">
+                      <p className="text-xs font-medium text-foreground leading-tight line-clamp-2 group-hover:text-primary transition-colors">
                         {work.title}
                       </p>
                     </Link>
-                    <p className="text-[11px] text-muted-foreground">
+                    <p className="text-[11px] text-muted-foreground font-normal">
                       {work.chapters?.length || 0} ch • {work.stats?.totalWordCount || 0}w
                     </p>
                   </div>

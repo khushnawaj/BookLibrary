@@ -273,6 +273,7 @@ export default function ProfilePage() {
   const handleFileChange = async (e) => {
     if (e.target.files && e.target.files.length > 0) {
       const selectedFile = e.target.files[0];
+      e.target.value = '';
       if (!selectedFile.type.startsWith('image/')) {
         toast.error('Please select an image file');
         return;
@@ -280,12 +281,16 @@ export default function ProfilePage() {
       try {
         setIsUploading(true);
         const res = await uploadService.uploadAvatar(selectedFile);
-        const imageUrl = res.data.data.secureUrl;
-        setAvatar(imageUrl);
-        toast.success('Avatar uploaded successfully!');
+        const imageUrl = res.data?.data?.secureUrl || res.data?.data?.url || res.data?.secureUrl || res.data?.url;
+        if (imageUrl) {
+          setAvatar(imageUrl);
+          toast.success('Avatar uploaded successfully!');
+        } else {
+          toast.error('Could not parse avatar image URL');
+        }
       } catch (error) {
         console.error(error);
-        toast.error('Failed to upload avatar');
+        toast.error(error.response?.data?.message || 'Failed to upload avatar');
       } finally {
         setIsUploading(false);
       }
@@ -306,7 +311,11 @@ export default function ProfilePage() {
       setIsUploadingBanner(true);
       // Step 1: Upload the image file
       const uploadRes = await uploadService.uploadAvatar(selectedFile);
-      const imageUrl = uploadRes.data.data.secureUrl;
+      const imageUrl = uploadRes.data?.data?.secureUrl || uploadRes.data?.data?.url || uploadRes.data?.secureUrl || uploadRes.data?.url;
+      if (!imageUrl) {
+        toast.error('Could not parse cover banner image URL');
+        return;
+      }
       // Step 2: Immediately persist to server
       const saveRes = await dispatch(
         updateUserProfile({
@@ -324,7 +333,7 @@ export default function ProfilePage() {
       toast.success('Cover photo updated!');
     } catch (error) {
       console.error(error);
-      toast.error('Failed to update cover photo');
+      toast.error(error.response?.data?.message || 'Failed to update cover photo');
     } finally {
       setIsUploadingBanner(false);
     }

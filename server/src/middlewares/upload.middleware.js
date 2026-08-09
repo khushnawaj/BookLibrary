@@ -29,18 +29,18 @@ const documentFileFilter = (req, file, cb) => {
   }
 };
 
-// Middleware for book cover upload to Cloudinary
+// Middleware for book cover upload to Cloudinary / local storage
 const uploadBookCover = multer({
   storage: getCloudinaryStorage('covers'),
   fileFilter: imageFileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
 });
 
-// Middleware for avatar upload to Cloudinary
+// Middleware for avatar & banner cover upload to Cloudinary / local storage
 const uploadAvatar = multer({
   storage: getCloudinaryStorage('avatars'),
   fileFilter: imageFileFilter,
-  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB limit
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
 });
 
 // Middleware for document import to memory

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { 
   Bell, Check, Inbox, MessageSquare, Clock, Share2, 
-  HelpCircle, Lightbulb, LifeBuoy, ShieldCheck, Loader2 
+  HelpCircle, Lightbulb, LifeBuoy, ShieldCheck, Loader2, X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -121,7 +121,7 @@ export function NotificationBell() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-            className="absolute right-0 mt-2 w-80 sm:w-96 bg-card/95 backdrop-blur-xl border border-glass-border rounded-2xl shadow-2xl z-50 overflow-hidden user-menu-dropdown"
+            className="fixed left-3 right-3 top-16 sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 w-auto sm:w-96 bg-card/95 backdrop-blur-xl border border-glass-border rounded-2xl shadow-2xl z-50 overflow-hidden user-menu-dropdown"
           >
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-glass-border bg-secondary/10">
@@ -129,19 +129,28 @@ export function NotificationBell() {
                 <Bell className="w-3.5 h-3.5 text-primary" />
                 Notifications
               </span>
-              {unreadCount > 0 && (
+              <div className="flex items-center gap-2">
+                {unreadCount > 0 && (
+                  <button
+                    onClick={handleMarkAllRead}
+                    className="text-[10px] font-bold text-primary hover:text-accent flex items-center gap-1 cursor-pointer transition-colors"
+                  >
+                    <Check className="w-3 h-3" />
+                    Mark all read
+                  </button>
+                )}
                 <button
-                  onClick={handleMarkAllRead}
-                  className="text-[10px] font-bold text-primary hover:text-accent flex items-center gap-1 cursor-pointer transition-colors"
+                  onClick={() => setIsOpen(false)}
+                  className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-secondary/40 sm:hidden cursor-pointer"
+                  aria-label="Close notifications"
                 >
-                  <Check className="w-3 h-3" />
-                  Mark all read
+                  <X className="w-4 h-4" />
                 </button>
-              )}
+              </div>
             </div>
 
             {/* List Container */}
-            <div className="max-h-[360px] overflow-y-auto divide-y divide-glass-border">
+            <div className="max-h-[70vh] sm:max-h-[360px] overflow-y-auto divide-y divide-glass-border">
               {status === 'loading' && notifications.length === 0 ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="w-6 h-6 text-primary animate-spin" />

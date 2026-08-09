@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'react-hot-toast';
 import { CommentSection } from './CommentSection';
 import { Modal } from '@/components/ui/modal';
+import { useConfirm } from '@/components/common/ConfirmDialog';
 
 const VISIBILITY_ICON = {
   PUBLIC:    Globe,
@@ -135,6 +136,7 @@ export function PostCard({ post, onDelete, onUpdate }) {
   // Inline editing states
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(post.content);
+  const [editVisibility, setEditVisibility] = useState(post.visibility || 'PUBLIC');
   const [isUpdating, setIsUpdating] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
 
@@ -302,10 +304,16 @@ export function PostCard({ post, onDelete, onUpdate }) {
     window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${window.location.origin}/post/${post._id}`)}`, '_blank');
   };
 
+  const confirm = useConfirm();
+
   const handleDelete = async () => {
-    if (!window.confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
-      return;
-    }
+    const isConfirmed = await confirm({
+      title: 'Delete Post',
+      message: 'Are you sure you want to delete this post? This action cannot be undone.',
+      confirmText: 'Delete Post',
+      variant: 'destructive',
+    });
+    if (!isConfirmed) return;
     try {
       await postService.deletePost(post._id);
       dispatch(removePostFromFeed(post._id));
@@ -320,7 +328,10 @@ export function PostCard({ post, onDelete, onUpdate }) {
     if (!editContent.trim()) return;
     try {
       setIsUpdating(true);
-      const res = await postService.updatePost(post._id, { content: editContent.trim() });
+      const res = await postService.updatePost(post._id, {
+        content: editContent.trim(),
+        visibility: editVisibility
+      });
       
       // Update redux state
       dispatch(updatePostInFeed(res.data.data));
@@ -433,6 +444,25 @@ export function PostCard({ post, onDelete, onUpdate }) {
                 <span className="text-muted-foreground/60 whitespace-nowrap">
                   {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
                 </span>
+
+                {/* Bullet Separator */}
+                <span className="text-muted-foreground/40 select-none">•</span>
+
+                {/* Visibility Badge */}
+                <span
+                  className={cn(
+                    "inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border transition-colors",
+                    post.visibility === 'PRIVATE'
+                      ? "bg-rose-500/10 text-rose-500 border-rose-500/20"
+                      : post.visibility === 'FOLLOWERS'
+                      ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                      : "bg-secondary/40 text-muted-foreground border-glass-border/40"
+                  )}
+                  title={`Visibility: ${post.visibility === 'PRIVATE' ? 'Only Me (Private)' : post.visibility === 'FOLLOWERS' ? 'Followers Only' : 'Public'}`}
+                >
+                  <VisibilityIcon className="w-3 h-3 shrink-0" />
+                  <span>{post.visibility === 'PRIVATE' ? 'Only me' : post.visibility === 'FOLLOWERS' ? 'Followers' : 'Public'}</span>
+                </span>
               </div>
             </div>
           </div>
@@ -492,25 +522,43 @@ export function PostCard({ post, onDelete, onUpdate }) {
                 className="w-full min-h-[120px] rounded-xl border border-glass-border bg-secondary/15 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/45 transition-all text-foreground font-medium"
                 placeholder="What is on your mind?"
               />
-              <div className="flex gap-2 justify-end">
-                <button
-                  onClick={() => {
-                    setIsEditing(false);
-                    setEditContent(post.content);
-                  }}
-                  disabled={isUpdating}
-                  className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-secondary/30 text-foreground hover:bg-secondary/45 border border-glass-border/40 transition-all cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleUpdateSubmit}
-                  disabled={isUpdating || !editContent.trim() || (editContent.trim() ? editContent.trim().split(/\s+/).length : 0) > 10000}
-                  className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/95 transition-all flex items-center gap-1 cursor-pointer"
-                >
-                  {isUpdating && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                  Save Changes
-                </button>
+
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                {/* Visibility Selector when editing */}
+                <div className="flex items-center gap-1.5 text-xs">
+                  <span className="text-muted-foreground font-semibold">Visibility:</span>
+                  <select
+                    value={editVisibility}
+                    onChange={(e) => setEditVisibility(e.target.value)}
+                    className="bg-card border border-glass-border text-foreground text-xs font-semibold rounded-lg px-2.5 py-1 focus:outline-none cursor-pointer"
+                  >
+                    <option value="PUBLIC">Public</option>
+                    <option value="FOLLOWERS">Followers</option>
+                    <option value="PRIVATE">Only me (Private)</option>
+                  </select>
+                </div>
+
+                <div className="flex gap-2 justify-end">
+                  <button
+                    onClick={() => {
+                      setIsEditing(false);
+                      setEditContent(post.content);
+                      setEditVisibility(post.visibility || 'PUBLIC');
+                    }}
+                    disabled={isUpdating}
+                    className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-secondary/30 text-foreground hover:bg-secondary/45 border border-glass-border/40 transition-all cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleUpdateSubmit}
+                    disabled={isUpdating || !editContent.trim() || (editContent.trim() ? editContent.trim().split(/\s+/).length : 0) > 10000}
+                    className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/95 transition-all flex items-center gap-1 cursor-pointer"
+                  >
+                    {isUpdating && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    Save Changes
+                  </button>
+                </div>
               </div>
             </div>
           ) : (
