@@ -591,3 +591,59 @@ exports.deleteWorkComment = async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to delete comment.' });
   }
 };
+
+// @desc    Rate & submit feedback for a specific chapter
+// @route   POST /api/works/:id/chapters/:chapterId/rate
+// @access  Private
+exports.rateChapter = async (req, res) => {
+  try {
+    const { id, chapterId } = req.params;
+    const { rating, feedback } = req.body;
+    const userId = req.user._id || req.user.id;
+
+    const parsedRating = Number(rating);
+    if (!parsedRating || parsedRating < 1 || parsedRating > 5) {
+      return res.status(400).json({ success: false, message: 'Rating must be a number between 1 and 5 stars.' });
+    }
+
+    const work = await Work.findById(id);
+    if (!work) return res.status(404).json({ success: false, message: 'Work not found.' });
+
+    const chapter = work.chapters.id(chapterId);
+    if (!chapter) return res.status(404).json({ success: false, message: 'Chapter not found.' });
+
+    if (!chapter.ratings) chapter.ratings = [];
+    const existingIndex = chapter.ratings.findIndex(r => r.user.toString() === userId.toString());
+
+    if (existingIndex !== -1) {
+      chapter.ratings[existingIndex].rating = parsedRating;
+      if (feedback !== undefined) chapter.ratings[existingIndex].feedback = feedback.trim();
+    } else {
+      chapter.ratings.push({
+        user: userId,
+        rating: parsedRating,
+        feedback: feedback ? feedback.trim() : '',
+      });
+    }
+
+    // Recalculate average rating for chapter
+    const totalStars = chapter.ratings.reduce((acc, r) => acc + r.rating, 0);
+    chapter.ratingsCount = chapter.ratings.length;
+    chapter.averageRating = Number((totalStars / chapter.ratingsCount).toFixed(1));
+
+    await work.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Chapter rating & feedback submitted!',
+      data: {
+        userRating: parsedRating,
+        averageRating: chapter.averageRating,
+        ratingsCount: chapter.ratingsCount,
+      },
+    });
+  } catch (error) {
+    console.error('Error rating chapter:', error);
+    res.status(500).json({ success: false, message: 'Failed to submit chapter rating.' });
+  }
+};

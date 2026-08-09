@@ -38,7 +38,7 @@ const FEATURES = [
   },
   {
     icon: BookOpen,
-    title: 'Pratilipi / Medium Reader View',
+    title: 'Immersive Reader Mode',
     description: 'Custom reader controls — toggle Serif/Sans typography, adjust text size, bookmark chapters, and like works.',
     color: 'from-purple-500 to-violet-600',
     bg: 'bg-purple-500/10',

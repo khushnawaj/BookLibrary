@@ -28,7 +28,7 @@ const LANGUAGES = [
   { id: 'Hinglish', label: 'Hinglish' },
 ];
 
-const PRATILIPI_CATEGORIES = [
+const WORK_CATEGORIES = [
   'Action & Adventure', 'Biography', 'Children', 'Creative Non-Fiction',
   'Crime', 'Fantasy', 'Historical', 'Horror', 'Humour', 'Motivational',
   'Romance', 'Satire', 'Sci-Fi', 'Short Story', 'Thriller', 'Young Adult'
@@ -44,7 +44,7 @@ export default function WritingEditorPage() {
   // Storage key for localStorage auto-save draft
   const draftStorageKey = `shelfforge_manuscript_draft_${id || 'new'}`;
 
-  // Pratilipi Publishing Mode: 'NEW_POST' | 'EXISTING_POST'
+  // Publishing Mode: 'NEW_POST' | 'EXISTING_POST'
   const [publishMode, setPublishMode] = useState('NEW_POST');
   const [existingWorks, setExistingWorks] = useState([]);
   const [selectedExistingWorkId, setSelectedExistingWorkId] = useState('');
@@ -90,7 +90,7 @@ export default function WritingEditorPage() {
   const [isMetadataModalOpen, setIsMetadataModalOpen] = useState(false);
   const [isImagePreviewModalOpen, setIsImagePreviewModalOpen] = useState(false);
 
-  // Fetch author's existing works for Pratilipi append mode
+  // Fetch author's existing works for append mode
   useEffect(() => {
     if (!user) return;
     const fetchUserWorks = async () => {
@@ -566,7 +566,7 @@ export default function WritingEditorPage() {
 
       let finalWorkId = id;
 
-      // ── PRATILIPI MODE 1: APPEND CHAPTER TO AN EXISTING BOOK ──
+      // ── MODE 1: APPEND CHAPTER TO AN EXISTING BOOK ──
       if (publishMode === 'EXISTING_POST' && selectedExistingWorkId) {
         for (const ch of chaptersList) {
           if (ch.content.trim()) {
@@ -579,7 +579,7 @@ export default function WritingEditorPage() {
         finalWorkId = selectedExistingWorkId;
         toast.success(`Appended new chapter(s) to existing book!`);
       } else if (id) {
-        // ── PRATILIPI MODE 2: UPDATE EXISTING STANDALONE BOOK ──
+        // ── MODE 2: UPDATE EXISTING STANDALONE BOOK ──
         await workService.updateWork(id, {
           title,
           contentType,
@@ -954,7 +954,7 @@ export default function WritingEditorPage() {
           </button>
         </div>
 
-        {/* PRATILIPI / MEDIUM EDITORIAL PAPER CANVAS CARD */}
+        {/* EDITORIAL PAPER CANVAS CARD */}
         <Card className="border border-glass-border bg-card shadow-2xl rounded-xl p-6 sm:p-12 space-y-6 relative min-h-[600px]">
           {/* CHAPTER TITLE (BALANCED 24PX/26PX TYPOGRAPHY) */}
           <div className="border-b border-glass-border/40 pb-4 mb-4">
@@ -1149,12 +1149,12 @@ export default function WritingEditorPage() {
             )}
           </div>
 
-          {/* RIGHT COLUMN: Pratilipi Mode Choice, Title, Summary, Format Selection, Categories */}
+          {/* RIGHT COLUMN: Mode Choice, Title, Summary, Format Selection, Categories */}
           <div className="md:col-span-2 space-y-4">
-            {/* PRATILIPI POST DESTINATION CHOICE */}
+            {/* POST DESTINATION CHOICE */}
             <div className="p-3 bg-secondary/30 rounded-lg border border-glass-border space-y-2">
               <Label className="text-xs font-extrabold uppercase tracking-wider text-primary block">
-                Publishing Destination / Mode (Pratilipi Style)
+                Publishing Destination / Mode
               </Label>
               <div className="grid grid-cols-2 gap-2">
                 <button
@@ -1263,7 +1263,7 @@ export default function WritingEditorPage() {
             <div className="space-y-2">
               <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">Categories & Genres</Label>
               <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto p-2 bg-secondary/15 rounded-md border border-glass-border/40">
-                {PRATILIPI_CATEGORIES.map((cat) => {
+                {WORK_CATEGORIES.map((cat) => {
                   const isSelected = selectedCategories.includes(cat);
                   return (
                     <button

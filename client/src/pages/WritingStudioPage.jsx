@@ -15,6 +15,7 @@ import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { cn } from '@/lib/utils';
 import { useConfirm } from '@/components/common/ConfirmDialog';
+import { CreativeWorkCard } from '@/components/writing/CreativeWorkCard';
 
 // Languages restricted strictly to English, Hindi, and Hinglish
 const LANGUAGES = [
@@ -293,67 +294,9 @@ export default function WritingStudioPage() {
               <p className="text-xs text-muted-foreground">Be the first author to publish a work in this language!</p>
             </div>
           ) : (
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-2.5 sm:gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
               {exploreWorks.map((work) => (
-                <div key={work._id} className="flex flex-col gap-2 group cursor-pointer">
-                  {/* Book Cover */}
-                  <Link to={`/read/${work._id}`} className="relative w-full aspect-[2/3] rounded-lg overflow-hidden shadow-md bg-secondary/40 flex items-center justify-center">
-                    {work.coverImage && !failedImages[work._id] ? (
-                      <>
-                        <img
-                          src={work.coverImage}
-                          alt=""
-                          aria-hidden="true"
-                          className="absolute inset-0 w-full h-full object-cover blur-md opacity-30 scale-110 pointer-events-none select-none"
-                        />
-                        <img
-                          src={work.coverImage}
-                          alt={work.title}
-                          onError={() => handleImageError(work._id)}
-                          className="relative z-10 w-full h-full object-contain group-hover:scale-105 transition-all duration-300"
-                        />
-                      </>
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-indigo-950 via-slate-900 to-zinc-950 flex flex-col items-center justify-between p-3.5 text-center group-hover:brightness-90 transition-all duration-300 select-none">
-                        <div className="w-9 h-9 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center text-primary mt-2 shadow-sm">
-                          {work.contentType === 'POEM' ? (
-                            <Feather className="w-4.5 h-4.5" />
-                          ) : work.contentType === 'BLOG' ? (
-                            <PenTool className="w-4.5 h-4.5" />
-                          ) : work.contentType === 'DIARY' ? (
-                            <Book className="w-4.5 h-4.5" />
-                          ) : (
-                            <BookOpen className="w-4.5 h-4.5" />
-                          )}
-                        </div>
-                        <span className="text-xs font-medium font-display text-white/95 leading-snug line-clamp-4 px-1 my-auto">
-                          {work.title}
-                        </span>
-                        <div className="flex items-center gap-1 mb-1">
-                          <span className="text-[9px] font-medium text-primary/80 uppercase tracking-widest bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full">
-                            {work.contentType || 'STORY'}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                    {/* Hover overlay */}
-                    <div className="absolute inset-0 z-20 opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-3 bg-black/40">
-                      <span className="text-xs font-medium text-white bg-black/60 rounded-md px-3 py-1 backdrop-blur-sm">Read</span>
-                    </div>
-                  </Link>
-
-                  {/* Title & Author */}
-                  <div className="space-y-0.5 px-0.5">
-                    <Link to={`/read/${work._id}`}>
-                      <p className="text-xs font-medium text-foreground leading-tight line-clamp-2 group-hover:text-primary transition-colors">
-                        {work.title}
-                      </p>
-                    </Link>
-                    <p className="text-[11px] text-muted-foreground truncate font-normal">
-                      {work.author?.penName || work.author?.name}
-                    </p>
-                  </div>
-                </div>
+                <CreativeWorkCard key={work._id} work={work} />
               ))}
             </div>
           )}

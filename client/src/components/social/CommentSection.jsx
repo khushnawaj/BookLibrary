@@ -173,7 +173,7 @@ export function CommentSection({ postId }) {
             src={user?.avatar}
             name={user?.name}
             size="sm"
-            className="shrink-0 hidden sm:flex ring-1 ring-glass-border"
+            className="shrink-0 flex ring-1 ring-glass-border"
           />
           
           <div className="relative flex-1">

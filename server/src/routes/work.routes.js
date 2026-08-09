@@ -18,6 +18,7 @@ router.delete('/:id', authenticate, workController.deleteWork);
 router.post('/:id/chapters', authenticate, workController.addChapter);
 router.put('/:id/chapters/:chapterId', authenticate, workController.updateChapter);
 router.post('/:id/chapters/:chapterId/like', authenticate, workController.toggleLikeChapter);
+router.post('/:id/chapters/:chapterId/rate', authenticate, workController.rateChapter);
 
 // Work Likes
 router.post('/:id/like', authenticate, workController.toggleLikeWork);

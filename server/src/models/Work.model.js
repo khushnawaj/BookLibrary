@@ -1,5 +1,24 @@
 const mongoose = require('mongoose');
 
+const chapterRatingSchema = new mongoose.Schema({
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
+  rating: {
+    type: Number,
+    required: true,
+    min: 1,
+    max: 5,
+  },
+  feedback: {
+    type: String,
+    trim: true,
+    default: '',
+  },
+}, { timestamps: true });
+
 const chapterSchema = new mongoose.Schema({
   title: {
     type: String,
@@ -32,6 +51,15 @@ const chapterSchema = new mongoose.Schema({
     default: 0,
   },
   commentsCount: {
+    type: Number,
+    default: 0,
+  },
+  ratings: [chapterRatingSchema],
+  averageRating: {
+    type: Number,
+    default: 5.0,
+  },
+  ratingsCount: {
     type: Number,
     default: 0,
   },
