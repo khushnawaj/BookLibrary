@@ -191,11 +191,22 @@ const getUserPosts = asyncHandler(async (req, res) => {
 
   // Refine query if specific visibility filter is requested
   if (visibility && visibility !== 'ALL') {
-    if (visibility === 'PRIVATE' && isOwner) {
+    if (visibility === 'PRIVATE') {
+      if (!isOwner) {
+        return ApiResponse.success(res, {
+          message: 'User posts retrieved',
+          data: { posts: [], page: parsedPage, totalPages: 1, totalPosts: 0, hasNextPage: false, nextCursor: null }
+        });
+      }
       query.visibility = 'PRIVATE';
     } else if (visibility === 'FOLLOWERS') {
       if (isOwner || isFollowing) {
         query.visibility = 'FOLLOWERS';
+      } else {
+        return ApiResponse.success(res, {
+          message: 'User posts retrieved',
+          data: { posts: [], page: parsedPage, totalPages: 1, totalPosts: 0, hasNextPage: false, nextCursor: null }
+        });
       }
     } else if (visibility === 'PUBLIC') {
       query.visibility = 'PUBLIC';

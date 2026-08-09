@@ -107,6 +107,7 @@ export const router = createBrowserRouter([
           { path: ROUTES.WRITE_EDIT, element: <WritingEditorPage /> },
           { path: ROUTES.EXPLORE_WRITING, element: <WritingStudioPage /> },
           { path: ROUTES.READ_WORK, element: <ReadWorkPage /> },
+          { path: '/read/:id/chapter/:chapterId', element: <ReadWorkPage /> },
           { path: ROUTES.SETTINGS, element: <SettingsPage /> },
           { path: ROUTES.FEEDBACK, element: <FeedbackPage /> },
           {

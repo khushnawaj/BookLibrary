@@ -7,17 +7,24 @@ const { authenticate, optionalAuthenticate } = require('../middlewares/auth.midd
 router.get('/explore', optionalAuthenticate, workController.getExploreWorks);
 router.get('/user/:username', optionalAuthenticate, workController.getUserWorks);
 router.get('/:id', optionalAuthenticate, workController.getWorkById);
+router.get('/:id/comments', optionalAuthenticate, workController.getWorkComments);
 
 // Protected routes
 router.post('/', authenticate, workController.createWork);
 router.put('/:id', authenticate, workController.updateWork);
 router.delete('/:id', authenticate, workController.deleteWork);
 
-// Chapter management
+// Chapter management & Chapter likes
 router.post('/:id/chapters', authenticate, workController.addChapter);
 router.put('/:id/chapters/:chapterId', authenticate, workController.updateChapter);
+router.post('/:id/chapters/:chapterId/like', authenticate, workController.toggleLikeChapter);
 
-// Likes
+// Work Likes
 router.post('/:id/like', authenticate, workController.toggleLikeWork);
+
+// Comments management
+router.post('/:id/comments', authenticate, workController.addWorkComment);
+router.post('/:id/comments/:commentId/like', authenticate, workController.toggleLikeWorkComment);
+router.delete('/:id/comments/:commentId', authenticate, workController.deleteWorkComment);
 
 module.exports = router;

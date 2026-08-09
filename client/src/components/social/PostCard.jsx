@@ -764,20 +764,27 @@ export function PostCard({ post, onDelete, onUpdate }) {
             </>
           )}
 
-          {/* Hashtags */}
-          {post.hashtags?.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              {post.hashtags.map((tag) => (
-                <span
-                  key={tag}
-                  className="text-[11px] text-primary font-bold hover:underline cursor-pointer
-                             bg-primary/5 border border-primary/15 px-2 py-0.5 rounded-full transition-all hover:bg-primary/10"
-                >
-                  #{tag}
-                </span>
-              ))}
-            </div>
-          )}
+          {/* Extra Hashtags (Only render tags not already present in post content text) */}
+          {(() => {
+            const extraTags = (post.hashtags || []).filter((tag) => {
+              const regex = new RegExp(`#${tag}\\b`, 'i');
+              return !regex.test(post.content || '');
+            });
+            if (extraTags.length === 0) return null;
+            return (
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {extraTags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="text-[11px] text-primary font-bold hover:underline cursor-pointer
+                               bg-primary/5 border border-primary/15 px-2 py-0.5 rounded-full transition-all hover:bg-primary/10"
+                  >
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            );
+          })()}
 
           {/* Images Grid */}
           {!post.poetryBg && post.images?.length > 0 && (

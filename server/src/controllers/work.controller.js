@@ -1,4 +1,4 @@
-const { Work, User } = require('../models');
+const { Work, User, Comment } = require('../models');
 
 // @desc    Create a new creative work (Story, Poem, Blog, Diary)
 // @route   POST /api/works
@@ -142,6 +142,21 @@ exports.getWorkById = async (req, res) => {
         success: false,
         message: 'Work not found.',
       });
+    }
+
+    // Privacy check: only author can view DRAFT or PRIVATE works
+    const isAuthor = req.user && (
+      (req.user._id && req.user._id.toString() === work.author._id.toString()) ||
+      (req.user.id && req.user.id.toString() === work.author._id.toString())
+    );
+
+    if (!isAuthor) {
+      if (work.status === 'DRAFT') {
+        return res.status(403).json({ success: false, message: 'This manuscript is a draft and not published.' });
+      }
+      if (work.visibility === 'PRIVATE') {
+        return res.status(403).json({ success: false, message: 'This manuscript is private.' });
+      }
     }
 
     // Increment view count atomically
@@ -365,5 +380,214 @@ exports.toggleLikeWork = async (req, res) => {
   } catch (error) {
     console.error('Error toggling like:', error);
     res.status(500).json({ success: false, message: 'Failed to toggle like.' });
+  }
+};
+
+// @desc    Toggle like on a specific chapter
+// @route   POST /api/works/:id/chapters/:chapterId/like
+// @access  Private
+exports.toggleLikeChapter = async (req, res) => {
+  try {
+    const { id, chapterId } = req.params;
+    const userId = req.user._id || req.user.id;
+
+    const work = await Work.findById(id);
+    if (!work) return res.status(404).json({ success: false, message: 'Work not found.' });
+
+    const chapter = work.chapters.id(chapterId);
+    if (!chapter) return res.status(404).json({ success: false, message: 'Chapter not found.' });
+
+    if (!chapter.likes) chapter.likes = [];
+    const index = chapter.likes.findIndex(u => u.toString() === userId.toString());
+    let isLiked = false;
+
+    if (index === -1) {
+      chapter.likes.push(userId);
+      isLiked = true;
+    } else {
+      chapter.likes.splice(index, 1);
+      isLiked = false;
+    }
+
+    chapter.likesCount = chapter.likes.length;
+    await work.save();
+
+    res.status(200).json({
+      success: true,
+      data: {
+        isLiked,
+        likesCount: chapter.likesCount,
+      },
+    });
+  } catch (error) {
+    console.error('Error toggling chapter like:', error);
+    res.status(500).json({ success: false, message: 'Failed to toggle chapter like.' });
+  }
+};
+
+// @desc    Get comments for a work (or specific chapter)
+// @route   GET /api/works/:id/comments
+// @access  Public
+exports.getWorkComments = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { chapterId } = req.query;
+
+    const filter = { work: id };
+    if (chapterId) {
+      filter.chapterId = chapterId;
+    } else {
+      filter.chapterId = null; // overall book comments
+    }
+
+    const comments = await Comment.find(filter)
+      .populate('user', 'name username avatar penName role')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const currentUserId = req.user ? (req.user._id || req.user.id).toString() : null;
+
+    const augmentedComments = comments.map(c => {
+      const likesList = c.likes || [];
+      const isLiked = currentUserId ? likesList.some(l => l.toString() === currentUserId) : false;
+      return {
+        ...c,
+        isLiked,
+        likesCount: c.likesCount || likesList.length,
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      data: augmentedComments,
+    });
+  } catch (error) {
+    console.error('Error fetching work comments:', error);
+    res.status(500).json({ success: false, message: 'Failed to load comments.' });
+  }
+};
+
+// @desc    Add comment / reply to a work or chapter
+// @route   POST /api/works/:id/comments
+// @access  Private
+exports.addWorkComment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { content, parentComment, chapterId } = req.body;
+    const userId = req.user._id || req.user.id;
+
+    if (!content || !content.trim()) {
+      return res.status(400).json({ success: false, message: 'Comment content is required.' });
+    }
+
+    const work = await Work.findById(id);
+    if (!work) return res.status(404).json({ success: false, message: 'Work not found.' });
+
+    const comment = await Comment.create({
+      user: userId,
+      work: id,
+      chapterId: chapterId || null,
+      parentComment: parentComment || null,
+      content: content.trim(),
+    });
+
+    // Update comment counters
+    if (chapterId) {
+      const ch = work.chapters.id(chapterId);
+      if (ch) {
+        ch.commentsCount = (ch.commentsCount || 0) + 1;
+        await work.save();
+      }
+    }
+
+    const populatedComment = await Comment.findById(comment._id)
+      .populate('user', 'name username avatar penName role')
+      .lean();
+
+    res.status(201).json({
+      success: true,
+      data: {
+        ...populatedComment,
+        isLiked: false,
+        likesCount: 0,
+      },
+    });
+  } catch (error) {
+    console.error('Error adding work comment:', error);
+    res.status(500).json({ success: false, message: 'Failed to add comment.' });
+  }
+};
+
+// @desc    Toggle like on a comment (works for reader & owner)
+// @route   POST /api/works/:id/comments/:commentId/like
+// @access  Private
+exports.toggleLikeWorkComment = async (req, res) => {
+  try {
+    const { commentId } = req.params;
+    const userId = req.user._id || req.user.id;
+
+    const comment = await Comment.findById(commentId);
+    if (!comment) return res.status(404).json({ success: false, message: 'Comment not found.' });
+
+    if (!comment.likes) comment.likes = [];
+    const index = comment.likes.findIndex(u => u.toString() === userId.toString());
+    let isLiked = false;
+
+    if (index === -1) {
+      comment.likes.push(userId);
+      isLiked = true;
+    } else {
+      comment.likes.splice(index, 1);
+      isLiked = false;
+    }
+
+    comment.likesCount = comment.likes.length;
+    await comment.save();
+
+    res.status(200).json({
+      success: true,
+      data: {
+        isLiked,
+        likesCount: comment.likesCount,
+      },
+    });
+  } catch (error) {
+    console.error('Error toggling comment like:', error);
+    res.status(500).json({ success: false, message: 'Failed to toggle comment like.' });
+  }
+};
+
+// @desc    Delete a comment (Allowed for Comment Author OR Work Owner)
+// @route   DELETE /api/works/:id/comments/:commentId
+// @access  Private
+exports.deleteWorkComment = async (req, res) => {
+  try {
+    const { id, commentId } = req.params;
+    const userId = (req.user._id || req.user.id).toString();
+
+    const work = await Work.findById(id);
+    if (!work) return res.status(404).json({ success: false, message: 'Work not found.' });
+
+    const comment = await Comment.findById(commentId);
+    if (!comment) return res.status(404).json({ success: false, message: 'Comment not found.' });
+
+    const isCommentAuthor = comment.user.toString() === userId;
+    const isWorkOwner = work.author.toString() === userId;
+
+    if (!isCommentAuthor && !isWorkOwner) {
+      return res.status(403).json({ success: false, message: 'Not authorized to delete this comment.' });
+    }
+
+    await Comment.findByIdAndDelete(commentId);
+    // Delete nested replies to this comment
+    await Comment.deleteMany({ parentComment: commentId });
+
+    res.status(200).json({
+      success: true,
+      message: 'Comment deleted successfully.',
+    });
+  } catch (error) {
+    console.error('Error deleting work comment:', error);
+    res.status(500).json({ success: false, message: 'Failed to delete comment.' });
   }
 };

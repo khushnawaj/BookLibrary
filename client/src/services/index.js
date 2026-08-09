@@ -123,5 +123,10 @@ export const workService = {
   deleteWork: (id) => api.delete(`/works/${id}`),
   addChapter: (id, data) => api.post(`/works/${id}/chapters`, data),
   updateChapter: (id, chapterId, data) => api.put(`/works/${id}/chapters/${chapterId}`, data),
+  toggleLikeChapter: (id, chapterId) => api.post(`/works/${id}/chapters/${chapterId}/like`),
   toggleLikeWork: (id) => api.post(`/works/${id}/like`),
+  getComments: (id, params) => api.get(`/works/${id}/comments`, { params }),
+  addComment: (id, data) => api.post(`/works/${id}/comments`, data),
+  toggleLikeComment: (id, commentId) => api.post(`/works/${id}/comments/${commentId}/like`),
+  deleteComment: (id, commentId) => api.delete(`/works/${id}/comments/${commentId}`),
 };

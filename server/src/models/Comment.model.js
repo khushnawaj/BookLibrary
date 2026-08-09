@@ -11,14 +11,23 @@ const commentSchema = new mongoose.Schema(
     post: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Post',
-      required: true,
+      index: true,
+    },
+    work: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Work',
+      index: true,
+    },
+    chapterId: {
+      type: mongoose.Schema.Types.ObjectId,
+      default: null,
       index: true,
     },
     content: {
       type: String,
       required: true,
       trim: true,
-      maxlength: 1000,
+      maxlength: 2000,
     },
     parentComment: {
       type: mongoose.Schema.Types.ObjectId,
@@ -26,6 +35,10 @@ const commentSchema = new mongoose.Schema(
       default: null,
       index: true,
     },
+    likes: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    }],
     likesCount: {
       type: Number,
       default: 0,
@@ -37,5 +50,6 @@ const commentSchema = new mongoose.Schema(
 );
 
 commentSchema.index({ post: 1, createdAt: 1 });
+commentSchema.index({ work: 1, chapterId: 1, createdAt: 1 });
 
 module.exports = mongoose.model('Comment', commentSchema);
