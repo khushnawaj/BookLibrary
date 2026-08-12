@@ -11,15 +11,21 @@ import {
   Bold, Italic, Strikethrough, Code, Quote, Heading3,
   Sparkles, Loader2, BookOpen, Feather, Lock, Globe, FileText,
   Image as ImageIcon, Upload, Languages, Users, Send, PenTool, Book,
-  ChevronLeft, Trash2, RefreshCw, Eye, X, Settings2, CheckCircle2,
+  ChevronLeft, Trash2, RefreshCw, Eye, EyeOff, X, Settings2, CheckCircle2,
   Maximize2, Check, SlidersHorizontal, Plus, ToggleLeft, ToggleRight,
-  Layers, FolderPlus, BookMarked, Edit3
+  Layers, FolderPlus, BookMarked, Edit3, MoreVertical, Edit2, ArrowLeft, ArrowRight
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { workService, uploadService } from '@/services';
 import { cn } from '@/lib/utils';
 import { format as formatDate } from 'date-fns';
 import { useConfirm } from '@/components/common/ConfirmDialog';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
 
 // Languages restricted strictly to English, Hindi, and Hinglish
 const LANGUAGES = [
@@ -183,6 +189,60 @@ export default function WritingEditorPage() {
     toast.success('Chapter removed');
   };
 
+  // Toggle chapter published vs draft status (Unpublish/Publish)
+  const toggleChapterStatus = async (indexToToggle, e) => {
+    if (e) e.stopPropagation();
+    const targetChapter = chaptersList[indexToToggle];
+    if (!targetChapter) return;
+
+    const newStatus = targetChapter.status === 'DRAFT' ? 'PUBLISHED' : 'DRAFT';
+
+    if (id && targetChapter._id) {
+      try {
+        await workService.updateChapter(id, targetChapter._id, { status: newStatus });
+      } catch (err) {
+        console.error('Failed to update chapter status:', err);
+      }
+    }
+
+    setChaptersList((prev) => {
+      const copy = [...prev];
+      if (copy[indexToToggle]) {
+        copy[indexToToggle] = { ...copy[indexToToggle], status: newStatus };
+      }
+      return copy;
+    });
+
+    toast.success(
+      newStatus === 'DRAFT'
+        ? `"${targetChapter.title || 'Chapter'}" unpublished (Saved to drafts)`
+        : `"${targetChapter.title || 'Chapter'}" set to Published!`
+    );
+  };
+
+  // Reorder chapter (Move Left/Up or Move Right/Down)
+  const moveChapter = (index, direction, e) => {
+    if (e) e.stopPropagation();
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= chaptersList.length) return;
+
+    setChaptersList((prev) => {
+      const copy = [...prev];
+      const temp = copy[index];
+      copy[index] = copy[targetIndex];
+      copy[targetIndex] = temp;
+      return copy;
+    });
+
+    if (activeChapterIndex === index) {
+      setActiveChapterIndex(targetIndex);
+    } else if (activeChapterIndex === targetIndex) {
+      setActiveChapterIndex(index);
+    }
+
+    toast.success(`Chapter moved ${direction < 0 ? 'earlier' : 'later'}`);
+  };
+
   // Load existing work or restore local draft
   useEffect(() => {
     if (!id) {
@@ -201,7 +261,7 @@ export default function WritingEditorPage() {
           if (draft.chaptersList && Array.isArray(draft.chaptersList) && draft.chaptersList.length > 0) {
             setChaptersList(draft.chaptersList);
           } else if (draft.chapterTitle || draft.content) {
-            setChaptersList([{ id: 'ch-1', title: draft.chapterTitle || 'Chapter 1', content: draft.content || '' }]);
+            setChaptersList([{ id: 'ch-1', title: draft.chapterTitle || 'Chapter 1', content: draft.content || '', status: 'PUBLISHED' }]);
           }
           if (draft.selectedCategories) setSelectedCategories(draft.selectedCategories);
           toast.success('Restored unsaved manuscript draft!');
@@ -238,6 +298,7 @@ export default function WritingEditorPage() {
               _id: ch._id,
               title: ch.title || `Chapter ${idx + 1}`,
               content: ch.content || '',
+              status: ch.status || 'PUBLISHED',
             }))
           );
         }
@@ -912,33 +973,104 @@ export default function WritingEditorPage() {
 
           {chaptersList.map((ch, index) => {
             const isActive = index === activeChapterIndex;
+            const isDraft = ch.status === 'DRAFT';
+
             return (
               <div
                 key={ch.id || index}
                 onClick={() => setActiveChapterIndex(index)}
                 className={cn(
-                  'group flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer border shrink-0',
+                  'group flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer border shrink-0',
                   isActive
                     ? 'bg-primary text-primary-foreground border-primary shadow-sm'
                     : 'bg-card text-muted-foreground hover:text-foreground hover:bg-secondary/40 border-glass-border'
                 )}
                 title={`Switch to ${ch.title}`}
               >
-                <span className="truncate max-w-[120px]">{ch.title || `Chapter ${index + 1}`}</span>
+                <span className="truncate max-w-[110px]">{ch.title || `Chapter ${index + 1}`}</span>
 
-                {chaptersList.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={(e) => handleDeleteChapter(index, e)}
-                    className={cn(
-                      'p-0.5 rounded hover:bg-black/20 transition-colors opacity-60 group-hover:opacity-100',
-                      isActive ? 'text-white' : 'text-muted-foreground hover:text-destructive'
-                    )}
-                    title="Delete chapter"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
+                {isDraft && (
+                  <span className={cn(
+                    "text-[9px] font-extrabold px-1 py-0.5 rounded uppercase tracking-wider",
+                    isActive ? "bg-black/20 text-amber-200" : "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30"
+                  )}>
+                    Draft
+                  </span>
                 )}
+
+                {/* Kebab Icon Menu on Every Chapter */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={(e) => e.stopPropagation()}
+                      className={cn(
+                        'p-1 rounded hover:bg-black/20 transition-colors ml-0.5 cursor-pointer',
+                        isActive ? 'text-white' : 'text-muted-foreground hover:text-foreground'
+                      )}
+                      title="Chapter options"
+                    >
+                      <MoreVertical className="w-3.5 h-3.5" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48 z-50">
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveChapterIndex(index);
+                      }}
+                      className="gap-2 cursor-pointer text-xs font-medium"
+                    >
+                      <Edit2 className="w-3.5 h-3.5 text-primary" />
+                      Edit Chapter
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem
+                      onClick={(e) => toggleChapterStatus(index, e)}
+                      className="gap-2 cursor-pointer text-xs font-medium"
+                    >
+                      {isDraft ? (
+                        <>
+                          <Eye className="w-3.5 h-3.5 text-emerald-500" />
+                          Publish Chapter
+                        </>
+                      ) : (
+                        <>
+                          <EyeOff className="w-3.5 h-3.5 text-amber-500" />
+                          Unpublish (Save to Drafts)
+                        </>
+                      )}
+                    </DropdownMenuItem>
+
+                    {index > 0 && (
+                      <DropdownMenuItem
+                        onClick={(e) => moveChapter(index, -1, e)}
+                        className="gap-2 cursor-pointer text-xs font-medium"
+                      >
+                        <ArrowLeft className="w-3.5 h-3.5" />
+                        Move Left (Earlier)
+                      </DropdownMenuItem>
+                    )}
+
+                    {index < chaptersList.length - 1 && (
+                      <DropdownMenuItem
+                        onClick={(e) => moveChapter(index, 1, e)}
+                        className="gap-2 cursor-pointer text-xs font-medium"
+                      >
+                        <ArrowRight className="w-3.5 h-3.5" />
+                        Move Right (Later)
+                      </DropdownMenuItem>
+                    )}
+
+                    <DropdownMenuItem
+                      onClick={(e) => handleDeleteChapter(index, e)}
+                      className="gap-2 cursor-pointer text-xs font-medium text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      Delete Chapter
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             );
           })}
@@ -1061,289 +1193,295 @@ export default function WritingEditorPage() {
         onClose={() => setIsMetadataModalOpen(false)}
         title="Manuscript Details & Cover Image"
         description="Setup cover image, summary, categories, or append chapter to an existing book"
-        className="max-w-3xl"
+        className="max-w-3xl w-[95vw] sm:w-full"
       >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
-          {/* LEFT COLUMN: 3:4 Cover Dropzone & Full Preview Trigger */}
-          <div className="md:col-span-1 space-y-2">
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Book Cover (Device Upload)</Label>
+        <div className="flex flex-col max-h-[75vh] sm:max-h-[78vh]">
+          {/* Scrollable Form Content Body */}
+          <div className="flex-1 overflow-y-auto pr-1 sm:pr-2 space-y-4 scrollbar-none pb-2">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 pt-1">
+              {/* LEFT COLUMN: 3:4 Cover Dropzone & Full Preview Trigger */}
+              <div className="md:col-span-1 space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Book Cover (Device Upload)</Label>
 
-            <input
-              type="file"
-              ref={fileInputRef}
-              className="hidden"
-              accept="image/*"
-              onChange={handleCoverFileUpload}
-            />
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleCoverFileUpload}
+                />
 
-            {!coverImage ? (
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full aspect-[2/3] border-2 border-dashed border-glass-border hover:border-primary/60 bg-secondary/20 hover:bg-secondary/30 rounded-lg p-4 flex flex-col items-center justify-center gap-3 cursor-pointer transition-all text-center group"
-                title="Click to select cover file from your device"
-              >
-                {isUploadingCover ? (
-                  <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                {!coverImage ? (
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full aspect-[2/3] max-h-[220px] sm:max-h-none border-2 border-dashed border-glass-border hover:border-primary/60 bg-secondary/20 hover:bg-secondary/30 rounded-xl p-4 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all text-center group"
+                    title="Click to select cover file from your device"
+                  >
+                    {isUploadingCover ? (
+                      <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                    ) : (
+                      <>
+                        <Upload className="w-7 h-7 sm:w-8 sm:h-8 text-primary group-hover:scale-110 transition-transform" />
+                        <div className="text-xs font-bold text-foreground">Upload Cover File</div>
+                        <span className="text-[10px] text-muted-foreground">PNG, JPG, WEBP from device</span>
+                      </>
+                    )}
+                  </div>
                 ) : (
-                  <>
-                    <Upload className="w-8 h-8 text-primary group-hover:scale-110 transition-transform" />
-                    <div className="text-xs font-bold text-foreground">Upload Cover File</div>
-                    <span className="text-[10px] text-muted-foreground">PNG, JPG, WEBP from device</span>
-                  </>
+                  <div className="relative group rounded-xl overflow-hidden aspect-[2/3] max-h-[220px] sm:max-h-none border border-glass-border shadow-md bg-secondary/40 flex items-center justify-center">
+                    <img
+                      src={coverImage}
+                      alt=""
+                      aria-hidden="true"
+                      className="absolute inset-0 w-full h-full object-cover blur-md opacity-30 scale-110 pointer-events-none select-none"
+                    />
+                    <img
+                      src={coverImage}
+                      alt="Book cover preview"
+                      className="relative z-10 w-full h-full object-contain"
+                    />
+
+                    {/* Click to Full Preview Lightbox Button */}
+                    <div
+                      onClick={() => setIsImagePreviewModalOpen(true)}
+                      className="absolute inset-0 z-20 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white cursor-pointer gap-1"
+                    >
+                      <Eye className="w-6 h-6" />
+                      <span className="text-xs font-bold">Preview Cover</span>
+                    </div>
+
+                    <div className="absolute top-2 right-2 flex items-center gap-1 z-30">
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="p-1.5 rounded-lg bg-card/90 backdrop-blur-md text-foreground hover:text-primary shadow-md cursor-pointer"
+                        title="Change cover file"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCoverImage('')}
+                        className="p-1.5 rounded-lg bg-card/90 backdrop-blur-md text-destructive hover:bg-destructive hover:text-white shadow-md cursor-pointer"
+                        title="Remove cover"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {coverImage && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsImagePreviewModalOpen(true)}
+                    className="w-full rounded-xl text-xs font-bold gap-1 mt-1"
+                  >
+                    <Eye className="w-3.5 h-3.5 text-primary" /> Full Cover Preview
+                  </Button>
                 )}
               </div>
-            ) : (
-              <div className="relative group rounded-lg overflow-hidden aspect-[2/3] border border-glass-border shadow-md bg-secondary/40 flex items-center justify-center">
-                <img
-                  src={coverImage}
-                  alt=""
-                  aria-hidden="true"
-                  className="absolute inset-0 w-full h-full object-cover blur-md opacity-30 scale-110 pointer-events-none select-none"
-                />
-                <img
-                  src={coverImage}
-                  alt="Book cover preview"
-                  className="relative z-10 w-full h-full object-contain"
-                />
 
-                {/* Click to Full Preview Lightbox Button */}
-                <div
-                  onClick={() => setIsImagePreviewModalOpen(true)}
-                  className="absolute inset-0 z-20 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white cursor-pointer gap-1"
-                >
-                  <Eye className="w-6 h-6" />
-                  <span className="text-xs font-bold">Preview Cover</span>
-                </div>
-
-                <div className="absolute top-2 right-2 flex items-center gap-1 z-30">
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="p-1.5 rounded bg-card/90 backdrop-blur-md text-foreground hover:text-primary shadow-md cursor-pointer"
-                    title="Change cover file"
-                  >
-                    <RefreshCw className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCoverImage('')}
-                    className="p-1.5 rounded bg-card/90 backdrop-blur-md text-destructive hover:bg-destructive hover:text-white shadow-md cursor-pointer"
-                    title="Remove cover"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {coverImage && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setIsImagePreviewModalOpen(true)}
-                className="w-full rounded-md text-xs font-bold gap-1 mt-1"
-              >
-                <Eye className="w-3.5 h-3.5 text-primary" /> Full Cover Preview
-              </Button>
-            )}
-          </div>
-
-          {/* RIGHT COLUMN: Mode Choice, Title, Summary, Format Selection, Categories */}
-          <div className="md:col-span-2 space-y-4">
-            {/* POST DESTINATION CHOICE */}
-            <div className="p-3 bg-secondary/30 rounded-lg border border-glass-border space-y-2">
-              <Label className="text-xs font-extrabold uppercase tracking-wider text-primary block">
-                Publishing Destination / Mode
-              </Label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setPublishMode('NEW_POST')}
-                  className={cn(
-                    'p-2 rounded-md text-xs font-bold border transition-all cursor-pointer text-left flex items-center gap-2',
-                    publishMode === 'NEW_POST'
-                      ? 'bg-primary text-primary-foreground border-primary shadow-sm'
-                      : 'bg-card text-muted-foreground border-glass-border hover:text-foreground'
-                  )}
-                >
-                  <FolderPlus className="w-4 h-4 shrink-0" />
-                  <span>Create New Book</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setPublishMode('EXISTING_POST')}
-                  className={cn(
-                    'p-2 rounded-md text-xs font-bold border transition-all cursor-pointer text-left flex items-center gap-2',
-                    publishMode === 'EXISTING_POST'
-                      ? 'bg-primary text-primary-foreground border-primary shadow-sm'
-                      : 'bg-card text-muted-foreground border-glass-border hover:text-foreground'
-                  )}
-                >
-                  <BookMarked className="w-4 h-4 shrink-0" />
-                  <span>Append to Existing Book</span>
-                </button>
-              </div>
-
-              {/* Existing Book Dropdown Selector */}
-              {publishMode === 'EXISTING_POST' && (
-                <div className="pt-2 space-y-1">
-                  <Label className="text-[11px] font-bold text-muted-foreground">Select Existing Book from Your Studio:</Label>
-                  <select
-                    value={selectedExistingWorkId}
-                    onChange={(e) => handleSelectExistingWork(e.target.value)}
-                    className="w-full border border-glass-border bg-card text-foreground text-xs rounded-md h-9 px-2.5 font-bold focus:outline-none cursor-pointer"
-                  >
-                    <option value="">-- Choose Existing Book --</option>
-                    {existingWorks.map((work) => (
-                      <option key={work._id} value={work._id}>
-                        {work.title} ({work.chapters?.length || 0} chapters)
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-            </div>
-
-            {/* Title */}
-            <div className="space-y-1">
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Manuscript Title *</Label>
-              <Input
-                value={title || ''}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Enter Title Here..."
-                className="border-glass-border rounded-md h-10 font-extrabold text-sm"
-                required
-              />
-            </div>
-
-            {/* Summary */}
-            <div className="space-y-1">
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Summary (Synopsis)</Label>
-              <textarea
-                value={summary || ''}
-                onChange={(e) => setSummary(e.target.value)}
-                placeholder="Add summary (you can edit it later)..."
-                className="w-full h-20 p-3 border border-glass-border rounded-md bg-card text-xs text-foreground resize-none focus:outline-none font-sans"
-              />
-            </div>
-
-            {/* Select Format & Language */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Manuscript Format *</Label>
-                <select
-                  value={contentType}
-                  onChange={(e) => setContentType(e.target.value)}
-                  className="w-full border border-glass-border bg-card text-foreground text-xs rounded-md h-9 px-2.5 font-bold focus:outline-none cursor-pointer"
-                >
-                  <option value="STORY">Fiction / Story</option>
-                  <option value="BLOG">Non-Fiction / Blog</option>
-                  <option value="POEM">Poetry</option>
-                  <option value="DIARY">Diary</option>
-                </select>
-              </div>
-
-              <div className="space-y-1">
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Language *</Label>
-                <select
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value)}
-                  className="w-full border border-glass-border bg-card text-foreground text-xs rounded-md h-9 px-2.5 font-bold focus:outline-none cursor-pointer"
-                >
-                  {LANGUAGES.map(lang => (
-                    <option key={lang.id} value={lang.id}>{lang.label}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Categories Tag Pills */}
-            <div className="space-y-2">
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">Categories & Genres</Label>
-              <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto p-2 bg-secondary/15 rounded-md border border-glass-border/40">
-                {WORK_CATEGORIES.map((cat) => {
-                  const isSelected = selectedCategories.includes(cat);
-                  return (
+              {/* RIGHT COLUMN: Mode Choice, Title, Summary, Format Selection, Categories */}
+              <div className="md:col-span-2 space-y-3.5">
+                {/* POST DESTINATION CHOICE */}
+                <div className="p-3 bg-secondary/30 rounded-xl border border-glass-border space-y-2">
+                  <Label className="text-xs font-extrabold uppercase tracking-wider text-primary block">
+                    Publishing Destination / Mode
+                  </Label>
+                  <div className="grid grid-cols-2 gap-2">
                     <button
-                      key={cat}
                       type="button"
-                      onClick={() => toggleCategoryTag(cat)}
+                      onClick={() => setPublishMode('NEW_POST')}
                       className={cn(
-                        'px-2 py-1 rounded text-[11px] font-semibold transition-all cursor-pointer border',
-                        isSelected
-                          ? 'bg-primary text-primary-foreground border-primary font-bold shadow-sm'
-                          : 'bg-card/70 border-glass-border text-muted-foreground hover:text-foreground'
+                        'p-2 rounded-xl text-xs font-bold border transition-all cursor-pointer text-left flex items-center gap-2',
+                        publishMode === 'NEW_POST'
+                          ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                          : 'bg-card text-muted-foreground border-glass-border hover:text-foreground'
                       )}
                     >
-                      {cat}
+                      <FolderPlus className="w-4 h-4 shrink-0" />
+                      <span>Create New Book</span>
                     </button>
-                  );
-                })}
+
+                    <button
+                      type="button"
+                      onClick={() => setPublishMode('EXISTING_POST')}
+                      className={cn(
+                        'p-2 rounded-xl text-xs font-bold border transition-all cursor-pointer text-left flex items-center gap-2',
+                        publishMode === 'EXISTING_POST'
+                          ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                          : 'bg-card text-muted-foreground border-glass-border hover:text-foreground'
+                      )}
+                    >
+                      <BookMarked className="w-4 h-4 shrink-0" />
+                      <span>Append to Existing Book</span>
+                    </button>
+                  </div>
+
+                  {/* Existing Book Dropdown Selector */}
+                  {publishMode === 'EXISTING_POST' && (
+                    <div className="pt-2 space-y-1">
+                      <Label className="text-[11px] font-bold text-muted-foreground">Select Existing Book from Your Studio:</Label>
+                      <select
+                        value={selectedExistingWorkId}
+                        onChange={(e) => handleSelectExistingWork(e.target.value)}
+                        className="w-full border border-glass-border bg-card text-foreground text-xs rounded-xl h-9 px-2.5 font-bold focus:outline-none cursor-pointer"
+                      >
+                        <option value="">-- Choose Existing Book --</option>
+                        {existingWorks.map((work) => (
+                          <option key={work._id} value={work._id}>
+                            {work.title} ({work.chapters?.length || 0} chapters)
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
+
+                {/* Title */}
+                <div className="space-y-1">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Manuscript Title *</Label>
+                  <Input
+                    value={title || ''}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="Enter Title Here..."
+                    className="border-glass-border rounded-xl h-10 font-extrabold text-sm"
+                    required
+                  />
+                </div>
+
+                {/* Summary */}
+                <div className="space-y-1">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Summary (Synopsis)</Label>
+                  <textarea
+                    value={summary || ''}
+                    onChange={(e) => setSummary(e.target.value)}
+                    placeholder="Add summary (you can edit it later)..."
+                    className="w-full h-18 p-3 border border-glass-border rounded-xl bg-card text-xs text-foreground resize-none focus:outline-none font-sans"
+                  />
+                </div>
+
+                {/* Select Format & Language */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Manuscript Format *</Label>
+                    <select
+                      value={contentType}
+                      onChange={(e) => setContentType(e.target.value)}
+                      className="w-full border border-glass-border bg-card text-foreground text-xs rounded-xl h-9 px-2.5 font-bold focus:outline-none cursor-pointer"
+                    >
+                      <option value="STORY">Fiction / Story</option>
+                      <option value="BLOG">Non-Fiction / Blog</option>
+                      <option value="POEM">Poetry</option>
+                      <option value="DIARY">Diary</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Language *</Label>
+                    <select
+                      value={language}
+                      onChange={(e) => setLanguage(e.target.value)}
+                      className="w-full border border-glass-border bg-card text-foreground text-xs rounded-xl h-9 px-2.5 font-bold focus:outline-none cursor-pointer"
+                    >
+                      {LANGUAGES.map(lang => (
+                        <option key={lang.id} value={lang.id}>{lang.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Categories Tag Pills */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">Categories & Genres</Label>
+                  <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto p-2 bg-secondary/15 rounded-xl border border-glass-border/40 scrollbar-none">
+                    {WORK_CATEGORIES.map((cat) => {
+                      const isSelected = selectedCategories.includes(cat);
+                      return (
+                        <button
+                          key={cat}
+                          type="button"
+                          onClick={() => toggleCategoryTag(cat)}
+                          className={cn(
+                            'px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer border',
+                            isSelected
+                              ? 'bg-primary text-primary-foreground border-primary font-bold shadow-sm'
+                              : 'bg-card/70 border-glass-border text-muted-foreground hover:text-foreground'
+                          )}
+                        >
+                          {cat}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Add Custom Category Tag */}
+                  <form onSubmit={handleAddCustomCategory} className="flex gap-2 pt-1">
+                    <Input
+                      value={customCategoryInput}
+                      onChange={(e) => setCustomCategoryInput(e.target.value)}
+                      placeholder="Add custom category tag..."
+                      className="border-glass-border rounded-xl h-8 text-xs flex-1"
+                    />
+                    <Button type="submit" variant="outline" size="sm" className="h-8 rounded-xl text-xs gap-1">
+                      <Plus className="w-3.5 h-3.5" /> Add
+                    </Button>
+                  </form>
+                </div>
+
+                {/* Copyright Agreement */}
+                <div className="flex items-center gap-2 pt-1">
+                  <input
+                    type="checkbox"
+                    id="copyright-check"
+                    checked={copyrightAccepted}
+                    onChange={(e) => setCopyrightAccepted(e.target.checked)}
+                    className="rounded text-primary focus:ring-primary h-4 w-4 cursor-pointer"
+                  />
+                  <label htmlFor="copyright-check" className="text-xs text-muted-foreground cursor-pointer select-none">
+                    I accept Copyright Policy and Terms of Service
+                  </label>
+                </div>
               </div>
-
-              {/* Add Custom Category Tag */}
-              <form onSubmit={handleAddCustomCategory} className="flex gap-2 pt-1">
-                <Input
-                  value={customCategoryInput}
-                  onChange={(e) => setCustomCategoryInput(e.target.value)}
-                  placeholder="Add custom category tag..."
-                  className="border-glass-border rounded-md h-8 text-xs flex-1"
-                />
-                <Button type="submit" variant="outline" size="sm" className="h-8 rounded-md text-xs gap-1">
-                  <Plus className="w-3.5 h-3.5" /> Add
-                </Button>
-              </form>
             </div>
+          </div>
 
-            {/* Copyright Agreement */}
-            <div className="flex items-center gap-2 pt-2">
-              <input
-                type="checkbox"
-                id="copyright-check"
-                checked={copyrightAccepted}
-                onChange={(e) => setCopyrightAccepted(e.target.checked)}
-                className="rounded text-primary focus:ring-primary h-4 w-4"
-              />
-              <label htmlFor="copyright-check" className="text-xs text-muted-foreground cursor-pointer">
-                I accept Copyright Policy and Terms of Service
-              </label>
-            </div>
+          {/* STICKY BOTTOM ACTION FOOTER BAR */}
+          <div className="sticky bottom-0 bg-card py-3 border-t border-glass-border flex flex-wrap items-center justify-between gap-2.5 z-30 shrink-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleDeleteWork}
+              disabled={isSubmitting}
+              className="rounded-xl text-xs font-bold h-9 px-3 border-destructive/40 text-destructive hover:bg-destructive hover:text-white transition-colors cursor-pointer gap-1"
+              title="Delete Manuscript"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Delete Manuscript</span>
+              <span className="sm:hidden">Delete</span>
+            </Button>
 
-            {/* Action Buttons */}
-            <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-glass-border">
+            <div className="flex items-center gap-2">
               <Button
                 type="button"
                 variant="outline"
-                onClick={handleDeleteWork}
+                onClick={() => handleSubmit('DRAFT')}
                 disabled={isSubmitting}
-                className="rounded-md text-xs font-bold h-9 px-3 border-destructive/40 text-destructive hover:bg-destructive hover:text-white transition-colors cursor-pointer gap-1"
-                title="Delete Manuscript"
+                className="rounded-xl text-xs font-bold h-9 px-4 border-glass-border cursor-pointer hover:bg-secondary/50"
               >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span>Delete Manuscript</span>
+                SAVE DRAFT
               </Button>
-
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => handleSubmit('DRAFT')}
-                  disabled={isSubmitting}
-                  className="rounded-md text-xs font-bold h-9 px-4"
-                >
-                  SAVE DRAFT
-                </Button>
-                <Button
-                  type="button"
-                  onClick={() => handleSubmit('PUBLISHED')}
-                  disabled={isSubmitting}
-                  className="bg-primary hover:bg-primary/95 text-primary-foreground rounded-md text-xs font-extrabold h-9 px-6 gap-1.5 shadow-md cursor-pointer"
-                >
-                  {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'PUBLISH NOW'}
-                </Button>
-              </div>
+              <Button
+                type="button"
+                onClick={() => handleSubmit('PUBLISHED')}
+                disabled={isSubmitting}
+                className="bg-primary hover:bg-primary/95 text-primary-foreground rounded-xl text-xs font-extrabold h-9 px-6 gap-1.5 shadow-md cursor-pointer border-none"
+              >
+                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'PUBLISH NOW'}
+              </Button>
             </div>
           </div>
         </div>

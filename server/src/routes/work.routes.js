@@ -17,6 +17,7 @@ router.delete('/:id', authenticate, workController.deleteWork);
 // Chapter management & Chapter likes
 router.post('/:id/chapters', authenticate, workController.addChapter);
 router.put('/:id/chapters/:chapterId', authenticate, workController.updateChapter);
+router.delete('/:id/chapters/:chapterId', authenticate, workController.deleteChapter);
 router.post('/:id/chapters/:chapterId/like', authenticate, workController.toggleLikeChapter);
 router.post('/:id/chapters/:chapterId/rate', authenticate, workController.rateChapter);
 

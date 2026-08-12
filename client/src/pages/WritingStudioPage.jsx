@@ -46,6 +46,7 @@ export default function WritingStudioPage() {
   const [myWorks, setMyWorks] = useState([]);
   const [isMyWorksLoading, setIsMyWorksLoading] = useState(true);
   const [myFilterType, setMyFilterType] = useState('ALL');
+  const [myStatusFilter, setMyStatusFilter] = useState('ALL'); // 'ALL' | 'PUBLISHED' | 'DRAFT'
   const [failedImages, setFailedImages] = useState({});
 
   const handleImageError = (id) => {
@@ -91,12 +92,14 @@ export default function WritingStudioPage() {
   };
 
   useEffect(() => {
-    if (activeStudioTab === 'EXPLORE') {
-      fetchExploreWorks();
-    } else {
+    fetchExploreWorks();
+  }, [exploreContentType, exploreLanguage, explorePage]);
+
+  useEffect(() => {
+    if (user?.username) {
       fetchMyWorks();
     }
-  }, [activeStudioTab, exploreContentType, exploreLanguage, explorePage]);
+  }, [user?.username, activeStudioTab]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -144,17 +147,19 @@ export default function WritingStudioPage() {
   const totalLikes = myWorks.reduce((sum, w) => sum + (w.stats?.likesCount || 0), 0);
 
   const filteredMyWorks = myWorks.filter((w) => {
-    if (myFilterType === 'ALL') return true;
-    return w.contentType === myFilterType;
+    const matchesType = myFilterType === 'ALL' || w.contentType === myFilterType;
+    const matchesStatus = myStatusFilter === 'ALL' || w.status === myStatusFilter;
+    return matchesType && matchesStatus;
   });
 
   return (
     <div className="mx-auto w-full max-w-6xl px-2 sm:px-4 pb-24 space-y-6">
       {/* Minimal Editorial Header */}
-      <div className="rounded-2xl bg-card/80 border border-glass-border p-5 sm:p-7 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="rounded-2xl bg-card/85 backdrop-blur-xl border border-glass-border/70 p-5 sm:p-7 shadow-md relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-72 h-72 bg-primary/5 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
           <div className="space-y-1">
-            <h1 className="text-xl sm:text-2xl font-medium font-display tracking-tight text-foreground">
+            <h1 className="text-xl sm:text-2xl font-bold font-display tracking-tight text-foreground flex items-center gap-2">
               Community Writings & Author Studio
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed font-sans max-w-xl">
@@ -164,7 +169,7 @@ export default function WritingStudioPage() {
 
           <Link
             to="/studio/write"
-            className="inline-flex items-center justify-center bg-primary hover:bg-primary/95 text-primary-foreground font-medium rounded-xl h-9 px-3.5 sm:px-4 gap-1.5 shadow-sm cursor-pointer shrink-0 text-xs transition-all border-none"
+            className="inline-flex items-center justify-center bg-primary hover:bg-primary/95 text-primary-foreground font-bold rounded-xl h-9 px-4 gap-1.5 shadow-md hover:shadow-lg transition-all cursor-pointer shrink-0 text-xs border-none active:scale-95"
             title="Start writing a new manuscript"
           >
             <Plus className="w-4 h-4" />
@@ -179,14 +184,14 @@ export default function WritingStudioPage() {
         <button
           onClick={() => setActiveStudioTab('EXPLORE')}
           className={cn(
-            'px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 border shrink-0',
+            'px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border shrink-0',
             activeStudioTab === 'EXPLORE'
-              ? 'bg-secondary text-foreground border-glass-border shadow-sm'
-              : 'border-transparent text-muted-foreground hover:text-foreground'
+              ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+              : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-secondary/40'
           )}
           title="Browse community published works"
         >
-          <Sparkles className="w-3.5 h-3.5 text-primary" />
+          <Sparkles className={cn("w-3.5 h-3.5", activeStudioTab === 'EXPLORE' ? "text-primary-foreground" : "text-primary")} />
           <span className="hidden sm:inline">Explore Community</span>
           <span className="sm:hidden">Explore</span>
         </button>
@@ -194,10 +199,10 @@ export default function WritingStudioPage() {
         <button
           onClick={() => setActiveStudioTab('MY_STUDIO')}
           className={cn(
-            'px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 border shrink-0',
+            'px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border shrink-0',
             activeStudioTab === 'MY_STUDIO'
-              ? 'bg-secondary text-foreground border-glass-border shadow-sm'
-              : 'border-transparent text-muted-foreground hover:text-foreground'
+              ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+              : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-secondary/40'
           )}
           title="View my author statistics and manuscripts"
         >
@@ -381,29 +386,53 @@ export default function WritingStudioPage() {
           </div>
 
           {/* Filter Pills */}
-          <div className="flex bg-secondary/35 p-1 rounded-xl gap-1 w-fit max-w-full overflow-x-auto border border-glass-border/30 scrollbar-none">
-            {[
-              { id: 'ALL', label: 'All My Works', icon: Globe },
-              { id: 'STORY', label: 'Stories', icon: BookOpen },
-              { id: 'POEM', label: 'Poems', icon: Feather },
-              { id: 'BLOG', label: 'Blogs', icon: PenTool },
-              { id: 'DIARY', label: 'Diaries', icon: Book },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setMyFilterType(tab.id)}
-                className={cn(
-                  'px-4 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 shrink-0',
-                  myFilterType === tab.id
-                    ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-                title={`Filter my works by ${tab.label}`}
-              >
-                <tab.icon className="w-3.5 h-3.5" />
-                <span>{tab.label}</span>
-              </button>
-            ))}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex bg-secondary/35 p-1 rounded-xl gap-1 w-fit max-w-full overflow-x-auto border border-glass-border/30 scrollbar-none">
+              {[
+                { id: 'ALL', label: 'All My Works', icon: Globe },
+                { id: 'STORY', label: 'Stories', icon: BookOpen },
+                { id: 'POEM', label: 'Poems', icon: Feather },
+                { id: 'BLOG', label: 'Blogs', icon: PenTool },
+                { id: 'DIARY', label: 'Diaries', icon: Book },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setMyFilterType(tab.id)}
+                  className={cn(
+                    'px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 shrink-0',
+                    myFilterType === tab.id
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                  title={`Filter my works by ${tab.label}`}
+                >
+                  <tab.icon className="w-3.5 h-3.5" />
+                  <span>{tab.label}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Status Filter Toggle (All, Live, Drafts) */}
+            <div className="flex bg-secondary/35 p-1 rounded-xl gap-1 border border-glass-border/30 shrink-0">
+              {[
+                { id: 'ALL', label: 'All Status' },
+                { id: 'PUBLISHED', label: 'Live' },
+                { id: 'DRAFT', label: 'Drafts' },
+              ].map((statusTab) => (
+                <button
+                  key={statusTab.id}
+                  onClick={() => setMyStatusFilter(statusTab.id)}
+                  className={cn(
+                    'px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap',
+                    myStatusFilter === statusTab.id
+                      ? 'bg-secondary text-foreground border border-glass-border shadow-sm font-bold'
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  {statusTab.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* My Works Cards */}
@@ -480,18 +509,48 @@ export default function WritingStudioPage() {
                         <span className="text-[9px] font-medium text-white bg-amber-600/80 rounded px-1.5 py-0.5 backdrop-blur-sm">Draft</span>
                       )}
                     </div>
+
+                    {/* Edit & Delete Action Overlay Buttons */}
+                    <div className="absolute top-2 right-2 z-20 flex items-center gap-1">
+                      <Link
+                        to={`/studio/edit/${work._id}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="p-1.5 rounded-md bg-black/60 hover:bg-primary text-white backdrop-blur-sm transition-colors shadow-sm"
+                        title="Edit manuscript"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </Link>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          handleDeleteWork(work._id);
+                        }}
+                        className="p-1.5 rounded-md bg-black/60 hover:bg-destructive text-white backdrop-blur-sm transition-colors shadow-sm cursor-pointer"
+                        title="Delete manuscript"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
 
-                  {/* Title only — Edit/Delete from Profile */}
-                  <div className="space-y-0.5 px-0.5">
+                  {/* Title & Actions */}
+                  <div className="space-y-1 px-0.5">
                     <Link to={`/read/${work._id}`}>
                       <p className="text-xs font-medium text-foreground leading-tight line-clamp-2 group-hover:text-primary transition-colors">
                         {work.title}
                       </p>
                     </Link>
-                    <p className="text-[11px] text-muted-foreground font-normal">
-                      {work.chapters?.length || 0} ch • {work.stats?.totalWordCount || 0}w
-                    </p>
+                    <div className="flex items-center justify-between gap-1 text-[11px] text-muted-foreground font-normal">
+                      <span>{work.chapters?.length || 0} ch • {work.stats?.totalWordCount || 0}w</span>
+                      <Link
+                        to={`/studio/edit/${work._id}`}
+                        className="text-primary hover:underline font-medium flex items-center gap-0.5 text-[11px]"
+                        title="Edit work in Writing Editor"
+                      >
+                        <Edit2 className="w-3 h-3" /> Edit
+                      </Link>
+                    </div>
                   </div>
                 </div>
               ))}

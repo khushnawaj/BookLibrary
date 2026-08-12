@@ -297,64 +297,73 @@ export default function ProfilePage() {
     }
   };
 
-  // Upload banner from the hover overlay — uploads then immediately saves to server
+  // Upload banner — uploads image and immediately persists to server & updates state
   const handleBannerFileChange = async (e) => {
     if (!e.target.files || e.target.files.length === 0) return;
     const selectedFile = e.target.files[0];
     // Reset input so the same file can be re-selected later
     e.target.value = '';
     if (!selectedFile.type.startsWith('image/')) {
-      toast.error('Please select an image file');
+      toast.error('Please select an image file (JPG, PNG, WebP)');
       return;
     }
     try {
       setIsUploadingBanner(true);
-      // Step 1: Upload the image file
-      const uploadRes = await uploadService.uploadAvatar(selectedFile);
+      // Step 1: Upload the cover image file using book cover service
+      const uploadRes = await uploadService.uploadBookCover(selectedFile);
       const imageUrl = uploadRes.data?.data?.secureUrl || uploadRes.data?.data?.url || uploadRes.data?.secureUrl || uploadRes.data?.url;
       if (!imageUrl) {
         toast.error('Could not parse cover banner image URL');
         return;
       }
-      // Step 2: Immediately persist to server
+      // Step 2: Update local state immediately
+      setBannerImage(imageUrl);
+      setProfile((prev) => ({ ...prev, bannerImage: imageUrl }));
+
+      // Step 3: Persist to server
       const saveRes = await dispatch(
         updateUserProfile({
-          name: profile.name,
-          username: profile.username,
-          bio: profile.bio || '',
-          avatar: profile.avatar || '',
+          name: (isEditing ? name : profile.name) || '',
+          username: (isEditing ? usernameInput : profile.username) || '',
+          bio: (isEditing ? bio : profile.bio) || '',
+          penName: (isEditing ? penName : profile.penName) || '',
+          avatar: (isEditing ? avatar : profile.avatar) || '',
           bannerImage: imageUrl,
         })
       ).unwrap();
+      
       const userData = saveRes.user || saveRes;
-      // Step 3: Update both local profile state and form state
-      setProfile((prev) => ({ ...prev, bannerImage: userData.bannerImage }));
-      setBannerImage(userData.bannerImage);
-      toast.success('Cover photo updated!');
+      if (userData?.bannerImage) {
+        setProfile((prev) => ({ ...prev, bannerImage: userData.bannerImage }));
+        setBannerImage(userData.bannerImage);
+      }
+      toast.success('Cover photo updated successfully!');
     } catch (error) {
-      console.error(error);
-      toast.error(error.response?.data?.message || 'Failed to update cover photo');
+      console.error('Banner upload error:', error);
+      toast.error(error.response?.data?.message || error.message || 'Failed to update cover photo');
     } finally {
       setIsUploadingBanner(false);
     }
   };
 
-  // Remove banner from the hover overlay — immediately clears on server
+  // Remove banner — clears on server and updates local state
   const handleRemoveBanner = async () => {
     try {
       setIsUploadingBanner(true);
+      setBannerImage('');
+      setProfile((prev) => ({ ...prev, bannerImage: '' }));
+
       const saveRes = await dispatch(
         updateUserProfile({
-          name: profile.name,
-          username: profile.username,
-          bio: profile.bio || '',
-          avatar: profile.avatar || '',
+          name: (isEditing ? name : profile.name) || '',
+          username: (isEditing ? usernameInput : profile.username) || '',
+          bio: (isEditing ? bio : profile.bio) || '',
+          penName: (isEditing ? penName : profile.penName) || '',
+          avatar: (isEditing ? avatar : profile.avatar) || '',
           bannerImage: '',
         })
       ).unwrap();
-      const userData = saveRes.user || saveRes;
-      setProfile((prev) => ({ ...prev, bannerImage: userData.bannerImage }));
-      setBannerImage('');
+
       toast.success('Cover photo removed');
     } catch (error) {
       console.error(error);
@@ -498,6 +507,22 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-4 sm:space-y-6 max-w-6xl mx-auto pb-16">
+      {/* Hidden file inputs for Avatar and Banner uploads — ALWAYS MOUNTED IN DOM */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        className="hidden"
+        accept="image/*"
+        onChange={handleFileChange}
+      />
+      <input
+        type="file"
+        ref={bannerFileInputRef}
+        className="hidden"
+        accept="image/*"
+        onChange={handleBannerFileChange}
+      />
+
       {/* ── Top Cover Banner ── */}
       <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden h-36 sm:h-48 md:h-56 lg:h-64 w-full shadow-md border border-glass-border group/banner">
         {profile.bannerImage ? (
@@ -513,15 +538,15 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {/* Cover Edit Overlay — uploads immediately and auto-saves */}
+        {/* Cover Edit Overlay — accessible on mobile touch & desktop hover */}
         {isOwnProfile && (
-          <div className="absolute inset-0 bg-black/45 opacity-0 group-hover/banner:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2 z-10">
+          <div className="absolute inset-0 bg-black/35 sm:bg-black/45 sm:opacity-0 sm:group-hover/banner:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2 z-10 p-2">
             <Button
               type="button"
               onClick={() => bannerFileInputRef.current?.click()}
               disabled={isUploadingBanner}
               variant="secondary"
-              className="bg-white/95 text-foreground hover:bg-white border-none shadow-sm flex items-center gap-2 text-xs font-semibold rounded-xl px-4 py-2 cursor-pointer transition-all hover:scale-105"
+              className="bg-white/95 text-foreground hover:bg-white border-none shadow-md flex items-center gap-1.5 text-xs font-bold rounded-xl px-3.5 sm:px-4 py-2 cursor-pointer transition-all hover:scale-105 active:scale-95"
             >
               {isUploadingBanner ? (
                 <Loader2 className="w-4 h-4 animate-spin text-primary" />
@@ -536,18 +561,11 @@ export default function ProfilePage() {
                 onClick={handleRemoveBanner}
                 disabled={isUploadingBanner}
                 variant="destructive"
-                className="bg-red-500/90 text-white hover:bg-red-600 border-none shadow-sm flex items-center gap-1.5 text-xs font-semibold rounded-xl px-3 py-2 cursor-pointer transition-all hover:scale-105"
+                className="bg-red-500/90 text-white hover:bg-red-600 border-none shadow-md flex items-center gap-1.5 text-xs font-bold rounded-xl px-3 py-2 cursor-pointer transition-all hover:scale-105 active:scale-95"
               >
                 <X className="w-3.5 h-3.5" /> Remove
               </Button>
             )}
-            <input
-              type="file"
-              ref={bannerFileInputRef}
-              className="hidden"
-              accept="image/*"
-              onChange={handleBannerFileChange}
-            />
           </div>
         )}
       </div>
@@ -643,35 +661,46 @@ export default function ProfilePage() {
                     )}
                   </Button>
                 ) : (
-                  <Button
-                    onClick={() => {
-                      setName(profile.name);
-                      setUsernameInput(profile.username);
-                      setBio(profile.bio || '');
-                      setPenName(profile.penName || '');
-                      setAvatar(profile.avatar || '');
-                      setBannerImage(profile.bannerImage || '');
-                      if (profile.avatar && profile.avatar.includes('api.dicebear.com')) {
-                        try {
-                          const url = new URL(profile.avatar);
-                          const pathParts = url.pathname.split('/');
-                          const style = pathParts[2];
-                          const seedParam = url.searchParams.get('seed');
-                          if (style) setAvatarStyle(style);
-                          if (seedParam) setAvatarSeed(seedParam);
-                        } catch (e) {
+                  <div className="flex items-center gap-2 w-full">
+                    <Button
+                      onClick={() => {
+                        setName(profile.name);
+                        setUsernameInput(profile.username);
+                        setBio(profile.bio || '');
+                        setPenName(profile.penName || '');
+                        setAvatar(profile.avatar || '');
+                        setBannerImage(profile.bannerImage || '');
+                        if (profile.avatar && profile.avatar.includes('api.dicebear.com')) {
+                          try {
+                            const url = new URL(profile.avatar);
+                            const pathParts = url.pathname.split('/');
+                            const style = pathParts[2];
+                            const seedParam = url.searchParams.get('seed');
+                            if (style) setAvatarStyle(style);
+                            if (seedParam) setAvatarSeed(seedParam);
+                          } catch (e) {
+                            setAvatarSeed(profile.username);
+                          }
+                        } else {
                           setAvatarSeed(profile.username);
                         }
-                      } else {
-                        setAvatarSeed(profile.username);
-                      }
-                      setIsEditing(true);
-                    }}
-                    variant="outline"
-                    className="w-full border-glass-border text-foreground hover:bg-secondary/50 flex items-center justify-center gap-2 rounded-xl text-xs sm:text-sm font-bold h-10 cursor-pointer transition-all active:scale-95"
-                  >
-                    <Edit2 className="w-3.5 h-3.5" /> Edit Profile
-                  </Button>
+                        setIsEditing(true);
+                      }}
+                      variant="outline"
+                      className="flex-1 border-glass-border text-foreground hover:bg-secondary/50 flex items-center justify-center gap-1.5 rounded-xl text-xs sm:text-sm font-bold h-10 cursor-pointer transition-all active:scale-95"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" /> Edit Profile
+                    </Button>
+
+                    <Button
+                      asChild
+                      className="bg-primary hover:bg-primary/95 text-primary-foreground flex items-center justify-center gap-1.5 rounded-xl text-xs sm:text-sm font-bold h-10 px-4 cursor-pointer transition-all active:scale-95 shadow-sm border-none"
+                    >
+                      <Link to="/studio" title="Go to Writing Studio">
+                        <Feather className="w-3.5 h-3.5" /> Studio
+                      </Link>
+                    </Button>
+                  </div>
                 )}
               </div>
             </div>
@@ -998,21 +1027,31 @@ export default function ProfilePage() {
                     <Loader2 className="w-8 h-8 text-primary animate-spin" />
                   </div>
                 ) : userWorks.length === 0 ? (
-                  <div className="text-center py-16 bg-secondary/10 rounded-2xl border border-dashed border-glass-border p-6 text-muted-foreground">
-                    <Feather className="w-8 h-8 mx-auto mb-2 text-muted-foreground/45" />
-                    <p className="font-semibold text-sm">No writings published</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">This author hasn't published any stories, poems, or blogs yet.</p>
+                  <div className="text-center py-16 bg-secondary/10 rounded-2xl border border-dashed border-glass-border p-6 text-muted-foreground space-y-3">
+                    <Feather className="w-8 h-8 mx-auto text-muted-foreground/45" />
+                    <p className="font-semibold text-sm text-foreground">No writings published</p>
+                    <p className="text-xs text-muted-foreground max-w-xs mx-auto">
+                      {isOwnProfile ? "You haven't written any original stories, poems, or blogs yet." : "This author hasn't published any stories, poems, or blogs yet."}
+                    </p>
+                    {isOwnProfile && (
+                      <Link
+                        to="/studio/write"
+                        className="inline-flex items-center gap-1.5 bg-primary text-primary-foreground text-xs font-bold px-4 py-2 rounded-xl hover:bg-primary/95 transition-all shadow-sm cursor-pointer mt-2"
+                      >
+                        Start New Writing
+                      </Link>
+                    )}
                   </div>
                 ) : (
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {userWorks.map((work) => (
                       <Card
                         key={work._id}
-                        className="bg-card/85 glass-card rounded-2xl border border-glass-border p-4 flex flex-col justify-between hover:shadow-md transition-shadow"
+                        className="bg-card/85 glass-card rounded-2xl border border-glass-border p-4 flex flex-col justify-between hover:shadow-md hover:border-primary/40 transition-all duration-200"
                       >
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-1.5 flex-wrap">
                               <Badge className="text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary border-none px-2 py-0.5 rounded-md">
                                 {work.contentType}
                               </Badge>
@@ -1020,6 +1059,11 @@ export default function ProfilePage() {
                                 <Badge variant="outline" className="text-[10px] font-semibold border-glass-border px-1.5 py-0.5 rounded-md flex items-center gap-1">
                                   <Languages className="w-3 h-3 text-primary" /> {work.language}
                                 </Badge>
+                              )}
+                              {work.status === 'DRAFT' && (
+                                <span className="text-[9px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/30 uppercase tracking-wider">
+                                  Draft
+                                </span>
                               )}
                             </div>
                             <span className="text-[10px] text-muted-foreground font-semibold">
@@ -1034,16 +1078,27 @@ export default function ProfilePage() {
                           </p>
                         </div>
 
-                        <div className="pt-3 border-t border-glass-border flex items-center justify-between mt-3">
+                        <div className="pt-3 border-t border-glass-border flex items-center justify-between mt-3 gap-2">
                           <span className="text-xs text-muted-foreground flex items-center gap-1 font-semibold">
                             <Eye className="w-3.5 h-3.5 text-primary" /> {work.stats?.views || 0}
                           </span>
-                          <Link
-                            to={`/read/${work._id}`}
-                            className="text-xs font-bold bg-primary text-primary-foreground px-3 py-1.5 rounded-xl hover:bg-primary/90 transition-colors"
-                          >
-                            Read Work →
-                          </Link>
+                          <div className="flex items-center gap-1.5">
+                            {isOwnProfile && (
+                              <Link
+                                to={`/studio/edit/${work._id}`}
+                                className="text-xs font-bold text-muted-foreground hover:text-foreground bg-secondary/50 hover:bg-secondary px-2.5 py-1.5 rounded-xl border border-glass-border flex items-center gap-1 transition-colors"
+                                title="Edit Work"
+                              >
+                                <Edit2 className="w-3 h-3 text-primary" /> Edit
+                              </Link>
+                            )}
+                            <Link
+                              to={`/read/${work._id}`}
+                              className="text-xs font-bold bg-primary text-primary-foreground px-3 py-1.5 rounded-xl hover:bg-primary/90 transition-colors shadow-sm"
+                            >
+                              Read →
+                            </Link>
+                          </div>
                         </div>
                       </Card>
                     ))}
@@ -1059,260 +1114,245 @@ export default function ProfilePage() {
         open={isEditing}
         onClose={handleCancel}
         title="Edit Profile"
-        description="Update your public profile details and custom avatar"
-        className="max-w-2xl"
+        description="Update your public profile details, custom avatar, and cover banner"
+        className="max-w-2xl w-[95vw] sm:w-full"
       >
-        <form onSubmit={handleSave} className="space-y-4 mt-3">
-          {/* Name + Username row - stacks on mobile */}
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="profile-name" className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Display Name</Label>
-              <Input
-                id="profile-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Your name"
-                className="border-glass-border focus:ring-primary bg-secondary/15 rounded-xl h-10"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="profile-username" className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Username</Label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                  <AtSign className="w-4 h-4" />
-                </span>
+        <form onSubmit={handleSave} className="flex flex-col mt-2">
+          {/* Scrollable Form Body */}
+          <div className="max-h-[60vh] sm:max-h-[65vh] overflow-y-auto pr-1.5 space-y-4 scrollbar-none pb-2">
+            {/* Name + Username row - stacks on mobile */}
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="profile-name" className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Display Name</Label>
                 <Input
-                  id="profile-username"
-                  value={usernameInput}
-                  onChange={(e) => setUsernameInput(e.target.value)}
-                  placeholder="username"
-                  className="pl-9 border-glass-border focus:ring-primary bg-secondary/15 rounded-xl h-10"
+                  id="profile-name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Your name"
+                  className="border-glass-border focus:ring-primary bg-secondary/15 rounded-xl h-10 text-xs sm:text-sm"
                   required
                 />
               </div>
-            </div>
-          </div>
-
-          {/* Bio */}
-          <div className="space-y-1.5">
-            <div className="flex justify-between items-center">
-              <Label htmlFor="profile-bio" className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Biography</Label>
-              <span className="text-[10px] text-muted-foreground">{bio.length}/500</span>
-            </div>
-            <textarea
-              id="profile-bio"
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              placeholder="Tell other readers about yourself..."
-              className="w-full min-h-[70px] sm:min-h-[90px] rounded-xl border border-glass-border bg-secondary/15 p-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary text-foreground resize-none"
-              maxLength={500}
-            />
-          </div>
-
-          {/* Pen Name */}
-          <div className="space-y-2">
-            <Label htmlFor="profile-penname" className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Poet / Writer Pen Name</Label>
-            <Input
-              id="profile-penname"
-              value={penName}
-              onChange={(e) => setPenName(e.target.value)}
-              placeholder="Your Pen Name / Pseudonym (e.g. Ghalib)"
-              className="border-glass-border focus:ring-primary bg-secondary/15 rounded-xl h-10"
-              maxLength={100}
-            />
-            <p className="text-[10px] text-muted-foreground mt-0.5 pl-0.5">
-              This pen name will be displayed as the signature on your published poems/quotes instead of your username.
-            </p>
-          </div>
-
-          {/* DiceBear Avatar Generator section */}
-          <div className="space-y-2">
-            <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Avatar Customization</Label>
-            {/* Always stacked column — side by side only on sm+ */}
-            <div className="flex flex-col sm:flex-row gap-4 items-center sm:items-start p-3 sm:p-4 border border-glass-border bg-secondary/5 rounded-xl">
-              {/* Preview Avatar */}
-              <div className="flex flex-row sm:flex-col items-center gap-3 sm:gap-2 shrink-0 w-full sm:w-auto">
-                <div className="relative rounded-full border-4 border-background shadow-md overflow-hidden h-16 w-16 sm:h-20 sm:w-20">
-                  <Avatar src={avatar} name={name} size="xl" className="h-full w-full text-2xl" />
-                  {isUploading && (
-                    <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center">
-                      <Loader2 className="w-5 h-5 text-white animate-spin" />
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-wider block">Preview</span>
-                  {/* Upload button right next to avatar on mobile */}
-                  <Button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploading || isSaving}
-                    variant="outline"
-                    className="sm:hidden mt-1 border-glass-border text-foreground hover:bg-secondary/40 flex items-center gap-1 rounded-lg text-[10px] h-7 cursor-pointer px-2"
-                  >
-                    <Camera className="w-3 h-3" /> Upload
-                  </Button>
+              <div className="space-y-1.5">
+                <Label htmlFor="profile-username" className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Username</Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                    <AtSign className="w-4 h-4" />
+                  </span>
+                  <Input
+                    id="profile-username"
+                    value={usernameInput}
+                    onChange={(e) => setUsernameInput(e.target.value)}
+                    placeholder="username"
+                    className="pl-9 border-glass-border focus:ring-primary bg-secondary/15 rounded-xl h-10 text-xs sm:text-sm"
+                    required
+                  />
                 </div>
               </div>
+            </div>
 
-              {/* Picker controls */}
-              <div className="flex-1 w-full space-y-3">
-                {/* Upload option — hidden on mobile (button shown inline above) */}
-                <div className="hidden sm:block space-y-2">
-                  <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">Option 1: Upload Custom File</span>
-                  <div className="flex items-center gap-2 flex-wrap">
+            {/* Bio */}
+            <div className="space-y-1.5">
+              <div className="flex justify-between items-center">
+                <Label htmlFor="profile-bio" className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Biography</Label>
+                <span className="text-[10px] text-muted-foreground">{bio.length}/500</span>
+              </div>
+              <textarea
+                id="profile-bio"
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                placeholder="Tell other readers about yourself..."
+                className="w-full min-h-[70px] sm:min-h-[85px] rounded-xl border border-glass-border bg-secondary/15 p-3 text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-primary text-foreground resize-none"
+                maxLength={500}
+              />
+            </div>
+
+            {/* Pen Name */}
+            <div className="space-y-1.5">
+              <Label htmlFor="profile-penname" className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Poet / Writer Pen Name</Label>
+              <Input
+                id="profile-penname"
+                value={penName}
+                onChange={(e) => setPenName(e.target.value)}
+                placeholder="Your Pen Name / Pseudonym (e.g. Ghalib)"
+                className="border-glass-border focus:ring-primary bg-secondary/15 rounded-xl h-10 text-xs sm:text-sm"
+                maxLength={100}
+              />
+              <p className="text-[10px] text-muted-foreground pt-0.5">
+                This pen name will be displayed as the signature on your published poems/quotes instead of your username.
+              </p>
+            </div>
+
+            {/* DiceBear Avatar Generator section */}
+            <div className="space-y-2 pt-1">
+              <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Avatar Customization</Label>
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-center sm:items-start p-3 sm:p-4 border border-glass-border bg-secondary/15 rounded-2xl">
+                {/* Preview Avatar */}
+                <div className="flex flex-row sm:flex-col items-center gap-3 sm:gap-2 shrink-0 w-full sm:w-auto justify-between sm:justify-start border-b sm:border-b-0 border-glass-border/40 pb-3 sm:pb-0">
+                  <div className="relative rounded-full border-4 border-background shadow-md overflow-hidden h-16 w-16 sm:h-20 sm:w-20">
+                    <Avatar src={avatar} name={name} size="xl" className="h-full w-full text-2xl" />
+                    {isUploading && (
+                      <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center">
+                        <Loader2 className="w-5 h-5 text-white animate-spin" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider sm:block hidden">Preview</span>
                     <Button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={isUploading || isSaving}
                       variant="outline"
-                      className="border-glass-border text-foreground hover:bg-secondary/40 flex items-center gap-1 rounded-xl text-[11px] h-8 cursor-pointer"
+                      className="border-glass-border text-foreground hover:bg-secondary/40 flex items-center gap-1 rounded-xl text-[11px] h-8 cursor-pointer px-3"
                     >
-                      <Camera className="w-3.5 h-3.5" /> Choose Image
+                      <Camera className="w-3.5 h-3.5" /> Upload File
                     </Button>
-                    <span className="text-[10px] text-muted-foreground">JPG, PNG, GIF files</span>
                   </div>
                 </div>
 
-                <div className="hidden sm:block h-px bg-glass-border" />
+                {/* Picker controls */}
+                <div className="flex-1 w-full space-y-3">
+                  <div className="hidden sm:block space-y-1.5">
+                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">Option 1: Custom Image Upload</span>
+                    <p className="text-[10px] text-muted-foreground">Upload your own photo (JPG, PNG, WebP)</p>
+                  </div>
 
-                <div className="space-y-2">
-                  <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">Generate Avatar Style</span>
-                  {/* Style thumbnails: 6 col always since they are compact */}
-                  <div className="grid grid-cols-6 gap-1 sm:gap-1.5">
-                    {AVATAR_STYLES.map((style) => {
-                      const styleUrl = `https://api.dicebear.com/9.x/${style.id}/svg?seed=${encodeURIComponent(avatarSeed || 'preview')}&backgroundColor=ffdfbf`;
-                      const isSelected = avatarStyle === style.id;
-                      return (
-                        <button
-                          key={style.id}
-                          type="button"
-                          onClick={() => {
-                            setAvatarStyle(style.id);
-                            const url = `https://api.dicebear.com/9.x/${style.id}/svg?seed=${encodeURIComponent(avatarSeed || 'preview')}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5cc,ffdfbf`;
+                  <div className="hidden sm:block h-px bg-glass-border" />
+
+                  <div className="space-y-2">
+                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">Generate Avatar Style</span>
+                    {/* Style thumbnails: 3 cols on mobile, 6 cols on sm+ */}
+                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 sm:gap-2">
+                      {AVATAR_STYLES.map((style) => {
+                        const styleUrl = `https://api.dicebear.com/9.x/${style.id}/svg?seed=${encodeURIComponent(avatarSeed || 'preview')}&backgroundColor=ffdfbf`;
+                        const isSelected = avatarStyle === style.id;
+                        return (
+                          <button
+                            key={style.id}
+                            type="button"
+                            onClick={() => {
+                              setAvatarStyle(style.id);
+                              const url = `https://api.dicebear.com/9.x/${style.id}/svg?seed=${encodeURIComponent(avatarSeed || 'preview')}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5cc,ffdfbf`;
+                              setAvatar(url);
+                            }}
+                            className={cn(
+                              "relative p-1.5 rounded-xl border-2 transition-all hover:scale-105 flex flex-col items-center gap-1 bg-background cursor-pointer",
+                              isSelected ? "border-primary shadow-sm bg-primary/5" : "border-glass-border hover:border-muted-foreground"
+                            )}
+                          >
+                            <img src={styleUrl} alt={style.name} className="w-8 h-8 sm:w-9 sm:h-9 rounded-full" />
+                            <span className="text-[8px] sm:text-[9px] font-bold text-foreground/80">{style.name}</span>
+                            {isSelected && (
+                              <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full p-0.5 shadow-sm">
+                                <Check className="w-2.5 h-2.5" />
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Seed control */}
+                    <div className="flex gap-2 items-end pt-1">
+                      <div className="flex-1 space-y-1">
+                        <Label htmlFor="avatar-seed-modal" className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Avatar Seed</Label>
+                        <Input
+                          id="avatar-seed-modal"
+                          value={avatarSeed}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAvatarSeed(val);
+                            const url = `https://api.dicebear.com/9.x/${avatarStyle}/svg?seed=${encodeURIComponent(val || 'preview')}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5cc,ffdfbf`;
                             setAvatar(url);
                           }}
-                          className={cn(
-                            "relative p-1 rounded-lg border-2 transition-all hover:scale-105 flex flex-col items-center gap-0.5 bg-background cursor-pointer",
-                            isSelected ? "border-primary shadow-sm bg-primary/5" : "border-glass-border hover:border-muted-foreground"
-                          )}
-                        >
-                          <img src={styleUrl} alt={style.name} className="w-7 h-7 sm:w-8 sm:h-8 rounded-full" />
-                          <span className="text-[7px] sm:text-[8px] font-semibold text-foreground/80">{style.name}</span>
-                          {isSelected && (
-                            <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full p-0.5 shadow-sm">
-                              <Check className="w-2 h-2" />
-                            </span>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {/* Seed control */}
-                  <div className="flex gap-2 items-end">
-                    <div className="flex-1 space-y-1">
-                      <Label htmlFor="avatar-seed-modal" className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Avatar Seed</Label>
-                      <Input
-                        id="avatar-seed-modal"
-                        value={avatarSeed}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setAvatarSeed(val);
-                          const url = `https://api.dicebear.com/9.x/${avatarStyle}/svg?seed=${encodeURIComponent(val || 'preview')}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5cc,ffdfbf`;
-                          setAvatar(url);
-                        }}
-                        placeholder="Type seed (e.g. name)"
-                        className="h-8 border-glass-border focus:ring-primary bg-secondary/15 rounded-lg text-xs"
-                      />
+                          placeholder="Type seed (e.g. name)"
+                          className="h-8 border-glass-border focus:ring-primary bg-secondary/15 rounded-lg text-xs"
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        onClick={handleShuffleAvatar}
+                        variant="outline"
+                        className="h-8 px-3 text-xs border-glass-border text-foreground hover:bg-secondary/40 rounded-lg cursor-pointer flex items-center gap-1 shrink-0 font-bold"
+                      >
+                        Shuffle
+                      </Button>
                     </div>
-                    <Button
-                      type="button"
-                      onClick={handleShuffleAvatar}
-                      variant="outline"
-                      className="h-8 px-2.5 text-xs border-glass-border text-foreground hover:bg-secondary/40 rounded-lg cursor-pointer flex items-center gap-1 shrink-0"
-                    >
-                      Shuffle
-                    </Button>
                   </div>
                 </div>
               </div>
             </div>
-            <input
-              type="file"
-              ref={fileInputRef}
-              className="hidden"
-              accept="image/*"
-              onChange={handleFileChange}
-            />
-          </div>
 
-          {/* Banner Image Customization Section */}
-          <div className="space-y-2 pt-3 border-t border-glass-border">
-            <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Cover Banner</Label>
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-5 items-stretch sm:items-start p-3 sm:p-4 border border-glass-border bg-secondary/5 rounded-xl">
-              {/* Preview Banner - shorter on mobile */}
-              <div className="w-full sm:w-2/5 h-16 sm:aspect-[3/1] sm:h-auto rounded-lg sm:rounded-xl overflow-hidden border border-glass-border shrink-0 relative bg-muted flex items-center justify-center">
-                {bannerImage ? (
-                  <img src={bannerImage} alt="Banner Preview" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-r from-primary/30 to-accent/20 flex items-center justify-center">
-                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">Default Gradient</span>
-                  </div>
-                )}
-                {isUploadingBanner && (
-                  <div className="absolute inset-0 bg-black/45 flex items-center justify-center">
-                    <Loader2 className="w-5 h-5 text-white animate-spin" />
-                  </div>
-                )}
-              </div>
-
-              {/* Upload controls */}
-              <div className="flex-1 w-full space-y-3">
-                <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">Upload Cover Banner</span>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Button
-                    type="button"
-                    onClick={() => bannerFileInputRef.current?.click()}
-                    disabled={isUploadingBanner || isSaving}
-                    variant="outline"
-                    className="border-glass-border text-foreground hover:bg-secondary/40 flex items-center gap-1.5 rounded-xl text-[11px] h-8 cursor-pointer"
-                  >
-                    <Camera className="w-3.5 h-3.5" /> Choose Image
-                  </Button>
-                  {bannerImage && (
-                    <Button
-                      type="button"
-                      onClick={() => setBannerImage('')}
-                      variant="outline"
-                      className="border-red-200 text-red-500 hover:bg-red-500/10 flex items-center gap-1.5 rounded-xl text-[11px] h-8 cursor-pointer"
-                    >
-                      <X className="w-3.5 h-3.5" /> Remove
-                    </Button>
+            {/* Banner Image Customization Section */}
+            <div className="space-y-2 pt-3 border-t border-glass-border">
+              <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Cover Banner</Label>
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center p-3 sm:p-4 border border-glass-border bg-secondary/15 rounded-2xl">
+                {/* Preview Banner */}
+                <div className="w-full sm:w-2/5 h-20 sm:aspect-[3/1] sm:h-auto rounded-xl overflow-hidden border border-glass-border shrink-0 relative bg-muted flex items-center justify-center">
+                  {bannerImage ? (
+                    <img src={bannerImage} alt="Banner Preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-r from-primary/30 to-accent/20 flex items-center justify-center">
+                      <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">Default Gradient</span>
+                    </div>
+                  )}
+                  {isUploadingBanner && (
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center backdrop-blur-xs">
+                      <Loader2 className="w-6 h-6 text-white animate-spin" />
+                    </div>
                   )}
                 </div>
-                <p className="text-[10px] text-muted-foreground leading-normal">
-                  Recommended ratio: 3:1. Max size: 5MB.
-                </p>
+
+                {/* Upload controls */}
+                <div className="flex-1 w-full space-y-2">
+                  <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">Profile Cover Banner</span>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Button
+                      type="button"
+                      onClick={() => bannerFileInputRef.current?.click()}
+                      disabled={isUploadingBanner || isSaving}
+                      variant="outline"
+                      className="border-glass-border text-foreground hover:bg-secondary/40 flex items-center gap-1.5 rounded-xl text-xs font-bold h-9 cursor-pointer px-3"
+                    >
+                      {isUploadingBanner ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5 text-primary" />}
+                      {isUploadingBanner ? 'Uploading...' : 'Choose Image'}
+                    </Button>
+                    {bannerImage && (
+                      <Button
+                        type="button"
+                        onClick={handleRemoveBanner}
+                        disabled={isUploadingBanner || isSaving}
+                        variant="outline"
+                        className="border-red-200 text-red-500 hover:bg-red-500/10 flex items-center gap-1.5 rounded-xl text-xs font-bold h-9 cursor-pointer px-3"
+                      >
+                        <X className="w-3.5 h-3.5" /> Remove
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground leading-normal">
+                    Recommended ratio: 3:1. Upload JPG, PNG or WebP image.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 sm:gap-3 pt-3 border-t border-glass-border">
+          {/* FIXED MODAL FOOTER BUTTONS (NEVER CUT OFF AT BOTTOM) */}
+          <div className="flex items-center justify-end gap-2 sm:gap-3 pt-3 mt-2 border-t border-glass-border shrink-0 bg-card z-20">
             <Button
               type="button"
               variant="outline"
               onClick={handleCancel}
               disabled={isSaving || isUploading || isUploadingBanner}
-              className="border-glass-border text-foreground hover:bg-secondary/40 flex items-center gap-1 rounded-xl text-xs h-9 cursor-pointer"
+              className="border-glass-border text-foreground hover:bg-secondary/40 flex items-center gap-1 rounded-xl text-xs font-bold h-9 cursor-pointer px-4"
             >
               <X className="w-3.5 h-3.5" /> Cancel
             </Button>
             <Button
               type="submit"
               disabled={isSaving || isUploading || isUploadingBanner}
-              className="bg-primary hover:bg-primary/95 text-primary-foreground flex items-center gap-1 rounded-xl text-xs h-9"
+              className="bg-primary hover:bg-primary/95 text-primary-foreground flex items-center gap-1 rounded-xl text-xs font-bold h-9 px-5 shadow-sm cursor-pointer border-none"
             >
               {isSaving ? (
                 <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving...</>

@@ -163,11 +163,17 @@ exports.getWorkById = async (req, res) => {
     Work.findByIdAndUpdate(req.params.id, { $inc: { 'stats.views': 1 } }).exec();
 
     const isLiked = req.user ? work.likes.includes(req.user.id) : false;
+    let workObj = work.toObject();
+
+    // Filter out draft chapters for public non-author readers
+    if (!isAuthor && workObj.chapters && Array.isArray(workObj.chapters)) {
+      workObj.chapters = workObj.chapters.filter((ch) => ch.status !== 'DRAFT');
+    }
 
     res.status(200).json({
       success: true,
       data: {
-        ...work.toObject(),
+        ...workObj,
         isLiked,
       },
     });
@@ -190,7 +196,9 @@ exports.getUserWorks = async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found.' });
     }
 
-    const isOwner = req.user && req.user._id.toString() === targetUser._id.toString();
+    const currentUserId = (req.user?._id || req.user?.id || req.auth?.userId)?.toString();
+    const targetUserId = targetUser._id.toString();
+    const isOwner = Boolean(currentUserId && currentUserId === targetUserId);
 
     const query = { author: targetUser._id };
     if (!isOwner) {
@@ -264,11 +272,12 @@ exports.addChapter = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Work not found.' });
     }
 
-    if (work.author.toString() !== req.user.id) {
+    const userId = (req.user?._id || req.user?.id).toString();
+    if (work.author.toString() !== userId) {
       return res.status(403).json({ success: false, message: 'Not authorized.' });
     }
 
-    const { title, content } = req.body;
+    const { title, content, status } = req.body;
     if (!content) {
       return res.status(400).json({ success: false, message: 'Chapter content is required.' });
     }
@@ -277,6 +286,7 @@ exports.addChapter = async (req, res) => {
     work.chapters.push({
       title: title || `Chapter ${chapterNumber}`,
       content,
+      status: status || 'PUBLISHED',
       chapterNumber,
       publishedAt: new Date(),
     });
@@ -303,16 +313,18 @@ exports.updateChapter = async (req, res) => {
     const work = await Work.findById(req.params.id);
     if (!work) return res.status(404).json({ success: false, message: 'Work not found.' });
 
-    if (work.author.toString() !== req.user.id) {
+    const userId = (req.user?._id || req.user?.id).toString();
+    if (work.author.toString() !== userId) {
       return res.status(403).json({ success: false, message: 'Not authorized.' });
     }
 
     const chapter = work.chapters.id(req.params.chapterId);
     if (!chapter) return res.status(404).json({ success: false, message: 'Chapter not found.' });
 
-    const { title, content } = req.body;
-    if (title) chapter.title = title;
-    if (content) chapter.content = content;
+    const { title, content, status } = req.body;
+    if (title !== undefined) chapter.title = title;
+    if (content !== undefined) chapter.content = content;
+    if (status !== undefined) chapter.status = status;
 
     await work.save();
 
@@ -323,6 +335,36 @@ exports.updateChapter = async (req, res) => {
   } catch (error) {
     console.error('Error updating chapter:', error);
     res.status(500).json({ success: false, message: 'Failed to update chapter.' });
+  }
+};
+
+// @desc    Delete a specific chapter
+// @route   DELETE /api/works/:id/chapters/:chapterId
+// @access  Private (Author only)
+exports.deleteChapter = async (req, res) => {
+  try {
+    const work = await Work.findById(req.params.id);
+    if (!work) return res.status(404).json({ success: false, message: 'Work not found.' });
+
+    const userId = (req.user?._id || req.user?.id).toString();
+    if (work.author.toString() !== userId) {
+      return res.status(403).json({ success: false, message: 'Not authorized.' });
+    }
+
+    const chapter = work.chapters.id(req.params.chapterId);
+    if (!chapter) return res.status(404).json({ success: false, message: 'Chapter not found.' });
+
+    work.chapters.pull({ _id: req.params.chapterId });
+    await work.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Chapter deleted successfully.',
+      data: work,
+    });
+  } catch (error) {
+    console.error('Error deleting chapter:', error);
+    res.status(500).json({ success: false, message: 'Failed to delete chapter.' });
   }
 };
 

@@ -9,14 +9,21 @@ import { Modal } from '@/components/ui/modal';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Heart, BookOpen, ChevronLeft, ChevronRight, Share2, Feather,
-  Loader2, Eye, Calendar, Sparkles, UserCheck, Users, Type, AtSign, Languages,
-  Star, Clock, Bookmark, Play, CheckCircle2, UserPlus, UserCheck2, ArrowLeft, MessageSquare
+  Loader2, Eye, EyeOff, Calendar, Sparkles, UserCheck, Users, Type, AtSign, Languages,
+  Star, Clock, Bookmark, Play, CheckCircle2, UserPlus, UserCheck2, ArrowLeft, MessageSquare, Edit2, MoreVertical, Trash2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import { useAuth } from '@/features/auth/authHooks';
 import { cn } from '@/lib/utils';
+import { useConfirm } from '@/components/common/ConfirmDialog';
 import { WorkCommentSection } from '@/components/writing/WorkCommentSection';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
 
 // ── Interactive Per-Chapter Rating & Feedback Component ──
 function ChapterFeedbackBox({ workId, chapterId, chapterTitle, initialRating = 5, onRatingSubmitted }) {
@@ -113,6 +120,7 @@ export default function ReadWorkPage() {
   const { id, chapterId } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const confirm = useConfirm();
   const readerCanvasRef = useRef(null);
 
   const [work, setWork] = useState(null);
@@ -125,6 +133,42 @@ export default function ReadWorkPage() {
   // Chapter-level likes & rating state
   const [isChapterLiked, setIsChapterLiked] = useState(false);
   const [chapterLikesCount, setChapterLikesCount] = useState(0);
+
+  // Chapter management handlers for author
+  const handleToggleChapterStatus = async (targetChapterId, newStatus) => {
+    try {
+      await workService.updateChapter(id, targetChapterId, { status: newStatus });
+      toast.success(newStatus === 'DRAFT' ? 'Chapter saved to drafts (Unpublished)' : 'Chapter published!');
+      const res = await workService.getWorkById(id);
+      setWork(res.data.data);
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to update chapter status');
+    }
+  };
+
+  const handleDeleteChapter = async (targetChapterId, chapterTitle) => {
+    const isConfirmed = await confirm({
+      title: 'Delete Chapter',
+      message: `Are you sure you want to delete "${chapterTitle || 'this chapter'}"? This action cannot be undone.`,
+      confirmText: 'Delete Chapter',
+      variant: 'destructive',
+    });
+    if (!isConfirmed) return;
+
+    try {
+      await workService.deleteChapter(id, targetChapterId);
+      toast.success('Chapter deleted successfully');
+      const res = await workService.getWorkById(id);
+      setWork(res.data.data);
+      if (chapterId === targetChapterId) {
+        navigate(`/read/${id}`);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || 'Failed to delete chapter');
+    }
+  };
 
 
   useEffect(() => {
@@ -291,6 +335,11 @@ export default function ReadWorkPage() {
     ? (ratedChs.reduce((acc, c) => acc + c.averageRating, 0) / ratedChs.length).toFixed(1)
     : null;
 
+  // Check if current logged-in user is the author of this work
+  const currentUserId = (user?.id || user?._id || '').toString();
+  const authorId = (work?.author?._id || work?.author?.id || work?.author || '').toString();
+  const isAuthor = Boolean(currentUserId && authorId && currentUserId === authorId);
+
   // ── MODE A: SEPARATE SINGLE CHAPTER READER PAGE ──
   if (chapterId && currentChapter) {
     const prevChapter = currentChapterIndex > 0 ? chapters[currentChapterIndex - 1] : null;
@@ -309,6 +358,13 @@ export default function ReadWorkPage() {
           </Link>
 
           <div className="flex items-center gap-2">
+            {isAuthor && (
+              <Button asChild variant="outline" size="sm" className="rounded-xl text-xs font-bold gap-1 border-glass-border">
+                <Link to={`/studio/edit/${id}`}>
+                  <Edit2 className="w-3.5 h-3.5 text-primary" /> Edit Manuscript
+                </Link>
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="sm"
@@ -337,9 +393,59 @@ export default function ReadWorkPage() {
             </div>
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-black font-display text-foreground leading-tight">
-            {currentChapter.title}
-          </h1>
+          <div className="flex items-center justify-between gap-3">
+            <h1 className="text-2xl sm:text-3xl font-black font-display text-foreground leading-tight">
+              {currentChapter.title}
+            </h1>
+
+            {isAuthor && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="p-1.5 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors cursor-pointer shrink-0"
+                    title="Chapter options"
+                  >
+                    <MoreVertical className="w-5 h-5" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48 z-50">
+                  <DropdownMenuItem
+                    onClick={() => navigate(`/studio/edit/${id}`)}
+                    className="gap-2 cursor-pointer text-xs font-medium"
+                  >
+                    <Edit2 className="w-3.5 h-3.5 text-primary" />
+                    Edit Chapter
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    onClick={() => handleToggleChapterStatus(currentChapter._id, currentChapter.status === 'DRAFT' ? 'PUBLISHED' : 'DRAFT')}
+                    className="gap-2 cursor-pointer text-xs font-medium"
+                  >
+                    {currentChapter.status === 'DRAFT' ? (
+                      <>
+                        <Eye className="w-3.5 h-3.5 text-emerald-500" />
+                        Publish Chapter
+                      </>
+                    ) : (
+                      <>
+                        <EyeOff className="w-3.5 h-3.5 text-amber-500" />
+                        Unpublish (Save in Drafts)
+                      </>
+                    )}
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    onClick={() => handleDeleteChapter(currentChapter._id, currentChapter.title)}
+                    className="gap-2 cursor-pointer text-xs font-medium text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Delete Chapter
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
 
           <div className="flex items-center justify-between pt-1 border-t border-glass-border/30 text-xs text-muted-foreground">
             <span className="font-medium">
@@ -432,6 +538,13 @@ export default function ReadWorkPage() {
           <ChevronLeft className="w-4 h-4" /> Back to Studio
         </Link>
         <div className="flex items-center gap-2">
+          {isAuthor && (
+            <Button asChild variant="outline" size="sm" className="rounded-xl text-xs font-bold gap-1 border-glass-border">
+              <Link to={`/studio/edit/${id}`}>
+                <Edit2 className="w-3.5 h-3.5 text-primary" /> Edit Manuscript
+              </Link>
+            </Button>
+          )}
           <Button variant="ghost" size="sm" onClick={handleShare} className="rounded-xl text-xs gap-1">
             <Share2 className="w-3.5 h-3.5" /> Share
           </Button>
@@ -622,11 +735,82 @@ export default function ReadWorkPage() {
                   to={`/read/${id}/chapter/${ch._id}`}
                   className="p-4 rounded-2xl border border-glass-border/70 bg-card hover:border-primary/50 hover:shadow-md transition-all flex flex-col justify-between gap-3 group"
                 >
-                  {/* Top Row: Chapter Number + Title */}
+                  {/* Top Row: Chapter Number + Title + Kebab Menu */}
                   <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-extrabold text-sm sm:text-base font-display text-foreground group-hover:text-primary transition-colors truncate min-w-0">
-                      {chapters.length > 1 ? `${idx + 1}. ${ch.title}` : ch.title}
-                    </h3>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <h3 className="font-extrabold text-sm sm:text-base font-display text-foreground group-hover:text-primary transition-colors truncate">
+                        {chapters.length > 1 ? `${idx + 1}. ${ch.title}` : ch.title}
+                      </h3>
+                      {ch.status === 'DRAFT' && (
+                        <span className="text-[9px] font-extrabold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/30 uppercase tracking-wider shrink-0">
+                          Draft
+                        </span>
+                      )}
+                    </div>
+
+                    {isAuthor && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                            }}
+                            className="p-1 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors cursor-pointer shrink-0"
+                            title="Chapter options"
+                          >
+                            <MoreVertical className="w-4 h-4" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48 z-50">
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              navigate(`/studio/edit/${id}`);
+                            }}
+                            className="gap-2 cursor-pointer text-xs font-medium"
+                          >
+                            <Edit2 className="w-3.5 h-3.5 text-primary" />
+                            Edit Chapter
+                          </DropdownMenuItem>
+
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleToggleChapterStatus(ch._id, ch.status === 'DRAFT' ? 'PUBLISHED' : 'DRAFT');
+                            }}
+                            className="gap-2 cursor-pointer text-xs font-medium"
+                          >
+                            {ch.status === 'DRAFT' ? (
+                              <>
+                                <Eye className="w-3.5 h-3.5 text-emerald-500" />
+                                Publish Chapter
+                              </>
+                            ) : (
+                              <>
+                                <EyeOff className="w-3.5 h-3.5 text-amber-500" />
+                                Unpublish (Save in Drafts)
+                              </>
+                            )}
+                          </DropdownMenuItem>
+
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleDeleteChapter(ch._id, ch.title);
+                            }}
+                            className="gap-2 cursor-pointer text-xs font-medium text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            Delete Chapter
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                   </div>
 
                   {/* Bottom Row: Metrics (Reads • Rating • Reading Time) */}

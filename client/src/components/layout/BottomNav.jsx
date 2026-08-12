@@ -27,7 +27,7 @@ export function BottomNav() {
   };
 
   const navItems = [
-    { to: ROUTES.FEED, label: 'Feed', icon: Users, badge: true, activeColor: 'text-indigo-500', dotColor: 'bg-indigo-500' },
+    { to: ROUTES.FEED, label: 'Feed', icon: Users, activeColor: 'text-indigo-500', dotColor: 'bg-indigo-500' },
     { to: ROUTES.WRITING_STUDIO, label: 'Studio', icon: Feather, activeColor: 'text-amber-500', dotColor: 'bg-amber-500' },
     { to: ROUTES.LIBRARY_ADD, label: 'Create', icon: Plus, isMain: true },
     { to: ROUTES.LIBRARY, label: 'Library', icon: Library, activeColor: 'text-violet-500', dotColor: 'bg-violet-500' },

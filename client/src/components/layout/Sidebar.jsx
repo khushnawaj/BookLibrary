@@ -30,7 +30,6 @@ const NAV_SECTIONS = [
         to: ROUTES.FEED, 
         label: 'Community Feed', 
         icon: Users, 
-        badge: true, 
         activeColor: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20'
       },
       { 

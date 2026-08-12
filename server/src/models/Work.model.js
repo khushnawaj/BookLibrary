@@ -30,6 +30,11 @@ const chapterSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Chapter content is required'],
   },
+  status: {
+    type: String,
+    enum: ['DRAFT', 'PUBLISHED'],
+    default: 'PUBLISHED',
+  },
   chapterNumber: {
     type: Number,
     default: 1,
