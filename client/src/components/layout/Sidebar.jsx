@@ -13,6 +13,7 @@ import {
   UserPlus,
   Feather,
   Sparkles,
+  Kanban,
 } from 'lucide-react';
 import { Logo } from '@/components/common/Logo';
 import { cn } from '@/lib/utils';
@@ -48,6 +49,12 @@ const NAV_SECTIONS = [
         label: 'Writing Studio', 
         icon: Feather, 
         activeColor: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
+      },
+      { 
+        to: ROUTES.WRITING_TRACKER, 
+        label: 'Writing Tracker', 
+        icon: Kanban, 
+        activeColor: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
       },
     ],
   },

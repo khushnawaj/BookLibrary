@@ -132,3 +132,15 @@ export const workService = {
   toggleLikeComment: (id, commentId) => api.post(`/works/${id}/comments/${commentId}/like`),
   deleteComment: (id, commentId) => api.delete(`/works/${id}/comments/${commentId}`),
 };
+
+export const trackerService = {
+  getTrackers: (params) => api.get('/tracker', { params }),
+  getUnlinkedWorks: () => api.get('/tracker/unlinked-works'),
+  getStats: () => api.get('/tracker/stats'),
+  createTracker: (data) => api.post('/tracker', data),
+  getTrackerById: (id) => api.get(`/tracker/${id}`),
+  updateTracker: (id, data) => api.patch(`/tracker/${id}`, data),
+  deleteTracker: (id) => api.delete(`/tracker/${id}`),
+  addWritingLog: (id, data) => api.post(`/tracker/${id}/log`, data),
+};
+

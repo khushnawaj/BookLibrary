@@ -8,6 +8,8 @@
 
 A premium, production-ready MERN stack social platform for book lovers. Features a sleek, dark-mode-first UI inspired by modern design paradigms like Linear, Notion, and Spotify.
 
+📖 **For full technical details, system architecture, API endpoints, and database schemas, please read [PROJECT_OVERVIEW.md](./PROJECT_OVERVIEW.md).**
+
 ---
 
 ## 🚀 Key Features

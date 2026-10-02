@@ -9,7 +9,7 @@ import { Avatar } from '@/components/ui/avatar';
 import {
   Feather, Plus, Edit2, Trash2, Eye, Heart, BookOpen, Sparkles,
   Loader2, Globe, Lock, Users, FileText, CheckCircle2, Bookmark,
-  PenTool, Book, Languages, Search, ChevronLeft, ChevronRight
+  PenTool, Book, Languages, Search, ChevronLeft, ChevronRight, Kanban
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -167,15 +167,27 @@ export default function WritingStudioPage() {
             </p>
           </div>
 
-          <Link
-            to="/studio/write"
-            className="inline-flex items-center justify-center bg-primary hover:bg-primary/95 text-primary-foreground font-bold rounded-xl h-9 px-4 gap-1.5 shadow-md hover:shadow-lg transition-all cursor-pointer shrink-0 text-xs border-none active:scale-95"
-            title="Start writing a new manuscript"
-          >
-            <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">Start New Writing</span>
-            <span className="sm:hidden font-medium">Write</span>
-          </Link>
+          <div className="flex items-center gap-2 shrink-0">
+            <Link
+              to="/studio/tracker"
+              className="inline-flex items-center justify-center bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl h-9 px-3.5 gap-1.5 shadow-md hover:shadow-lg transition-all cursor-pointer text-xs border-none active:scale-95"
+              title="Open Writing Tracker dashboard"
+            >
+              <Kanban className="w-4 h-4" />
+              <span className="hidden sm:inline">Writing Tracker</span>
+              <span className="sm:hidden font-medium">Tracker</span>
+            </Link>
+
+            <Link
+              to="/studio/write"
+              className="inline-flex items-center justify-center bg-primary hover:bg-primary/95 text-primary-foreground font-bold rounded-xl h-9 px-4 gap-1.5 shadow-md hover:shadow-lg transition-all cursor-pointer text-xs border-none active:scale-95"
+              title="Start writing a new manuscript"
+            >
+              <Plus className="w-4 h-4" />
+              <span className="hidden sm:inline">Start New Writing</span>
+              <span className="sm:hidden font-medium">Write</span>
+            </Link>
+          </div>
         </div>
       </div>
 

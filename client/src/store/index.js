@@ -9,6 +9,7 @@ import analyticsReducer from '@/features/analytics/analyticsSlice';
 import feedReducer from '@/features/feed/feedSlice';
 import postReducer from '@/features/feed/postSlice';
 import notificationReducer from '@/features/notifications/notificationSlice';
+import trackerReducer from '@/features/tracker/trackerSlice';
 
 export const store = configureStore({
   reducer: {
@@ -22,6 +23,8 @@ export const store = configureStore({
     feed: feedReducer,
     post: postReducer,
     notifications: notificationReducer,
+    tracker: trackerReducer,
   },
   devTools: import.meta.env.DEV,
 });
+

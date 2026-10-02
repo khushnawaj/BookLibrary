@@ -13,6 +13,8 @@ const SavedPost = require('./SavedPost.model');
 const Feedback = require('./Feedback.model');
 const Notification = require('./Notification.model');
 const Work = require('./Work.model');
+const WritingTracker = require('./WritingTracker.model');
+const WritingLog = require('./WritingLog.model');
 
 module.exports = {
   User,
@@ -30,4 +32,7 @@ module.exports = {
   Feedback,
   Notification,
   Work,
+  WritingTracker,
+  WritingLog,
 };
+

@@ -21,6 +21,7 @@ export const ROUTES = {
   ADMIN: '/admin',
   FEEDBACK: '/feedback',
   WRITING_STUDIO: '/studio',
+  WRITING_TRACKER: '/studio/tracker',
   WRITE_NEW: '/studio/write',
   WRITE_EDIT: '/studio/edit/:id',
   EXPLORE_WRITING: '/explore-writing',

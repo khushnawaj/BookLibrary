@@ -27,6 +27,7 @@ const ProfilePage = safeLazy(() => import('@/pages/ProfilePage'));
 const SettingsPage = safeLazy(() => import('@/pages/SettingsPage'));
 const FeedbackPage = safeLazy(() => import('@/pages/FeedbackPage'));
 const WritingStudioPage = safeLazy(() => import('@/pages/WritingStudioPage'));
+const TrackerPage = safeLazy(() => import('@/pages/TrackerPage'));
 const WritingEditorPage = safeLazy(() => import('@/pages/WritingEditorPage'));
 const ExploreWritingPage = safeLazy(() => import('@/pages/ExploreWritingPage'));
 const ReadWorkPage = safeLazy(() => import('@/pages/ReadWorkPage'));
@@ -103,6 +104,7 @@ export const router = createBrowserRouter([
           { path: ROUTES.PROFILE, element: <ProfilePage /> },
           { path: `${ROUTES.PROFILE}/:username`, element: <ProfilePage /> },
           { path: ROUTES.WRITING_STUDIO, element: <WritingStudioPage /> },
+          { path: ROUTES.WRITING_TRACKER, element: <TrackerPage /> },
           { path: ROUTES.WRITE_NEW, element: <WritingEditorPage /> },
           { path: ROUTES.WRITE_EDIT, element: <WritingEditorPage /> },
           { path: ROUTES.EXPLORE_WRITING, element: <WritingStudioPage /> },

@@ -26,5 +26,7 @@ router.use('/admin', require('./admin.routes'));
 router.use('/feedback', require('./feedback.routes'));
 router.use('/notifications', require('./notification.routes'));
 router.use('/works', require('./work.routes'));
+router.use('/tracker', require('./tracker.routes'));
 
 module.exports = router;
+
