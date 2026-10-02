@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import {
   Heart, BookOpen, ChevronLeft, ChevronRight, Share2, Feather,
   Loader2, Eye, EyeOff, Calendar, Sparkles, UserCheck, Users, Type, AtSign, Languages,
-  Star, Clock, Bookmark, Play, CheckCircle2, UserPlus, UserCheck2, ArrowLeft, MessageSquare, Edit2, MoreVertical, Trash2
+  Star, Clock, Bookmark, Play, CheckCircle2, UserPlus, UserCheck2, ArrowLeft, MessageSquare, Edit2, MoreVertical, Trash2, Copy
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
@@ -292,6 +292,45 @@ export default function ReadWorkPage() {
     }
   };
 
+  // 1-Click Copy Chapter Content to Clipboard
+  const handleCopyChapterContent = async (chapterToCopy, e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    const textToCopy = typeof chapterToCopy === 'string'
+      ? chapterToCopy
+      : chapterToCopy?.content || '';
+
+    const chapterTitle = typeof chapterToCopy === 'object'
+      ? chapterToCopy?.title || 'Chapter'
+      : 'Chapter';
+
+    if (!textToCopy.trim()) {
+      toast.error(`"${chapterTitle}" content is empty`);
+      return;
+    }
+
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(textToCopy);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = textToCopy;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+      toast.success(`"${chapterTitle}" copied to clipboard! 📋`);
+    } catch (err) {
+      toast.error('Failed to copy chapter content');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -358,6 +397,15 @@ export default function ReadWorkPage() {
           </Link>
 
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={(e) => handleCopyChapterContent(currentChapter, e)}
+              className="rounded-xl text-xs font-bold gap-1 border-glass-border hover:bg-secondary/60 text-foreground cursor-pointer"
+              title="1-Click Copy Chapter Text"
+            >
+              <Copy className="w-3.5 h-3.5 text-primary" /> Copy Chapter
+            </Button>
             {isAuthor && (
               <Button asChild variant="outline" size="sm" className="rounded-xl text-xs font-bold gap-1 border-glass-border">
                 <Link to={`/studio/edit/${id}`}>
@@ -416,6 +464,14 @@ export default function ReadWorkPage() {
                   >
                     <Edit2 className="w-3.5 h-3.5 text-primary" />
                     Edit Chapter
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    onClick={(e) => handleCopyChapterContent(currentChapter, e)}
+                    className="gap-2 cursor-pointer text-xs font-medium"
+                  >
+                    <Copy className="w-3.5 h-3.5 text-primary" />
+                    Copy Chapter Text
                   </DropdownMenuItem>
 
                   <DropdownMenuItem

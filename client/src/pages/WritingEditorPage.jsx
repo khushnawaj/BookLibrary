@@ -13,7 +13,7 @@ import {
   Image as ImageIcon, Upload, Languages, Users, Send, PenTool, Book,
   ChevronLeft, Trash2, RefreshCw, Eye, EyeOff, X, Settings2, CheckCircle2,
   Maximize2, Check, SlidersHorizontal, Plus, ToggleLeft, ToggleRight,
-  Layers, FolderPlus, BookMarked, Edit3, MoreVertical, Edit2, ArrowLeft, ArrowRight
+  Layers, FolderPlus, BookMarked, Edit3, MoreVertical, Edit2, ArrowLeft, ArrowRight, Copy
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { workService, uploadService } from '@/services';
@@ -241,6 +241,41 @@ export default function WritingEditorPage() {
     }
 
     toast.success(`Chapter moved ${direction < 0 ? 'earlier' : 'later'}`);
+  };
+
+  // 1-Click Copy Chapter Content to Clipboard
+  const handleCopyChapterContent = async (chapterToCopy = activeChapter, e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    const targetChapter = chapterToCopy || activeChapter;
+    const textToCopy = targetChapter.content || '';
+    const chapterTitle = targetChapter.title || 'Chapter';
+
+    if (!textToCopy.trim()) {
+      toast.error(`"${chapterTitle}" is empty`);
+      return;
+    }
+
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(textToCopy);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = textToCopy;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+      toast.success(`"${chapterTitle}" copied to clipboard! 📋`);
+    } catch (err) {
+      toast.error('Failed to copy chapter text');
+    }
   };
 
   // Load existing work or restore local draft
@@ -787,8 +822,19 @@ export default function WritingEditorPage() {
           </div>
         </div>
 
-        {/* Action Buttons: Save Draft, Primary Publish */}
+        {/* Action Buttons: Copy Chapter, Save Draft, Primary Publish */}
         <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={(e) => handleCopyChapterContent(activeChapter, e)}
+            className="rounded-md text-xs font-bold h-9 px-3 border-glass-border cursor-pointer hover:bg-secondary/60 gap-1.5 text-foreground"
+            title="1-Click Copy active chapter text to clipboard"
+          >
+            <Copy className="w-3.5 h-3.5 text-primary" />
+            <span className="hidden sm:inline">Copy Chapter</span>
+          </Button>
+
           <Button
             type="button"
             variant="outline"
@@ -1023,6 +1069,14 @@ export default function WritingEditorPage() {
                     >
                       <Edit2 className="w-3.5 h-3.5 text-primary" />
                       Edit Chapter
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem
+                      onClick={(e) => handleCopyChapterContent(ch, e)}
+                      className="gap-2 cursor-pointer text-xs font-medium"
+                    >
+                      <Copy className="w-3.5 h-3.5 text-primary" />
+                      Copy Chapter Text
                     </DropdownMenuItem>
 
                     <DropdownMenuItem
