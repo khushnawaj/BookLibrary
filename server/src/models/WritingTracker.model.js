@@ -55,6 +55,11 @@ const writingTrackerSchema = new mongoose.Schema(
       trim: true,
       default: 'General',
     },
+    coverImage: {
+      type: String,
+      trim: true,
+      default: '',
+    },
     language: {
       type: String,
       trim: true,

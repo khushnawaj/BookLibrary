@@ -73,11 +73,14 @@ function formatTrackerSummary(trackerDoc) {
   const isNeglected = ACTIVE_STATUSES.includes(obj.trackerStatus) && diffMs >= NEGLECT_THRESHOLD_MS;
   const daysNeglected = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
+  const coverImage = (isLinked && obj.work?.coverImage) ? obj.work.coverImage : (obj.coverImage || '');
+
   return {
     ...obj,
     title,
     contentType,
     genre,
+    coverImage,
     language,
     isLinked,
     counts: {

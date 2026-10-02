@@ -179,6 +179,7 @@ exports.createTracker = async (req, res) => {
       title,
       contentType,
       genre,
+      coverImage,
       language,
       trackerStatus,
       plannedChapters,
@@ -229,6 +230,7 @@ exports.createTracker = async (req, res) => {
       title: title ? title.trim() : undefined,
       contentType: contentType || 'NOVEL',
       genre: genre ? genre.trim() : 'General',
+      coverImage: coverImage ? coverImage.trim() : '',
       language: language ? language.trim() : 'English',
       trackerStatus: trackerStatus || 'DRAFTING',
       plannedChapters: plannedChapters ? parseInt(plannedChapters) : null,
@@ -327,6 +329,7 @@ exports.updateTracker = async (req, res) => {
       title,
       contentType,
       genre,
+      coverImage,
       language,
       trackerStatus,
       plannedChapters,
@@ -342,6 +345,7 @@ exports.updateTracker = async (req, res) => {
     if (title !== undefined) tracker.title = title.trim();
     if (contentType !== undefined) tracker.contentType = contentType;
     if (genre !== undefined) tracker.genre = genre.trim();
+    if (coverImage !== undefined) tracker.coverImage = coverImage.trim();
     if (language !== undefined) tracker.language = language.trim();
     if (trackerStatus !== undefined) tracker.trackerStatus = trackerStatus;
     if (plannedChapters !== undefined) tracker.plannedChapters = plannedChapters;

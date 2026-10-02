@@ -358,7 +358,26 @@
     border: 1px solid rgba(139,69,19,0.15);
   }
 
-  /* ─── Input focus ring ─── */
+  /* ─── Input focus ring & select drop-down styling ─── */
+  select {
+    color-scheme: light dark;
+  }
+  .dark select, html.dark select, body.dark select {
+    color-scheme: dark;
+  }
+
+  select option {
+    background-color: var(--color-card, #ffffff);
+    color: var(--color-foreground, #1c1a17);
+  }
+
+  .dark select option,
+  html.dark select option,
+  body.dark select option {
+    background-color: #1e293b !important;
+    color: #f8fafc !important;
+  }
+
   input:focus-visible, select:focus-visible {
     outline: none;
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 20%, transparent) !important;
@@ -532,17 +551,36 @@
   }
   
   /* Dialogs / Alerts / Dropdowns compatibility */
-  /* Popover/Select/Dropdown content must be heavily blurred and highly opaque to prevent behind content bleed-through */
+  /* Popover/Select/Dropdown content must be solid and high contrast to prevent behind content bleed-through */
   [data-slot="dropdown-menu-content"],
   [data-slot="dropdown-menu-sub-content"],
   [data-slot="select-content"],
   .user-menu-dropdown {
-    background-color: color-mix(in srgb, var(--color-background) 97%, transparent) !important;
-    color: var(--color-foreground) !important;
+    background-color: var(--color-card, #ffffff) !important;
+    color: var(--color-foreground, #1c1a17) !important;
     border-color: var(--color-glass-border) !important;
-    backdrop-filter: blur(32px) saturate(210%) !important;
-    -webkit-backdrop-filter: blur(32px) saturate(210%) !important;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25) !important;
+  }
+
+  .dark [data-slot="dropdown-menu-content"],
+  .dark [data-slot="dropdown-menu-sub-content"],
+  .dark [data-slot="select-content"],
+  .dark .user-menu-dropdown {
+    background-color: #1e293b !important; /* solid slate-800 background */
+    color: #f8fafc !important; /* crisp white text */
+    border-color: rgba(255, 255, 255, 0.15) !important;
+  }
+
+  .dark [data-slot="dropdown-menu-item"],
+  .dark [data-slot="select-item"] {
+    color: #f8fafc !important;
+  }
+  .dark [data-slot="dropdown-menu-item"]:hover,
+  .dark [data-slot="dropdown-menu-item"]:focus,
+  .dark [data-slot="select-item"]:hover,
+  .dark [data-slot="select-item"]:focus {
+    background-color: #334155 !important; /* slate-700 hover */
+    color: #ffffff !important;
   }
 
   /* bg-popover used in modals / alert dialogs — keep semi-solid */
